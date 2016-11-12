@@ -1,0 +1,324 @@
+package net
+
+import (
+	"fmt"
+	"time"
+	"sort"
+	"math"
+	"math/rand"
+)
+
+/******* Globals *******/
+
+
+/******* types *******/
+
+/* TimeFunc */
+
+type TimeFunc func() time.Duration
+
+
+/* Place */
+
+type Place struct {
+	Tokens int
+	Description string
+}
+
+func (p Place) String () string {
+	return fmt.Sprintf("(%d)%s", p.Tokens, p.Description)
+}
+
+
+/* Places */
+
+type Places []*Place
+
+
+/* Transtition */
+
+type Transition struct {
+	Origins []*Place
+	Targets []*Place
+	Priority int
+	TimeFunc TimeFunc
+	Description string
+}
+
+func (t Transition) String () string {
+	return fmt.Sprintf("%s -> []%s -> %s", t.Origins, t.Description, t.Targets)
+}
+
+func (t * Transition) getEnabilityMagnitude() int {
+	enability := math.MaxInt64
+	for _, place := range t.Origins {
+		if place.Tokens < enability {
+			enability = place.Tokens
+		}
+	}
+	return enability
+}
+
+func (t * Transition) isEnabled() bool {
+	for _, place := range t.Origins {
+		if place.Tokens < 1 {
+			return false
+		}
+	}
+	return true
+}
+
+func (t * Transition) doIn() {
+	for _, place := range t.Origins {
+		place.Tokens--
+		if place.Tokens < 0 {
+			panic("impossible transition done")
+		}
+	}
+}
+
+func (t * Transition) doOut() {
+	for _, place := range t.Targets {
+		if place.Tokens == math.MaxInt64 {
+			panic("place reached its limit cant finish transition")
+		}
+		place.Tokens++
+	}
+}
+
+
+/* Transitions */
+
+type Transitions []*Transition
+
+func (trans *Transitions) Push(tran Transition) {
+	*trans = append(*trans, &tran)
+}
+
+func (trans *Transitions) Remove(i int) {
+	*trans = append((*trans)[:i], (*trans)[i+1:]...)
+}
+
+func (trans Transitions) Len() int {
+	return len(trans)
+}
+
+func (trans Transitions) Swap(i, j int) {
+	trans[i], trans[j] = trans[j], trans[i]
+}
+
+func (trans Transitions) Less(i, j int) bool {
+	if trans[i].TimeFunc == nil && trans[j].TimeFunc != nil {
+		return true
+	}
+	if trans[j].TimeFunc == nil && trans[i].TimeFunc != nil {
+		return false
+	}
+	return trans[i].Priority > trans[j].Priority
+}
+
+
+/* Event */
+
+type Event struct {
+	t time.Duration
+	transition *Transition
+}
+
+
+/* Calendar */
+
+type Calendar []Event
+
+func (c Calendar) String() string {
+	str := "c: "
+	for _, event := range c {
+		str += fmt.Sprintf("T=%s,%s | ", event.t, event.transition.Description)
+	}
+	return str
+}
+
+func (c *Calendar) Insert(event Event, i int) {
+	*c = append((*c)[:i], append([]Event{event}, (*c)[i:]...)...)
+}
+
+func (c *Calendar) Remove(i int) {
+	*c = append((*c)[:i], (*c)[i+1:]...)
+}
+
+func (c *Calendar) isEmpty() bool {
+	return len(*c) == 0
+}
+
+func (c *Calendar) shift() (time.Duration, *Transition) {
+	defer func() {
+		*c = (*c)[1:]
+	}()
+	return (*c)[0].t, (*c)[0].transition
+}
+
+func (c *Calendar) insert(newTime time.Duration, tran *Transition) {
+	if c.isEmpty() {
+		c.Insert(Event{newTime, tran}, 0)
+		return
+	}
+	i, event := 0, Event{};
+	for i, event = range *c {
+		if newTime < event.t {
+			c.Insert(Event{newTime, tran}, i)
+			return
+		}
+	}
+	// not found, new is biggest
+	c.Insert(Event{newTime, tran}, i+1)
+}
+
+
+/* Simulation */
+
+type Simulation struct {
+	startTime time.Duration
+	endTime time.Duration
+	now time.Duration
+	transitions Transitions
+	calendar Calendar
+	DoEveryTime func()
+}
+
+func (sim *Simulation) GetNow() time.Duration {
+	return sim.now
+}
+
+
+/**
+ * check how much is enabled and how many times is already scheduled
+ * and return difference
+ */
+func (sim *Simulation)  diffEnabilityVsScheduled(transition *Transition) int {
+	enability := transition.getEnabilityMagnitude()
+	eventCount := 0
+	for _, event := range sim.calendar {
+		if event.transition == transition {
+			eventCount++
+		}
+	}
+	return enability - eventCount
+}
+
+func (sim *Simulation) scheduleEnabledTimed() {
+	for _, tran := range sim.transitions {
+		if tran.TimeFunc != nil {
+			max := sim.diffEnabilityVsScheduled(tran)
+			for i := 0; i < max; i++ {
+				sim.calendar.insert(sim.now + tran.TimeFunc(), tran)
+			}
+		}
+	}
+}
+
+func (sim *Simulation) cancelUnenabledTimed() {
+	subtractions := map[*Transition]int{}
+	for _, tran := range sim.transitions {
+		subtractions[tran] = sim.diffEnabilityVsScheduled(tran)
+	}
+
+	// remove excess
+	for i := len(sim.calendar)-1; i >= 0; i-- {
+		tran := sim.calendar[i].transition
+		if sub, ok := subtractions[tran]; ok && sub < 0 {
+			sim.calendar.Remove(i)
+			subtractions[tran]++
+		}
+	}
+}
+
+func (sim *Simulation) Run() {
+	sim.calendar = Calendar{}
+
+	fire := func(scheduledTran *Transition) {
+
+		scheduledTran.doIn()
+		sim.cancelUnenabledTimed()
+		scheduledTran.doOut()
+
+		countOfPasses := 0
+		stabilize: // whenever transition is completed, start checking again from bigest priority
+		countOfPasses++
+		if countOfPasses > 1E7 {
+			panic("too many transitions done in zero time, possible loop")
+		}
+		for _, tran := range sim.transitions {
+			if tran.TimeFunc != nil {
+				break // no need to go further, rest are timed due to sort
+			}
+			if tran.isEnabled() {
+				tran.doIn()
+				sim.cancelUnenabledTimed()
+				tran.doOut()
+				goto stabilize
+			}
+		}
+
+		sim.scheduleEnabledTimed() // might create new event in current time
+	}
+
+	fire(&Transition{})
+
+	for !sim.calendar.isEmpty() {
+		eventTime, tranToFireNow := sim.calendar.shift()
+		if eventTime > sim.endTime {
+			break
+		}
+		sim.now = eventTime
+		fire(tranToFireNow)
+		if sim.DoEveryTime != nil {
+			sim.DoEveryTime()
+		}
+
+	}
+}
+
+
+/******* exported functions *******/
+
+func NewSimulation(startTime, endTime time.Duration, transitions Transitions) Simulation {
+	sort.Sort(transitions)
+	return Simulation{startTime, endTime, startTime, transitions, Calendar{}, nil}
+}
+
+/* timeFunc factories */
+
+func GetConstantTimeFunc(duration time.Duration) TimeFunc {
+	return func() time.Duration {
+		return duration
+	}
+}
+
+func GetUniformTimeFunc(from, to time.Duration) TimeFunc {
+	if from > to {
+		from, to = to, from
+	}
+	return func() time.Duration {
+		return uniformTime(from, to)
+	}
+}
+
+func GetExponentialTimeFunc(mean time.Duration) TimeFunc {
+	return func() time.Duration {
+		return exponentialTime(mean)
+	}
+}
+
+
+/******* unexported functions *******/
+
+/* random functions*/
+
+func uniformTime(from, to time.Duration) time.Duration {
+	return from + time.Duration(rand.Int63n(int64(to-from)))
+}
+
+func exponentialTime(mean time.Duration) time.Duration {
+	return time.Duration(rand.ExpFloat64() * float64(mean))
+}
+
