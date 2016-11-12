@@ -1,10 +1,10 @@
 package net
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"strconv"
+	"time"
 	"errors"
 )
 
@@ -13,6 +13,7 @@ var (
 	placeRE *regexp.Regexp
 	transitionRE *regexp.Regexp
 	emptyLineRE *regexp.Regexp
+	timeRE *regexp.Regexp
 )
 
 func compileRegExps () {
@@ -24,11 +25,12 @@ func compileRegExps () {
 		STR = `"([^"]*")`
 		CMNT = `//.*`
 		IDS = SP+ID+SP+`(,`+SP+ID+SP+`)*`
-		PRIO = `p=`+NUM
-		TIME = NUM+`[smhd]?`
-		EXP = `exp\(`+TIME+`\)`
-		UNIF = TIME+`-`+TIME
-		ATTR = `(`+PRIO+`)|(`+TIME+`)|(`+UNIF+`)|(`+EXP+`)`
+		PRIO = `(p=(?P<prio>`+NUM+`))`
+		TIME = `(`+NUM+`)([smhd]|(ms)|(us))?`
+		FIX = `(?P<fix>`+TIME+`)`
+		UNIF = `(?P<unf0>`+TIME+`)-(?P<unf1>`+TIME+`)`
+		EXP = `exp\((?P<exp>`+TIME+`\))`
+		ATTR = `(`+PRIO+`)|(`+FIX+`)|(`+UNIF+`)|(`+EXP+`)`
 	)
 
 
@@ -46,7 +48,7 @@ func compileRegExps () {
 		`$`,
 	}, SP)
 
-	// IDS -> [] STR? -> IDS
+	// IDS -> [ ATTR? ] STR? -> IDS
 	transitionREstr := strings.Join([]string{
 		`^`,
 		`((?P<in>`+IDS+`)->)?`,
@@ -63,7 +65,8 @@ func compileRegExps () {
 
 	placeRE = regexp.MustCompile(placeREstr)
 	transitionRE = regexp.MustCompile(transitionREstr)
-	emptyLineRE = regexp.MustCompile(SP+`(`+CMNT+`)?`)
+	emptyLineRE = regexp.MustCompile(`^`+SP+`(`+CMNT+`)?$`)
+	timeRE = regexp.MustCompile(TIME)
 
 }
 
@@ -75,34 +78,37 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 		compileRegExps()
 	}
 
+	places = Places{}
+	transitions = Transitions{}
 
 	lines := strings.Split(input, "\n")
+
+	namedPlaces := make(map[string]*Place)
 
 
 	/* ----------- parse places ----------- */
 
-	namedPlaces := make(map[string]*Place)
-
-	for _, line := range lines {
-		if matches := placeRE.FindStringSubmatch(line); matches != nil {
+	for i, line := range lines {
+		if isPlaceDefinition(line) {
 
 			id := getSubmatchString(placeRE, line, "id")
 			num, _ := strconv.Atoi(getSubmatchString(placeRE, line, "num"))
 			desc := getSubmatchString(placeRE, line, "desc")
 
 			if _, ok := namedPlaces[id]; ok {
-				err = errors.New("id already used")
+				err = errors.New("place with id >"+id+"< already defined")
 				return
 			}
-
-			namedPlaces[id] = &Place{
+			place := &Place{
 				Tokens: num,
 				Description: desc,
 			}
-			fmt.Println(id, num, desc)
+			namedPlaces[id] = place
+			places.Push(place)
+
 		} else {
-			if emptyLineRE.FindAllString(line, -1) == nil {
-				err = errors.New("syntax error")
+			if !isEmptyLine(line) && !isTransitionDefinition(line) {
+				err = errors.New("syntax error at lin " + strconv.Itoa(i))
 				return
 			}
 		}
@@ -111,21 +117,68 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 
 	/* ----------- parse transitions ----------- */
 
-	transitions = Transitions{}
+	for i, line := range lines {
+		if isTransitionDefinition(line) {
 
-	for _, line := range lines {
-		if matches := transitionRE.FindStringSubmatch(line); matches != nil {
-
-			listin := getSubmatchString(transitionRE, line, "in")
-			listout := getSubmatchString(transitionRE, line, "out")
-			attr := getSubmatchString(transitionRE, line, "attr")
+			listin := strings.Split(getSubmatchString(transitionRE, line, "in"),",")
+			listout := strings.Split(getSubmatchString(transitionRE, line, "out"), ",")
+			attr := getSubmatchString(transitionRE, line, "attr") // TODO
 			desc := getSubmatchString(transitionRE, line, "desc")
 
-			fmt.Printf("%s->[%s]%s->%s\n", listin, attr, desc, listout)
+
+			getPlacesByList := func(list []string) Places {
+				places := Places{}
+				for _, id := range list {
+					id := strings.TrimSpace(id)
+					if id == "" {
+						continue
+					}
+					if place, ok := namedPlaces[id]; !ok {
+						err = errors.New("undefined place id >"+id+"< used in transition")
+						return places
+					} else {
+						places.Push(place)
+					}
+				}
+				return places
+			}
+
+			origins := getPlacesByList(listin)
+			targets := getPlacesByList(listout)
+
+			priority := 0
+			var timeFunc TimeFunc = nil
+
+			if attr != "" {
+				prio := getSubmatchString(transitionRE, line, "prio")
+				fix := getSubmatchString(transitionRE, line, "fix")
+				unf0 := getSubmatchString(transitionRE, line, "unf0")
+				unf1 := getSubmatchString(transitionRE, line, "unf1")
+				exp := getSubmatchString(transitionRE, line, "exp")
+				switch {
+					case prio != "":
+						priority, _ = strconv.Atoi(prio)
+					case fix != "":
+						timeFunc = GetConstantTimeFunc(parseTime(fix))
+					case unf0 != "":
+						timeFunc = GetUniformTimeFunc(parseTime(unf0), parseTime(unf1))
+					case exp != "":
+						timeFunc = GetExponentialTimeFunc(parseTime(exp))
+				}
+			}
+
+
+			transitions.Push(Transition{
+				Origins: origins,
+				Targets: targets,
+				Priority: priority,
+				TimeFunc: timeFunc,
+				Description: desc,
+			})
 
 		} else {
-			if emptyLineRE.FindAllString(line, -1) == nil {
-				err = errors.New("syntax error")
+			if !isEmptyLine(line) && !isPlaceDefinition(line) {
+				err = errors.New("syntax error at line " + strconv.Itoa(i))
 				return
 			}
 		}
@@ -136,7 +189,34 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 	return transitions, places, err
 }
 
+func isPlaceDefinition(line string) bool {
+	return placeRE.FindStringSubmatch(line) != nil
+}
+
+func isTransitionDefinition(line string) bool {
+	return transitionRE.FindStringSubmatch(line) != nil
+}
+
+func isEmptyLine(line string) bool {
+	return len(emptyLineRE.FindAllString(line, 1)) != 0
+}
 
 func getSubmatchString(re *regexp.Regexp, input string, name string) string {
 	return re.ReplaceAllString(input, "${"+name+"}")
+}
+
+func parseTime(tstr string) time.Duration {
+	match := timeRE.FindStringSubmatch(tstr)
+	timeInt, _ := strconv.Atoi(match[1])
+	timeUnit := match[2]
+
+	switch timeUnit {
+	case "":
+		return time.Duration(timeInt)
+	case "d":
+		return time.Duration(timeInt) * time.Hour * 24
+	default:
+		t, _ := time.ParseDuration(tstr)
+		return t
+	}
 }

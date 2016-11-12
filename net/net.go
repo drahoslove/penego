@@ -34,6 +34,10 @@ func (p Place) String () string {
 
 type Places []*Place
 
+func (places *Places) Push(place *Place) {
+	*places = append(*places, place)
+}
+
 
 /* Transtition */
 
@@ -244,7 +248,7 @@ func (sim *Simulation) Run() {
 		countOfPasses := 0
 		stabilize: // whenever transition is completed, start checking again from bigest priority
 		countOfPasses++
-		if countOfPasses > 1E7 {
+		if countOfPasses > 1E6 {
 			panic("too many transitions done in zero time, possible loop")
 		}
 		for _, tran := range sim.transitions {
