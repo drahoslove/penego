@@ -29,7 +29,7 @@ func compileRegExps () {
 		TIME = `(`+NUM+`)([smhd]|(ms)|(us))?`
 		FIX = `(?P<fix>`+TIME+`)`
 		UNIF = `(?P<unf0>`+TIME+`)-(?P<unf1>`+TIME+`)`
-		EXP = `exp\((?P<exp>`+TIME+`\))`
+		EXP = `exp\((?P<exp>`+TIME+`)\)`
 		ATTR = `(`+PRIO+`)|(`+FIX+`)|(`+UNIF+`)|(`+EXP+`)`
 	)
 
