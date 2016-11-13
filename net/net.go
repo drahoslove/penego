@@ -43,24 +43,14 @@ func (net Net) String() (str string) {
 }
 
 func (net *Net) saveState() {
-	for _, tran := range net.transitions {
-		for _, place := range tran.Origins {
-			place.initTokens = place.Tokens
-		}
-		for _, place := range tran.Targets {
-			place.initTokens = place.Tokens
-		}
+	for _, place := range net.places {
+		place.initTokens = place.Tokens
 	}
 }
 
 func (net *Net) restoreState() {
-	for _, tran := range net.transitions {
-		for _, place := range tran.Origins {
-			place.Tokens = place.initTokens
-		}
-		for _, place := range tran.Targets {
-			place.Tokens = place.initTokens
-		}
+	for _, place := range net.places {
+		place.Tokens = place.initTokens
 	}
 }
 
@@ -96,11 +86,42 @@ func (places Places) String() string {
 }
 
 
+/* Arc */
+
+type Arc struct {
+	Weight int
+	Place *Place
+}
+
+func (arc Arc) String() string {
+	if arc.Weight > 1 {
+		return fmt.Sprintf("%d %s", arc.Weight, arc.Place)
+	} else {
+		return arc.Place.String()
+	}
+}
+
+/* Arcs */
+
+type Arcs []Arc
+
+func (arcs Arcs) String() string {
+	arcsstr := make([]string, 0, len(arcs))
+	for _, arc := range arcs {
+		arcsstr = append(arcsstr, arc.String())
+	}
+	return strings.Join(arcsstr, ", ")
+}
+
+func (arcs *Arcs) Push(w int, place *Place) {
+	*arcs = append(*arcs, Arc{w, place})
+}
+
 /* Transtition */
 
 type Transition struct {
-	Origins Places
-	Targets Places
+	Origins Arcs
+	Targets Arcs
 	Priority int
 	TimeFunc *TimeFunc
 	Description string
@@ -116,17 +137,18 @@ func (t Transition) String () string {
 
 func (t * Transition) getEnabilityMagnitude() int {
 	enability := math.MaxInt64
-	for _, place := range t.Origins {
-		if place.Tokens < enability {
-			enability = place.Tokens
+	for _, arc := range t.Origins {
+		arcEnability := arc.Place.Tokens / arc.Weight // posible fires for this arc
+		if arcEnability < enability {
+			enability = arcEnability
 		}
 	}
 	return enability
 }
 
 func (t * Transition) isEnabled() bool {
-	for _, place := range t.Origins {
-		if place.Tokens < 1 {
+	for _, arc := range t.Origins {
+		if arc.Place.Tokens < arc.Weight {
 			return false
 		}
 	}
@@ -134,20 +156,17 @@ func (t * Transition) isEnabled() bool {
 }
 
 func (t * Transition) doIn() {
-	for _, place := range t.Origins {
-		place.Tokens--
-		if place.Tokens < 0 {
+	for _, arc := range t.Origins {
+		arc.Place.Tokens -= arc.Weight
+		if arc.Place.Tokens < 0 {
 			panic("impossible transition done")
 		}
 	}
 }
 
 func (t * Transition) doOut() {
-	for _, place := range t.Targets {
-		if place.Tokens == math.MaxInt64 {
-			panic("place reached its limit cant finish transition")
-		}
-		place.Tokens++
+	for _, arc := range t.Targets {
+		arc.Place.Tokens += arc.Weight
 	}
 }
 
@@ -302,7 +321,7 @@ func (sim *Simulation) Run() {
 	sim.now = sim.startTime
 	sim.calendar = Calendar{}
 
-	sim.net.saveState()
+	sim.net.restoreState()
 
 	fire := func(scheduledTran *Transition) {
 
@@ -346,7 +365,6 @@ func (sim *Simulation) Run() {
 
 	}
 
-	sim.net.restoreState()
 }
 
 
@@ -354,5 +372,6 @@ func (sim *Simulation) Run() {
 
 func NewSimulation(startTime, endTime time.Duration, net Net) Simulation {
 	sort.Sort(net.transitions)
+	net.saveState()
 	return Simulation{startTime, endTime, 0, net, Calendar{}, nil}
 }

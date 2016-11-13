@@ -24,7 +24,8 @@ func compileRegExps () {
 		NUM = `(0|([1-9][0-9]*))`
 		STR = `"[^"]*"`
 		CMNT = `//.*`
-		IDS = SP+ID+SP+`(,`+SP+ID+SP+`)*`
+		ARC = SP+`(`+NUM+SP+`)?`+ID+SP
+		ARCS = ARC+`(,`+ARC+`)*`
 		PRIO = `p=(?P<prio>`+NUM+`)`
 		TIME = `(?P<t>`+NUM+`)(?P<u>[smhd]|(ms)|(us))?`
 		FIX = `(?P<fix>`+TIME+`)`
@@ -51,12 +52,12 @@ func compileRegExps () {
 	// IDS -> [ ATTR? ] STR? -> IDS
 	transitionREstr := strings.Join([]string{
 		`^`,
-		`((?P<in>`+IDS+`)->)?`,
+		`((?P<in>`+ARCS+`)->)?`,
 		`\[`,	// [
 		`(?P<attr>`+ATTR+`)?`,
 		`\]`,	// ]
 		`(?P<desc>`+STR+`)?`,
-		`(->(?P<out>`+IDS+`))?`,
+		`(->(?P<out>`+ARCS+`))?`,
 		`(`+CMNT+`)?`,
 		`$`,
 	}, SP)
@@ -127,21 +128,26 @@ func Parse(input string) (net Net, err error) {
 			desc := getSubmatchString(transitionRE, line, "desc")
 
 
-			getPlacesByList := func(list string) Places {
-				places := Places{}
-				for _, id := range strings.Split(list, ",") {
-					id := strings.TrimSpace(id)
-					if id == "" {
+			getPlacesByList := func(list string) Arcs {
+				arcs := Arcs{}
+				for _, pair := range strings.Split(list, ",") {
+					pair := strings.Split(strings.TrimSpace(pair), " ")
+					if len(pair) == 0 {
 						continue
+					}
+					id := pair[len(pair)-1]
+					w := 1
+					if len(pair) == 2 {
+						w, _ = strconv.Atoi(pair[0])
 					}
 					if place, exists := namedPlaces[id]; !exists {
 						err = errors.New("undefined place id `"+id+"` used in transition")
-						return places
+						return arcs
 					} else {
-						places.Push(place)
+						arcs.Push(w, place)
 					}
 				}
-				return places
+				return arcs
 			}
 
 			origins := getPlacesByList(listin)
@@ -151,8 +157,8 @@ func Parse(input string) (net Net, err error) {
 			// where S is hidden place creating self loop
 			if len(origins) == 0 {
 				selfLoopPlace := &Place{Tokens: 1, id: "."}
-				origins.Push(selfLoopPlace)
-				targets.Push(selfLoopPlace)
+				origins.Push(1, selfLoopPlace)
+				targets.Push(1, selfLoopPlace)
 			}
 
 			priority := 0

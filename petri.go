@@ -52,7 +52,7 @@ func main() {
 	 *
 	 *   (1)<-----
 	 *    |       |
-	 *    |       |       exit
+	 *    |       |   2   exit
 	 *     ----->[ ]----->( )
 	 *         exp(30s)
 	 */
@@ -62,8 +62,8 @@ func main() {
 	g := &net.Place{Tokens:1} // generator
 	e := &net.Place{Description: "exit"}
 	t := &net.Transition{
-		Origins: net.Places{g},
-		Targets: net.Places{g,e},
+		Origins: net.Arcs{{1,g}},
+		Targets: net.Arcs{{1,g},{2,e}},
 		TimeFunc: net.GetExponentialTimeFunc(30*time.Second),
 	}
 	network = net.New(net.Places{g, e}, net.Transitions{t})
@@ -73,13 +73,13 @@ func main() {
 	network, err = net.Parse(`
 		g (1) // geneartor
 		e ( ) "exit"
-		g -> [exp(30s)] -> g, e
+		g -> [exp(30s)] -> g, 2 e
 	`)
 
 
 	////////////////////////////////
 
-	network, err = net.Parse(NOTATION_EXAMPLE)
+	// network, err = net.Parse(NOTATION_EXAMPLE)
 	if err != nil {
 		fmt.Println(err)
 		return
