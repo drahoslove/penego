@@ -11,14 +11,14 @@ import (
 const FORMAT_EXAMPLE = `
 // definice míst:
 
-g (1) // generování studentů
+g (1) "g" // generování studentů
 f (0) "fronta"
 k (5) "kuchařky"
 v ( ) "výdej"
 s ( ) "stravování"
-o ( ) // odchod
-z ( ) // ohlášena žloutenka
-c ( ) // vyprazdňovací cyklus
+o ( ) "o" // odchod
+z ( ) "z" // ohlášena žloutenka
+c ( ) "c" // vyprazdňovací cyklus
 i ( ) "karanténa"
 
 // definice přechodů:
@@ -26,7 +26,7 @@ i ( ) "karanténa"
 g	-> [exp(3m)] "příchod studentů" -> g,f
 f,k	-> [] -> v
 v	-> [exp(1m)] -> s,k
-s 	-> [10m-15m] -> o
+s 	-> [10m..15m] -> o
 // o	-> [] "odchod"
 
 [exp(100d)]  -> z

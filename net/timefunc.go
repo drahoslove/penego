@@ -75,7 +75,7 @@ func RegisterFuncTextRepr(fn *TimeFunc, name string, args... time.Duration) {
 	arguments := make([]string,0)
 
 	for _, arg := range args {
-		arguments = append(arguments, arg.String())
+		arguments = append(arguments, trimZeroUnits(arg.String()))
 	}
 
 	textReprs[fn] = func() string {
@@ -94,6 +94,10 @@ func RegisterFuncTextRepr(fn *TimeFunc, name string, args... time.Duration) {
 
 
 /******* unexported functions *******/
+
+func trimZeroUnits(input string) string {
+	return strings.Replace(strings.Replace(input, "m0s", "m", 1), "h0m", "h", 1)
+}
 
 /* random functions*/
 

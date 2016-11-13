@@ -28,7 +28,7 @@ func compileRegExps () {
 		PRIO = `p=(?P<prio>`+NUM+`)`
 		TIME = `(?P<t>`+NUM+`)(?P<u>[smhd]|(ms)|(us))?`
 		FIX = `(?P<fix>`+TIME+`)`
-		UNIF = `(?P<unf0>`+TIME+`)-(?P<unf1>`+TIME+`)`
+		UNIF = `(?P<unf0>`+TIME+`)(-|(..))(?P<unf1>`+TIME+`)`
 		EXP = `exp\((?P<exp>`+TIME+`)\)`
 		ATTR = `(`+PRIO+`)|(`+FIX+`)|(`+UNIF+`)|(`+EXP+`)`
 	)
@@ -149,7 +149,7 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 			// changes `[] -> n` to `S -> [] -> n,S`
 			// where S is hidden place creating self loop
 			if len(origins) == 0 {
-				selfLoopPlace := &Place{1, ""}
+				selfLoopPlace := &Place{1, "."}
 				origins.Push(selfLoopPlace)
 				targets.Push(selfLoopPlace)
 			}

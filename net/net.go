@@ -5,6 +5,8 @@ import (
 	"time"
 	"sort"
 	"math"
+	"strings"
+	"strconv"
 )
 
 
@@ -30,19 +32,31 @@ func (places *Places) Push(place *Place) {
 	*places = append(*places, place)
 }
 
+func (places Places) String() string {
+	placestrs := make([]string, 0, len(places))
+	for _, place := range places {
+		placestrs = append(placestrs, place.String())
+	}
+	return strings.Join(placestrs, ", ")
+}
+
 
 /* Transtition */
 
 type Transition struct {
-	Origins []*Place
-	Targets []*Place
+	Origins Places
+	Targets Places
 	Priority int
 	TimeFunc *TimeFunc
 	Description string
 }
 
 func (t Transition) String () string {
-	return fmt.Sprintf("%s -> [%s]%s -> %s", t.Origins, t.TimeFunc, t.Description, t.Targets)
+	prio := ""
+	if t.Priority != 0 {
+		prio = "p=" + strconv.Itoa(t.Priority)
+	}
+	return fmt.Sprintf("%s -> [%s%s]%s -> %s", t.Origins, t.TimeFunc, prio, t.Description, t.Targets)
 }
 
 func (t * Transition) getEnabilityMagnitude() int {
