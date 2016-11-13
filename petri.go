@@ -46,7 +46,7 @@ func main() {
 		err error
 	)
 
-	// this ne net:
+	// this petri net:
 
 	/**
 	 *
