@@ -8,7 +8,7 @@ import (
 )
 
 
-const FORMAT_EXAMPLE = `
+const NOTATION_EXAMPLE = `
 // definice míst:
 
 g (1) // generování studentů
@@ -42,8 +42,7 @@ i	-> [10d] -> g
 func main() {
 
 	var (
-		places net.Places
-		transitions net.Transitions
+		network net.Net
 		err error
 	)
 
@@ -67,12 +66,11 @@ func main() {
 		Targets: net.Places{g,e},
 		TimeFunc: net.GetExponentialTimeFunc(30*time.Second),
 	}
-	places = net.Places{g, e}
-	transitions = net.Transitions{t}
+	network = net.New(net.Places{g, e}, net.Transitions{t})
 
 	// or like this:
 
-	transitions, places, err = net.Parse(`
+	network, err = net.Parse(`
 		g (1) // geneartor
 		e ( ) "exit"
 		g -> [exp(30s)] -> g, e
@@ -81,28 +79,22 @@ func main() {
 
 	////////////////////////////////
 
-	transitions, places, err = net.Parse(FORMAT_EXAMPLE)
+	network, err = net.Parse(NOTATION_EXAMPLE)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	for _, place := range places {
-		fmt.Println(place)
-	}
-	for _, tran := range transitions {
-		fmt.Println(tran)
-	}
+	fmt.Println(network)
 
-
-	sim := net.NewSimulation(0, 3*time.Hour, transitions)
+	sim := net.NewSimulation(0, 3*time.Hour, network)
 	sim.DoEveryTime = func () {
 	}
 
 	for i := 0; i < 10; i++ {
 		net.TrueRandomSeed()
 		sim.Run()
-		fmt.Println(sim.GetNow(), places)
+		fmt.Println(sim.GetNow(), network.Places())
 	}
 
 }

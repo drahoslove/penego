@@ -72,14 +72,14 @@ func compileRegExps () {
 
 
 
-func Parse(input string) (transitions Transitions, places Places, err error) {
+func Parse(input string) (net Net, err error) {
 
 	if emptyLineRE == nil || placeRE == nil || transitionRE == nil {
 		compileRegExps()
 	}
 
-	places = Places{}
-	transitions = Transitions{}
+	net.places = Places{}
+	net.transitions = Transitions{}
 
 	lines := strings.Split(input, "\n")
 
@@ -105,7 +105,7 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 				id: id,
 			}
 			namedPlaces[id] = place
-			places.Push(place)
+			net.places.Push(place)
 
 		} else {
 			if !isEmptyLine(line) && !isTransitionDefinition(line) {
@@ -177,7 +177,7 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 			}
 
 
-			transitions.Push(Transition{
+			net.transitions.Push(Transition{
 				Origins: origins,
 				Targets: targets,
 				Priority: priority,
@@ -194,8 +194,7 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 
 	}
 
-
-	return transitions, places, err
+	return net, err
 }
 
 func isPlaceDefinition(line string) bool {

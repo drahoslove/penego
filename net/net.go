@@ -12,6 +12,59 @@ import (
 
 /******* types *******/
 
+/* Net */
+
+type Net struct {
+	places Places
+	transitions Transitions
+}
+
+func New(places Places, transitions Transitions) Net {
+	return Net{places, transitions}
+}
+
+func (net *Net) Places() Places {
+	return net.places
+}
+
+func (net *Net) Transitions() Transitions {
+	return net.transitions
+}
+
+func (net Net) String() (str string) {
+	for _, pl := range net.places {
+		str += pl.String() + "\n"
+	}
+	str += "----\n"
+	for _, tr := range net.transitions {
+		str += tr.String() + "\n"
+	}
+	return
+}
+
+func (net *Net) saveState() {
+	for _, tran := range net.transitions {
+		for _, place := range tran.Origins {
+			place.initTokens = place.Tokens
+		}
+		for _, place := range tran.Targets {
+			place.initTokens = place.Tokens
+		}
+	}
+}
+
+func (net *Net) restoreState() {
+	for _, tran := range net.transitions {
+		for _, place := range tran.Origins {
+			place.Tokens = place.initTokens
+		}
+		for _, place := range tran.Targets {
+			place.Tokens = place.initTokens
+		}
+	}
+}
+
+
 /* Place */
 
 type Place struct {
@@ -192,36 +245,13 @@ type Simulation struct {
 	startTime time.Duration
 	endTime time.Duration
 	now time.Duration
-	transitions Transitions
+	net Net
 	calendar Calendar
 	DoEveryTime func()
 }
 
 func (sim *Simulation) GetNow() time.Duration {
 	return sim.now
-}
-
-
-func (sim *Simulation) saveState() {
-	for _, tran := range sim.transitions {
-		for _, place := range tran.Origins {
-			place.initTokens = place.Tokens
-		}
-		for _, place := range tran.Targets {
-			place.initTokens = place.Tokens
-		}
-	}
-}
-
-func (sim *Simulation) restoreState() {
-	for _, tran := range sim.transitions {
-		for _, place := range tran.Origins {
-			place.Tokens = place.initTokens
-		}
-		for _, place := range tran.Targets {
-			place.Tokens = place.initTokens
-		}
-	}
 }
 
 /**
@@ -240,7 +270,7 @@ func (sim *Simulation)  diffEnabilityVsScheduled(transition *Transition) int {
 }
 
 func (sim *Simulation) scheduleEnabledTimed() {
-	for _, tran := range sim.transitions {
+	for _, tran := range sim.net.transitions {
 		if tran.TimeFunc != nil {
 			max := sim.diffEnabilityVsScheduled(tran)
 			for i := 0; i < max; i++ {
@@ -252,7 +282,7 @@ func (sim *Simulation) scheduleEnabledTimed() {
 
 func (sim *Simulation) cancelUnenabledTimed() {
 	subtractions := map[*Transition]int{}
-	for _, tran := range sim.transitions {
+	for _, tran := range sim.net.transitions {
 		subtractions[tran] = sim.diffEnabilityVsScheduled(tran)
 	}
 
@@ -272,7 +302,7 @@ func (sim *Simulation) Run() {
 	sim.now = sim.startTime
 	sim.calendar = Calendar{}
 
-	sim.saveState()
+	sim.net.saveState()
 
 	fire := func(scheduledTran *Transition) {
 
@@ -286,7 +316,7 @@ func (sim *Simulation) Run() {
 		if countOfPasses > 1E6 {
 			panic("too many transitions done in zero time, possible loop")
 		}
-		for _, tran := range sim.transitions {
+		for _, tran := range sim.net.transitions {
 			if tran.TimeFunc != nil {
 				break // no need to go further, rest are timed due to sort
 			}
@@ -316,13 +346,13 @@ func (sim *Simulation) Run() {
 
 	}
 
-	sim.restoreState()
+	sim.net.restoreState()
 }
 
 
 /******* exported functions *******/
 
-func NewSimulation(startTime, endTime time.Duration, transitions Transitions) Simulation {
-	sort.Sort(transitions)
-	return Simulation{startTime, endTime, 0, transitions, Calendar{}, nil}
+func NewSimulation(startTime, endTime time.Duration, net Net) Simulation {
+	sort.Sort(net.transitions)
+	return Simulation{startTime, endTime, 0, net, Calendar{}, nil}
 }
