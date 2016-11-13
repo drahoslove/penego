@@ -95,15 +95,15 @@ func main() {
 	}
 
 
-	sim := net.NewSimulation(0, 10*time.Minute, transitions)
+	sim := net.NewSimulation(0, 3*time.Hour, transitions)
 	sim.DoEveryTime = func () {
 	}
 
-	// for i := 0; i < 2; i++ {
-	// 	// net.TrueRandomSeed()
-	// 	sim.Run()
-	// 	fmt.Println(sim.GetNow(), places)
-	// }
+	for i := 0; i < 10; i++ {
+		net.TrueRandomSeed()
+		sim.Run()
+		fmt.Println(sim.GetNow(), places)
+	}
 
 }
 

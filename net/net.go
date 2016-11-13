@@ -202,6 +202,28 @@ func (sim *Simulation) GetNow() time.Duration {
 }
 
 
+func (sim *Simulation) saveState() {
+	for _, tran := range sim.transitions {
+		for _, place := range tran.Origins {
+			place.initTokens = place.Tokens
+		}
+		for _, place := range tran.Targets {
+			place.initTokens = place.Tokens
+		}
+	}
+}
+
+func (sim *Simulation) restoreState() {
+	for _, tran := range sim.transitions {
+		for _, place := range tran.Origins {
+			place.Tokens = place.initTokens
+		}
+		for _, place := range tran.Targets {
+			place.Tokens = place.initTokens
+		}
+	}
+}
+
 /**
  * check how much is enabled and how many times is already scheduled
  * and return difference
@@ -223,7 +245,6 @@ func (sim *Simulation) scheduleEnabledTimed() {
 			max := sim.diffEnabilityVsScheduled(tran)
 			for i := 0; i < max; i++ {
 				sim.calendar.insert(sim.now + (*tran.TimeFunc)(), tran)
-				fmt.Println(sim.calendar)
 			}
 		}
 	}
@@ -250,6 +271,8 @@ func (sim *Simulation) Run() {
 	restartSeed()
 	sim.now = sim.startTime
 	sim.calendar = Calendar{}
+
+	sim.saveState()
 
 	fire := func(scheduledTran *Transition) {
 
@@ -292,6 +315,8 @@ func (sim *Simulation) Run() {
 		}
 
 	}
+
+	sim.restoreState()
 }
 
 
