@@ -102,6 +102,7 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 			place := &Place{
 				Tokens: num,
 				Description: desc,
+				id: id,
 			}
 			namedPlaces[id] = place
 			places.Push(place)
@@ -149,7 +150,7 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 			// changes `[] -> n` to `S -> [] -> n,S`
 			// where S is hidden place creating self loop
 			if len(origins) == 0 {
-				selfLoopPlace := &Place{1, "."}
+				selfLoopPlace := &Place{Tokens: 1, id: "."}
 				origins.Push(selfLoopPlace)
 				targets.Push(selfLoopPlace)
 			}

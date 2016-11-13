@@ -17,10 +17,12 @@ import (
 type Place struct {
 	Tokens int
 	Description string
+	id string
+	initTokens int
 }
 
 func (p Place) String () string {
-	return fmt.Sprintf("(%d)%s", p.Tokens, p.Description)
+	return fmt.Sprintf("%s(%d)%s", p.id, p.Tokens, p.Description)
 }
 
 
@@ -221,6 +223,7 @@ func (sim *Simulation) scheduleEnabledTimed() {
 			max := sim.diffEnabilityVsScheduled(tran)
 			for i := 0; i < max; i++ {
 				sim.calendar.insert(sim.now + (*tran.TimeFunc)(), tran)
+				fmt.Println(sim.calendar)
 			}
 		}
 	}
@@ -243,6 +246,8 @@ func (sim *Simulation) cancelUnenabledTimed() {
 }
 
 func (sim *Simulation) Run() {
+	//todo change init state!
+	restartSeed()
 	sim.now = sim.startTime
 	sim.calendar = Calendar{}
 

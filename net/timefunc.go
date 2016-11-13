@@ -28,6 +28,7 @@ func (fn *TimeFunc) String() string {
 /******* global vars *******/
 
 var textReprs map[*TimeFunc] string
+var startSeed int64 = 1
 
 
 /******* exported functions *******/
@@ -64,13 +65,11 @@ func GetExponentialTimeFunc(mean time.Duration) *TimeFunc {
 func TrueRandomSeed() {
 	max := big.NewInt(math.MaxInt32)
 	seed, _ := truerand.Int(truerand.Reader, max)
-	rand.Seed(seed.Int64())
+	startSeed = seed.Int64()
+	rand.Seed(startSeed)
 }
 
 func RegisterFuncTextRepr(fn *TimeFunc, name string, args... time.Duration) {
-	if textReprs == nil {
-		textReprs = make(map[*TimeFunc]string)
-	}
 
 	arguments := make([]string,0)
 
@@ -94,6 +93,14 @@ func RegisterFuncTextRepr(fn *TimeFunc, name string, args... time.Duration) {
 
 
 /******* unexported functions *******/
+
+func init () {
+	textReprs = make(map[*TimeFunc]string)
+}
+
+func restartSeed() {
+	rand.Seed(startSeed)
+}
 
 func trimZeroUnits(input string) string {
 	return strings.Replace(strings.Replace(input, "m0s", "m", 1), "h0m", "h", 1)

@@ -11,14 +11,14 @@ import (
 const FORMAT_EXAMPLE = `
 // definice míst:
 
-g (1) "g" // generování studentů
+g (1) // generování studentů
 f (0) "fronta"
 k (5) "kuchařky"
 v ( ) "výdej"
 s ( ) "stravování"
-o ( ) "o" // odchod
-z ( ) "z" // ohlášena žloutenka
-c ( ) "c" // vyprazdňovací cyklus
+o ( ) // odchod
+z ( ) // ohlášena žloutenka
+c ( ) // vyprazdňovací cyklus
 i ( ) "karanténa"
 
 // definice přechodů:
@@ -41,56 +41,52 @@ i	-> [10d] -> g
 
 func main() {
 
-	// definice míst
+	var (
+		places net.Places
+		transitions net.Transitions
+		err error
+	)
 
-	// g := &net.Place{Tokens:1} // generator studentů
-	// f := &net.Place{Tokens:0, Description:"fronta"}
-	// k := &net.Place{Tokens:4, Description:"kuchařky"}
-	// v := &net.Place{Description:"výdej"}
-	// s := &net.Place{Description:"stravování"}
-	// o := &net.Place{} // odchod
+	// this ne net:
 
-	// places := net.Places{g, f, k, v, s, o}
+	/**
+	 *
+	 *   (1)<-----
+	 *    |       |
+	 *    |       |       exit
+	 *     ----->[ ]----->( )
+	 *         exp(30s)
+	 */
 
-	// // definice přechodů
+	// can be done likek this:
 
-	// transitions := net.Transitions{}
+	g := &net.Place{Tokens:1} // generator
+	e := &net.Place{Description: "exit"}
+	t := &net.Transition{
+		Origins: net.Places{g},
+		Targets: net.Places{g,e},
+		TimeFunc: net.GetExponentialTimeFunc(30*time.Second),
+	}
+	places = net.Places{g, e}
+	transitions = net.Transitions{t}
 
-	// transitions.Push(net.Transition{
-	// 	Origins: net.Places{g},
-	// 	Targets: net.Places{g,f},
-	// 	TimeFunc: net.GetExponentialTimeFunc(30*time.Second),
-	// 	Description: "příchody studentů",
-	// })
-	// transitions.Push(net.Transition{
-	// 	Origins: net.Places{f,k},
-	// 	Targets: net.Places{v},
-	// })
-	// transitions.Push(net.Transition{
-	// 	Origins: net.Places{v},
-	// 	Targets: net.Places{s,k},
-	// 	TimeFunc: net.GetExponentialTimeFunc(1*time.Minute),
-	// })
-	// transitions.Push(net.Transition{
-	// 	Origins: net.Places{s},
-	// 	Targets: net.Places{o},
-	// 	TimeFunc: net.GetUniformTimeFunc(10*time.Minute, 15*time.Minute),
-	// })
-	// transitions.Push(Transition{
-	// 	Origins: []*Place{o},
-	// })
+	// or like this:
 
-	// fmt.Println("Places:", places)
-	// fmt.Println("Transitioms:", transitions)
+	transitions, places, err = net.Parse(`
+		g (1) // geneartor
+		e ( ) "exit"
+		g -> [exp(30s)] -> g, e
+	`)
 
 
-	transitions, places, err := net.Parse(FORMAT_EXAMPLE)
+	////////////////////////////////
+
+	transitions, places, err = net.Parse(FORMAT_EXAMPLE)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	_ = places
 	for _, place := range places {
 		fmt.Println(place)
 	}
@@ -99,12 +95,12 @@ func main() {
 	}
 
 
-	sim := net.NewSimulation(0, 1*time.Hour, transitions)
+	sim := net.NewSimulation(0, 10*time.Minute, transitions)
 	sim.DoEveryTime = func () {
 	}
-		net.TrueRandomSeed()
 
-	// for i := 0; i < 10; i++ {
+	// for i := 0; i < 2; i++ {
+	// 	// net.TrueRandomSeed()
 	// 	sim.Run()
 	// 	fmt.Println(sim.GetNow(), places)
 	// }
