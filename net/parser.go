@@ -155,7 +155,7 @@ func Parse(input string) (transitions Transitions, places Places, err error) {
 			}
 
 			priority := 0
-			timeFunc := TimeFunc(nil)
+			var timeFunc *TimeFunc
 
 			if attr != "" {
 				prio := getSubmatchString(transitionRE, line, "prio")

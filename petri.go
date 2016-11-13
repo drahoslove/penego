@@ -8,6 +8,37 @@ import (
 )
 
 
+const FORMAT_EXAMPLE = `
+// definice míst:
+
+g (1) // generování studentů
+f (0) "fronta"
+k (5) "kuchařky"
+v ( ) "výdej"
+s ( ) "stravování"
+o ( ) // odchod
+z ( ) // ohlášena žloutenka
+c ( ) // vyprazdňovací cyklus
+i ( ) "karanténa"
+
+// definice přechodů:
+
+g	-> [exp(3m)] "příchod studentů" -> g,f
+f,k	-> [] -> v
+v	-> [exp(1m)] -> s,k
+s 	-> [10m-15m] -> o
+// o	-> [] "odchod"
+
+[exp(100d)]  -> z
+z,g -> [p=1] -> c
+c,f	-> [p=3] -> c,o
+c,v	-> [p=2] -> c,o,k
+c,s	-> [p=1] -> c,o
+c	-> [p=0] -> i
+i	-> [10d] -> g
+
+`
+
 func main() {
 
 	// definice míst
@@ -67,45 +98,17 @@ func main() {
 		fmt.Println(tran)
 	}
 
-	sim := net.NewSimulation(0, 3*time.Hour, transitions)
+
+	sim := net.NewSimulation(0, 1*time.Hour, transitions)
 	sim.DoEveryTime = func () {
-		fmt.Println(sim.GetNow(), places)
 	}
-	sim.Run()
+		net.TrueRandomSeed()
+
+	// for i := 0; i < 10; i++ {
+	// 	sim.Run()
+	// 	fmt.Println(sim.GetNow(), places)
+	// }
 
 }
 
 
-
-const FORMAT_EXAMPLE = `
-// definice míst:
-
-g (1) // generování studentů
-f (0) "fronta"
-k (5) "kuchařky"
-v ( ) "výdej"
-s ( ) "stravování"
-o ( ) // odchod
-
-
-// definice přechodů:
-
-g	-> [exp(3m)] "příchod studentů" -> g,f
-f,k	-> [] -> v
-v	-> [exp(1m)] -> s,k
-s 	-> [10m-15m] -> o
-// o	-> [] "odchod"
-
-z ( ) // ohlášena žloutenka
-c ( ) // vyprazdňovací cyklus
-i ( ) "karanténa"
-
-[exp(100d)]  -> z
-z,g -> [p=1] -> c
-c,f	-> [p=3] -> c,o
-c,v	-> [p=2] -> c,o,k
-c,s	-> [p=1] -> c,o
-c	-> [p=0] -> i
-i	-> [10d] -> g
-
-`

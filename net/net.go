@@ -5,18 +5,10 @@ import (
 	"time"
 	"sort"
 	"math"
-	"math/rand"
 )
-
-/******* Globals *******/
 
 
 /******* types *******/
-
-/* TimeFunc */
-
-type TimeFunc func() time.Duration
-
 
 /* Place */
 
@@ -45,12 +37,12 @@ type Transition struct {
 	Origins []*Place
 	Targets []*Place
 	Priority int
-	TimeFunc TimeFunc
+	TimeFunc *TimeFunc
 	Description string
 }
 
 func (t Transition) String () string {
-	return fmt.Sprintf("%s -> []%s -> %s", t.Origins, t.Description, t.Targets)
+	return fmt.Sprintf("%s -> [%s]%s -> %s", t.Origins, t.TimeFunc, t.Description, t.Targets)
 }
 
 func (t * Transition) getEnabilityMagnitude() int {
@@ -214,7 +206,7 @@ func (sim *Simulation) scheduleEnabledTimed() {
 		if tran.TimeFunc != nil {
 			max := sim.diffEnabilityVsScheduled(tran)
 			for i := 0; i < max; i++ {
-				sim.calendar.insert(sim.now + tran.TimeFunc(), tran)
+				sim.calendar.insert(sim.now + (*tran.TimeFunc)(), tran)
 			}
 		}
 	}
@@ -237,6 +229,7 @@ func (sim *Simulation) cancelUnenabledTimed() {
 }
 
 func (sim *Simulation) Run() {
+	sim.now = sim.startTime
 	sim.calendar = Calendar{}
 
 	fire := func(scheduledTran *Transition) {
@@ -287,42 +280,5 @@ func (sim *Simulation) Run() {
 
 func NewSimulation(startTime, endTime time.Duration, transitions Transitions) Simulation {
 	sort.Sort(transitions)
-	return Simulation{startTime, endTime, startTime, transitions, Calendar{}, nil}
+	return Simulation{startTime, endTime, 0, transitions, Calendar{}, nil}
 }
-
-/* timeFunc factories */
-
-func GetConstantTimeFunc(duration time.Duration) TimeFunc {
-	return func() time.Duration {
-		return duration
-	}
-}
-
-func GetUniformTimeFunc(from, to time.Duration) TimeFunc {
-	if from > to {
-		from, to = to, from
-	}
-	return func() time.Duration {
-		return uniformTime(from, to)
-	}
-}
-
-func GetExponentialTimeFunc(mean time.Duration) TimeFunc {
-	return func() time.Duration {
-		return exponentialTime(mean)
-	}
-}
-
-
-/******* unexported functions *******/
-
-/* random functions*/
-
-func uniformTime(from, to time.Duration) time.Duration {
-	return from + time.Duration(rand.Int63n(int64(to-from)))
-}
-
-func exponentialTime(mean time.Duration) time.Duration {
-	return time.Duration(rand.ExpFloat64() * float64(mean))
-}
-
