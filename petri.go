@@ -69,11 +69,11 @@ func main() {
 	network = net.New(net.Places{g, e}, net.Transitions{t})
 
 	// or like this:
-
 	network, err = net.Parse(`
-		g (1) // geneartor
+		g (1)
 		e ( ) "exit"
-		g -> [exp(30s)] -> g, 2 e
+		----
+		g -> [exp(3ms)] -> g, 2*e
 	`)
 
 
@@ -87,14 +87,14 @@ func main() {
 
 	fmt.Println(network)
 
-	sim := net.NewSimulation(0, 3*time.Hour, network)
+	sim := net.NewSimulation(0, time.Second, network)
 	sim.DoEveryTime = func () {
+		fmt.Println(sim.GetNow(), network.Places())
 	}
 
 	for i := 0; i < 10; i++ {
 		net.TrueRandomSeed()
 		sim.Run()
-		fmt.Println(sim.GetNow(), network.Places())
 	}
 
 }

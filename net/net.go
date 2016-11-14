@@ -95,9 +95,9 @@ type Arc struct {
 
 func (arc Arc) String() string {
 	if arc.Weight > 1 {
-		return fmt.Sprintf("%d %s", arc.Weight, arc.Place)
+		return fmt.Sprintf("%d*%s", arc.Weight, arc.Place.id)
 	} else {
-		return arc.Place.String()
+		return arc.Place.id
 	}
 }
 

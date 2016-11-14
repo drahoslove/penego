@@ -23,8 +23,8 @@ func compileRegExps () {
 		ID = `[a-zA-Z][a-zA-Z0-9_]*`
 		NUM = `(0|([1-9][0-9]*))`
 		STR = `"[^"]*"`
-		CMNT = `//.*`
-		ARC = SP+`(`+NUM+SP+`)?`+ID+SP
+		CMNT = `((//)|(--)).*`
+		ARC = SP+`(`+NUM+SP+`\*`+SP+`)?`+ID+SP
 		ARCS = ARC+`(,`+ARC+`)*`
 		PRIO = `p=(?P<prio>`+NUM+`)`
 		TIME = `(?P<t>`+NUM+`)(?P<u>[smhd]|(ms)|(us))?`
@@ -124,34 +124,36 @@ func Parse(input string) (net Net, err error) {
 
 			listin := getSubmatchString(transitionRE, line, "in")
 			listout := getSubmatchString(transitionRE, line, "out")
-			attr := getSubmatchString(transitionRE, line, "attr") // TODO
+			attr := getSubmatchString(transitionRE, line, "attr")
 			desc := getSubmatchString(transitionRE, line, "desc")
 
 
-			getPlacesByList := func(list string) Arcs {
+			getArcsByList := func(list string) Arcs {
 				arcs := Arcs{}
 				for _, pair := range strings.Split(list, ",") {
-					pair := strings.Split(strings.TrimSpace(pair), " ")
-					if len(pair) == 0 {
-						continue
-					}
-					id := pair[len(pair)-1]
+					pair := strings.Split(strings.TrimSpace(pair), "*")
+					id := strings.TrimSpace(pair[len(pair)-1])
 					w := 1
 					if len(pair) == 2 {
-						w, _ = strconv.Atoi(pair[0])
+						w, _ = strconv.Atoi(strings.TrimSpace(pair[0]))
 					}
 					if place, exists := namedPlaces[id]; !exists {
 						err = errors.New("undefined place id `"+id+"` used in transition")
 						return arcs
 					} else {
+						for _, arc := range arcs {
+							if arc.Place == place {
+								err = errors.New("place `"+place.id+"` used multiple times in one side of transition")
+							}
+						}
 						arcs.Push(w, place)
 					}
 				}
 				return arcs
 			}
 
-			origins := getPlacesByList(listin)
-			targets := getPlacesByList(listout)
+			origins := getArcsByList(listin)
+			targets := getArcsByList(listout)
 
 			// changes `[] -> n` to `S -> [] -> n,S`
 			// where S is hidden place creating self loop
