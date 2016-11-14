@@ -9,3 +9,6 @@
 
 # Ignore exe binaries
 *.exe
+
+# Ignore sublime files
+*.sublime*

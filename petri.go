@@ -52,8 +52,8 @@ func main() {
 	 *
 	 *   (1)<-----
 	 *    |       |
-	 *    |       |   2   exit
-	 *     ----->[ ]----->( )
+	 *    |       |    2    exit
+	 *     ----->[ ]------->( )
 	 *         exp(30s)
 	 */
 
@@ -73,7 +73,7 @@ func main() {
 		g (1)
 		e ( ) "exit"
 		----
-		g -> [exp(3ms)] -> g, 2*e
+		g -> [exp(30us)] -> g, 2*e
 	`)
 
 
@@ -87,7 +87,7 @@ func main() {
 
 	fmt.Println(network)
 
-	sim := net.NewSimulation(0, time.Second, network)
+	sim := net.NewSimulation(0, time.Millisecond, network)
 	sim.DoEveryTime = func () {
 		fmt.Println(sim.GetNow(), network.Places())
 	}
@@ -98,5 +98,3 @@ func main() {
 	}
 
 }
-
-
