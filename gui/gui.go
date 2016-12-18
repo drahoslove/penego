@@ -75,10 +75,13 @@ func Run() {
 
 	// main loop
 	for !window.ShouldClose() {
-		select {
-		case f := <-inLoopFuncChan:
-			f()
-		default:
+		emptyfuncchan: for {
+			select {
+			case f := <-inLoopFuncChan:
+				f()
+			default:
+				break emptyfuncchan
+			}
 		}
 		if contentInvalid {
 			draw()
@@ -86,7 +89,7 @@ func Run() {
 			contentInvalid = false
 		}
 
-		glfw.WaitEventsTimeout(0.01)
+		glfw.WaitEventsTimeout(0.001) // do not waste CPU
 		glfw.PollEvents()
 	}
 
@@ -103,9 +106,9 @@ func reshape(window *glfw.Window, w, h int) {
 	/* Map abstract coords directly to window coords. */
 	gl.Ortho(0, float64(w), 0, float64(h), -1, 1)
 	/* Invert Y axis so increasing Y goes down. */
-	// gl.Scalef(1, -1, 1)
+	gl.Scalef(1, -1, 1)
 	/* Shift origin */
-	// gl.Translatef(float32(w/2), float32(h/2), 0)
+	gl.Translatef(0, float32(-h), 0)
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.DEPTH_TEST)

@@ -67,6 +67,8 @@ func main() {
 	////////////////////////////////
 
 	go func () {
+		time.Sleep(time.Second*2)
+
 		noise := func() int {
 			return rand.Int()%2
 		}
@@ -78,15 +80,15 @@ func main() {
 			gui.DrawTransition(-150+noise(), 75+noise())
 			gui.DrawTransition(-50+noise(), 60+noise())
 		})
-		for count := 20; count > 0; count-- {
+		for count := 1000; count > 0; count-- {
 
 			gui.ForceRedraw()
 
-			time.Sleep(time.Millisecond*100)
+			time.Sleep(time.Second/20)
 		}
 	}()
 
-	gui.Run()
+	gui.Run() // blocks
 
 }
 

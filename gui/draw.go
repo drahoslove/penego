@@ -3,6 +3,7 @@ package gui
 import (
 	"math"
 	"image/color"
+	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dgl"
 	"github.com/llgcode/draw2d/draw2dkit"
 )
@@ -29,12 +30,18 @@ var (
 func init () {
 	drawContent = func() {
 		if ctx != nil {
-			ctx.MoveTo(-30, -30)
-			ctx.LineTo(+30, +30)
-			ctx.Stroke()
-			ctx.MoveTo(+30, -30)
-			ctx.LineTo(-30, +30)
-			ctx.Stroke()
+			// ctx.MoveTo(-30, -30)
+			// ctx.LineTo(+30, +30)
+			// ctx.Stroke()
+			// ctx.MoveTo(+30, -30)
+			// ctx.LineTo(-30, +30)
+			// ctx.Stroke()
+			ctx.Save()
+			ctx.SetFontData(draw2d.FontData{Name:"gobold"})
+			ctx.SetFontSize(48)
+			ctx.SetFillColor(DARK_GRAY)
+			drawCenteredString(ctx, "Penego", 0, 0)
+			ctx.Restore()
 		}
 	}
 }
@@ -64,6 +71,8 @@ func draw() {
 
 	/* create graphic context and set styles */
 	ctx = draw2dgl.NewGraphicContext(width, height)
+	ctx.SetFontData(draw2d.FontData{Name:"goregular"})
+	ctx.SetFontSize(16)
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
 	ctx.SetLineWidth(3)
@@ -94,27 +103,30 @@ func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int) {
 	ctx.SetStrokeColor(BLACKISH)
 	ctx.FillStroke()
 
-	if n == 1 {
-		draw2dkit.Circle(ctx, x, y, 6)
-		ctx.Close()
-
-		ctx.SetFillColor(BLACKISH)
-		ctx.Fill()
-	}
-	if 1 < n && n < 5 {
-		rr := float64(r)/(3-float64(n)*0.25)
-		for i := 1; i <= n; i++ {
-			angle := math.Pi/float64(n)*float64(i)*2
-			xx := x+math.Sin(angle)*rr
-			yy := y+math.Cos(angle)*rr
-
-			draw2dkit.Circle(ctx, xx, yy, 5)
+	// tokens
+	switch {
+		case n ==1:
+			draw2dkit.Circle(ctx, x, y, 6)
 			ctx.Close()
-
 			ctx.SetFillColor(BLACKISH)
 			ctx.Fill()
-		}
+		case 1 < n && n < 5:
+			rr := float64(r)/(3-float64(n)*0.25)
+			for i := 1; i <= n; i++ {
+				angle := math.Pi/float64(n)*float64(i)*2
+				xx := x+math.Sin(angle)*rr
+				yy := y+math.Cos(angle)*rr
+
+				draw2dkit.Circle(ctx, xx, yy, 5)
+				ctx.Close()
+
+				ctx.SetFillColor(BLACKISH)
+				ctx.Fill()
+			}
+		case n >= 5:
+
 	}
+
 }
 
 func drawTransition(ctx * draw2dgl.GraphicContext, x float64, y float64) {
@@ -128,4 +140,12 @@ func drawTransition(ctx * draw2dgl.GraphicContext, x float64, y float64) {
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
 	ctx.FillStroke()
+}
+
+func drawCenteredString(ctx * draw2dgl.GraphicContext , str string, x float64, y float64) {
+	left, top, right, bottom := ctx.GetStringBounds(str)
+	width := right - left
+	height := bottom - top
+	_ = height
+	ctx.FillStringAt(str, x - width/2, y)
 }
