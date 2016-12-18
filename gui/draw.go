@@ -6,6 +6,7 @@ import (
 	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dgl"
 	"github.com/llgcode/draw2d/draw2dkit"
+	"strconv"
 )
 
 type OnRedrawFunc func()
@@ -30,12 +31,6 @@ var (
 func init () {
 	drawContent = func() {
 		if ctx != nil {
-			// ctx.MoveTo(-30, -30)
-			// ctx.LineTo(+30, +30)
-			// ctx.Stroke()
-			// ctx.MoveTo(+30, -30)
-			// ctx.LineTo(-30, +30)
-			// ctx.Stroke()
 			ctx.Save()
 			ctx.SetFontData(draw2d.FontData{Name:"gobold"})
 			ctx.SetFontSize(48)
@@ -55,24 +50,25 @@ func OnRedraw(f OnRedrawFunc) {
 }
 
 
-func DrawPlace(x, y, n int) {
+func DrawPlace(x, y, n int, description string) {
 	if ctx != nil {
-		drawPlace(ctx, float64(x), float64(y), n)
+		drawPlace(ctx, float64(x), float64(y), n, description)
 	}
 }
 
-func DrawTransition(x, y int) {
+func DrawTransition(x, y int, attrs, description string) {
 	if ctx != nil {
-		drawTransition(ctx, float64(x), float64(y))
+		drawTransition(ctx, float64(x), float64(y), attrs, description)
 	}
 }
 
+// called by mainloop if context is invalid
 func draw() {
 
 	/* create graphic context and set styles */
 	ctx = draw2dgl.NewGraphicContext(width, height)
 	ctx.SetFontData(draw2d.FontData{Name:"goregular"})
-	ctx.SetFontSize(16)
+	ctx.SetFontSize(14)
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
 	ctx.SetLineWidth(3)
@@ -90,7 +86,7 @@ func draw() {
 	}
 }
 
-func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int) {
+func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int, description string) {
 	r := 24.0
 	ctx.Save()
 	defer ctx.Restore()
@@ -105,12 +101,12 @@ func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int) {
 
 	// tokens
 	switch {
-		case n ==1:
+		case n == 1: // draw dot
 			draw2dkit.Circle(ctx, x, y, 6)
 			ctx.Close()
 			ctx.SetFillColor(BLACKISH)
 			ctx.Fill()
-		case 1 < n && n < 5:
+		case 1 < n && n < 5: // draw dots
 			rr := float64(r)/(3-float64(n)*0.25)
 			for i := 1; i <= n; i++ {
 				angle := math.Pi/float64(n)*float64(i)*2
@@ -123,14 +119,37 @@ func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int) {
 				ctx.SetFillColor(BLACKISH)
 				ctx.Fill()
 			}
-		case n >= 5:
 
+		case n >= 5: // draw numbers
+			ctx.Save()
+			ctx.SetFontData(draw2d.FontData{Name: "gomono"})
+			switch {
+			case n < 100:
+				ctx.SetFontSize(24)
+				drawCenteredString(ctx, strconv.Itoa(n), x-1, y+10)
+			case n < 1000:
+				ctx.SetFontSize(18)
+				drawCenteredString(ctx, strconv.Itoa(n), x-1, y+7)
+			case n < 10000:
+				ctx.SetFontSize(14)
+				drawCenteredString(ctx, strconv.Itoa(n), x-1, y+5)
+			default:
+				// TODO "~XeN" form
+				ctx.SetFontSize(14)
+				drawCenteredString(ctx, "many", x-1, y+5)
+			}
+			ctx.Restore()
+	}
+
+	// description
+	if description != "" {
+		drawCenteredString(ctx, description, x, y-r-8)
 	}
 
 }
 
-func drawTransition(ctx * draw2dgl.GraphicContext, x float64, y float64) {
-	w, h := 18.0, 72.0 // 1:4
+func drawTransition(ctx * draw2dgl.GraphicContext, x, y float64, attrs, description string) {
+	w, h := 18.0, 72.0
 	ctx.Save()
 	defer ctx.Restore()
 
@@ -140,6 +159,16 @@ func drawTransition(ctx * draw2dgl.GraphicContext, x float64, y float64) {
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
 	ctx.FillStroke()
+
+	// timed or priority
+	if attrs != "" {
+		drawCenteredString(ctx, attrs, x, y+h/2+20) // under
+	}
+
+	// description
+	if description != "" {
+		drawCenteredString(ctx, description, x, y-h/2-10) //ahove
+	}
 }
 
 func drawCenteredString(ctx * draw2dgl.GraphicContext , str string, x float64, y float64) {
@@ -147,5 +176,8 @@ func drawCenteredString(ctx * draw2dgl.GraphicContext , str string, x float64, y
 	width := right - left
 	height := bottom - top
 	_ = height
+	ctx.Save()
+	ctx.SetFillColor(BLACKISH)
 	ctx.FillStringAt(str, x - width/2, y)
+	ctx.Restore()
 }

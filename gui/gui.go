@@ -35,7 +35,15 @@ func ForceRedraw() {
 	})
 }
 
-func Run() {
+func Run(f func()) {
+	var window * glfw.Window
+
+	go func() {
+		f()
+		doInLoop(func() { // close windows after f returns
+			window.SetShouldClose(true)
+		})
+	}()
 
 	// init glfw
 	if err := glfw.Init(); err != nil {
@@ -54,7 +62,7 @@ func Run() {
 		panic(err)
 	}
 	window.MakeContextCurrent() // must be called before gl init
-	glfw.SwapInterval(1) // vsync
+	glfw.SwapInterval(1) // vsync - causes SwapBuffers to wait for frame
 
 	// center window on screen
 	window.SetPos((screenWidth-width)/2, (screenHeight-height)/2)
@@ -75,21 +83,20 @@ func Run() {
 
 	// main loop
 	for !window.ShouldClose() {
-		emptyfuncchan: for {
-			select {
-			case f := <-inLoopFuncChan:
-				f()
-			default:
-				break emptyfuncchan
-			}
+		select { // only one function call per loop cycle
+		case f := <-inLoopFuncChan:
+			f()
+		default:
 		}
+
 		if contentInvalid {
 			draw()
 			window.SwapBuffers()
 			contentInvalid = false
+		} else {
+			glfw.WaitEventsTimeout(1.0/60) // do not waste CPU
 		}
 
-		glfw.WaitEventsTimeout(0.001) // do not waste CPU
 		glfw.PollEvents()
 	}
 

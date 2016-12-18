@@ -1,13 +1,13 @@
 package gui
 
 import (
+	"fmt"
 	"github.com/llgcode/draw2d"
+	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/gofont/gobold"
 	"golang.org/x/image/font/gofont/goitalic"
 	"golang.org/x/image/font/gofont/gomono"
-	"github.com/golang/freetype/truetype"
-	"fmt"
 )
 
 type MyFontCache map[string]*truetype.Font
@@ -17,15 +17,13 @@ func (fc MyFontCache) Store(fd draw2d.FontData, font *truetype.Font) {
 }
 
 func (fc MyFontCache) Load(fd draw2d.FontData) (*truetype.Font, error) {
-	font, ok := fc[fd.Name]
-	if !ok {
+	font, stored := fc[fd.Name]
+	if !stored {
 		return nil, fmt.Errorf("Font %s is not stored in font cache.", fd.Name)
 	}
 	return font, nil
 }
 
-
-// fonts
 func init () {
 	fontCache := MyFontCache{}
 
