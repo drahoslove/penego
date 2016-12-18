@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+	"math/rand"
 	"penego/net"
 	"penego/gui"
 )
@@ -64,15 +65,28 @@ func main() {
 	}
 
 	////////////////////////////////
-	gui.OnRedraw(func() {
-		for i := 0; i < 10; i++ {
-			gui.DrawPlace(60*(i%5), (60*(i-i%5))/5, i);
-		}
 
-		gui.DrawTransition(-150, 75)
-		gui.DrawTransition(-50, 60)
-	})
-	gui.Run() // blocks
+	go func () {
+		noise := func() int {
+			return rand.Int()%2
+		}
+		gui.OnRedraw(func() {
+			for i := 0; i < 10; i++ {
+				gui.DrawPlace(60*(i%5)+noise(), (60*(i-i%5))/5 + noise(), i);
+			}
+
+			gui.DrawTransition(-150+noise(), 75+noise())
+			gui.DrawTransition(-50+noise(), 60+noise())
+		})
+		for count := 20; count > 0; count-- {
+
+			gui.ForceRedraw()
+
+			time.Sleep(time.Millisecond*100)
+		}
+	}()
+
+	gui.Run()
 
 }
 

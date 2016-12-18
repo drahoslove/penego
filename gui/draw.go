@@ -9,24 +9,6 @@ import (
 
 type OnRedrawFunc func()
 
-var (
-	redraw OnRedrawFunc = nil
-	ctx * draw2dgl.GraphicContext
-)
-
-func init () {
-	redraw = func() {
-		if ctx != nil {
-			ctx.MoveTo(-30, -30)
-			ctx.LineTo(+30, +30)
-			ctx.Stroke()
-			ctx.MoveTo(+30, -30)
-			ctx.LineTo(-30, +30)
-			ctx.Stroke()
-		}
-	}
-}
-
 var ( // pseudo constants
 	WHITE = color.RGBA{255, 255, 255, 255}	// #ffffff
 	WHITISH = color.RGBA{239, 239, 239, 255}	// #efefef
@@ -39,9 +21,30 @@ var ( // pseudo constants
 	BLACK = color.RGBA{0, 0, 0, 255}	// #000000
 )
 
+var (
+	drawContent OnRedrawFunc = nil // function for drawing content, settable by OnRedraw
+	ctx * draw2dgl.GraphicContext
+)
+
+func init () {
+	drawContent = func() {
+		if ctx != nil {
+			ctx.MoveTo(-30, -30)
+			ctx.LineTo(+30, +30)
+			ctx.Stroke()
+			ctx.MoveTo(+30, -30)
+			ctx.LineTo(-30, +30)
+			ctx.Stroke()
+		}
+	}
+}
+
+
 func OnRedraw(f OnRedrawFunc) {
-	redraw = f;
-	invalid = true
+	doInLoop(func() {
+		drawContent = f; // update drawContentFunc
+		contentInvalid = true // force draw
+	})
 }
 
 
@@ -73,8 +76,8 @@ func draw() {
 	ctx.Translate(float64(width/2), float64(height/2))
 
 	// draw shapes
-	if redraw != nil {
-		redraw()
+	if drawContent != nil {
+		drawContent()
 	}
 }
 

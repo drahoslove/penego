@@ -3,19 +3,36 @@ package gui
 import (
 	"runtime"
 	"github.com/go-gl/gl/v2.1/gl"
-	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 
 var (
 	width = 800
 	height = 600
-	invalid = true
+	contentInvalid = false
+	inLoopFuncChan chan func()
 )
 
 
 func init() {
 	runtime.LockOSThread()
+	inLoopFuncChan = make(chan func())
+}
+
+func doInLoop(f func()) {
+	done := make(chan bool, 1)
+	inLoopFuncChan <- func() {
+		f()
+		done <- true
+	}
+	<-done
+}
+
+func ForceRedraw() {
+	doInLoop(func() {
+		contentInvalid = true
+	})
 }
 
 func Run() {
@@ -25,8 +42,6 @@ func Run() {
 		panic(err)
 	}
 	defer glfw.Terminate()
-
-	// glfw.SwapInterval(1) // vsync
 
 	// create window
 	screenWidth, screenHeight := getResolution()
@@ -39,6 +54,7 @@ func Run() {
 		panic(err)
 	}
 	window.MakeContextCurrent() // must be called before gl init
+	glfw.SwapInterval(1) // vsync
 
 	// center window on screen
 	window.SetPos((screenWidth-width)/2, (screenHeight-height)/2)
@@ -59,13 +75,21 @@ func Run() {
 
 	// main loop
 	for !window.ShouldClose() {
-		if invalid {
+		select {
+		case f := <-inLoopFuncChan:
+			f()
+		default:
+		}
+		if contentInvalid {
 			draw()
 			window.SwapBuffers()
-			invalid = false
+			contentInvalid = false
 		}
+
+		glfw.WaitEventsTimeout(0.01)
 		glfw.PollEvents()
 	}
+
 }
 
 func reshape(window *glfw.Window, w, h int) {
@@ -87,7 +111,7 @@ func reshape(window *glfw.Window, w, h int) {
 	gl.Disable(gl.DEPTH_TEST)
 
 	width, height = w, h
-	invalid = true
+	contentInvalid = true
 }
 
 func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
