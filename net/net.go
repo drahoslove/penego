@@ -324,6 +324,9 @@ func (sim *Simulation) DoEveryStateChange(fun func(time.Duration, time.Duration)
 }
 
 func (sim *Simulation) Run() {
+	sortedTransitions := make(Transitions, len(sim.net.transitions))
+	copy(sortedTransitions, sim.net.transitions)
+	sort.Sort(sortedTransitions)
 
 	//todo change init state!
 	restartSeed()
@@ -344,7 +347,7 @@ func (sim *Simulation) Run() {
 		if countOfPasses > 1E6 {
 			panic("too many transitions done in zero time, possible loop")
 		}
-		for _, tran := range sim.net.transitions {
+		for _, tran := range sortedTransitions {
 			if tran.TimeFunc != nil {
 				break // no need to go further, rest are timed due to sort
 			}
@@ -379,7 +382,6 @@ func (sim *Simulation) Run() {
 /******* exported functions *******/
 
 func NewSimulation(startTime, endTime time.Duration, net Net) Simulation {
-	sort.Sort(net.transitions)
 	net.saveState()
 	return Simulation{startTime, endTime, 0, net, Calendar{}, nil}
 }

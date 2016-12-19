@@ -108,13 +108,13 @@ func main() {
 			screen.ForceRedraw()
 		})
 
-		// for i:=0; i<10; i++ {
-		// 	screen.ForceRedraw()
-		// 	net.TrueRandomSeed()
-		// 	sim.Run()
-		// 	fmt.Println("----")
-		// 	time.Sleep(time.Second*5)
-		// }
+		for i:=0; i<10; i++ {
+			screen.ForceRedraw()
+			net.TrueRandomSeed()
+			sim.Run()
+			fmt.Println("----")
+			time.Sleep(time.Second*5)
+		}
 
 		screen.SetTitle("done")
 		for true {
