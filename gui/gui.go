@@ -32,12 +32,6 @@ func doInLoop(f func()) {
 func Run(handler func(*Screen)) {
 	var window * glfw.Window
 
-	go func() {
-		handler(new(Screen))
-		doInLoop(func() { // close windows after handler returns
-			window.SetShouldClose(true)
-		})
-	}()
 
 	// init glfw
 	if err := glfw.Init(); err != nil {
@@ -74,6 +68,13 @@ func Run(handler func(*Screen)) {
 		draw()
 		window.SwapBuffers()
 	});
+
+	go func() {
+		handler(&Screen{window})
+		doInLoop(func() { // close windows after handler returns
+			window.SetShouldClose(true)
+		})
+	}()
 
 	// main loop
 	for !window.ShouldClose() {

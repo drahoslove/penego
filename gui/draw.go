@@ -85,7 +85,7 @@ func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int, descr
 			ctx.Close()
 			ctx.SetFillColor(BLACKISH)
 			ctx.Fill()
-		case 1 < n && n < 5: // draw dots
+		case 1 < n && n < 6: // draw dots
 			rr := float64(r)/(3-float64(n)*0.25)
 			for i := 1; i <= n; i++ {
 				angle := math.Pi/float64(n)*float64(i)*2
@@ -99,7 +99,7 @@ func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int, descr
 				ctx.Fill()
 			}
 
-		case n >= 5: // draw numbers
+		case n >= 6: // draw numbers
 			ctx.Save()
 			ctx.SetFontData(draw2d.FontData{Name: "gomono"})
 			switch {

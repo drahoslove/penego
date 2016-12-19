@@ -17,7 +17,6 @@ func main() {
 
 	var (
 		network net.Net
-		err     error
 	)
 
 	// parse from file if given filename
@@ -31,58 +30,16 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+	} else {
+		fmt.Println("No pn file specified")
+		return
 	}
 
-
-	// this petri net:
-
-	/**
-	 *
-	 *   (1)<-----
-	 *    |       |
-	 *    |       |    2    exit
-	 *     ----->[ ]------->( )
-	 *         exp(30s)
-	 */
-
-	if false {
-		// can be created like this:
-		g := &net.Place{Tokens: 1} // generator
-		e := &net.Place{Description: "exit"}
-		t := &net.Transition{
-			Origins:  net.Arcs{{1, g}},
-			Targets:  net.Arcs{{1, g}, {2, e}},
-			TimeFunc: net.GetExponentialTimeFunc(30 * time.Microsecond),
-			Description: "gen",
-		}
-		network = net.New(net.Places{g, e}, net.Transitions{t})
-	}
-	if false {
-		// or like this:
-		network, err = net.Parse(`
-			g (1)
-			e ( ) "exit"
-			----
-			g -> [exp(30us)] -> g, 2*e
-		`)
-		if err != nil {
-			panic(err)
-		}
-	}
 
 	////////////////////////////////
 
 	fmt.Println(network)
 
-	// sim := net.NewSimulation(0, time.Millisecond, network)
-	// sim.DoEveryTime = func() {
-	// 	fmt.Println(sim.GetNow(), network.Places())
-	// }
-
-	// for i := 0; i < 10; i++ {
-	// 	net.TrueRandomSeed()
-	// 	sim.Run()
-	// }
 
 	////////////////////////////////
 
@@ -104,20 +61,30 @@ func main() {
 				y := +60
 				screen.DrawTransition(x, y, t.TimeFunc.String(), t.Description)
 			}
-
 		})
 
-		sim := net.NewSimulation(0, time.Millisecond, network)
-		sim.DoEveryTimeChange = func() {
+		sim := net.NewSimulation(0, time.Hour*24*10, network)
+
+		sim.DoEveryStateChange(func(now, then time.Duration) {
 			fmt.Println(sim.GetNow(), network.Places())
+			screen.SetTitle(now.String())
+			// time.Sleep((then-now)/1000) // render 1000× faster than reality
+
+			// time.Sleep((then-now)) // render as fast as reality
+
+			// time.Sleep(time.Second/5) // render to be comprehentable
 			screen.ForceRedraw()
-			time.Sleep(time.Second/5)
+		})
+
+		for i:=0; i<10; i++ {
+			screen.ForceRedraw()
+			net.TrueRandomSeed()
+			sim.Run()
+			fmt.Println("----")
+			time.Sleep(time.Second*5)
 		}
 
-		net.TrueRandomSeed()
-		sim.Run()
-		fmt.Println("----")
-
+		screen.SetTitle("done")
 		for true {
 			time.Sleep(time.Second/1)
 		}

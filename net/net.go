@@ -266,7 +266,7 @@ type Simulation struct {
 	now time.Duration
 	net Net
 	calendar Calendar
-	DoEveryTimeChange func()
+	stateChange func(time.Duration, time.Duration)
 }
 
 func (sim *Simulation) GetNow() time.Duration {
@@ -315,7 +315,16 @@ func (sim *Simulation) cancelUnenabledTimed() {
 	}
 }
 
+func (sim *Simulation) DoEveryStateChange(fun func(time.Duration, time.Duration)) {
+	sim.stateChange = func(now, then time.Duration) {
+		if fun != nil {
+			fun(now, then)
+		}
+	}
+}
+
 func (sim *Simulation) Run() {
+
 	//todo change init state!
 	restartSeed()
 	sim.now = sim.startTime
@@ -323,7 +332,7 @@ func (sim *Simulation) Run() {
 
 	sim.net.restoreState()
 
-	fire := func(scheduledTran *Transition) {
+	fireEvent := func(scheduledTran *Transition) {
 
 		scheduledTran.doIn()
 		sim.cancelUnenabledTimed()
@@ -340,6 +349,7 @@ func (sim *Simulation) Run() {
 				break // no need to go further, rest are timed due to sort
 			}
 			if tran.isEnabled() {
+				sim.stateChange(sim.now, sim.now)
 				tran.doIn()
 				sim.cancelUnenabledTimed()
 				tran.doOut()
@@ -350,18 +360,16 @@ func (sim *Simulation) Run() {
 		sim.scheduleEnabledTimed() // might create new event in current time
 	}
 
-	fire(&Transition{})
+	fireEvent(&Transition{})
 
 	for !sim.calendar.isEmpty() {
 		eventTime, tranToFireNow := sim.calendar.shift()
+		sim.stateChange(sim.now, eventTime) // current time and next time
+		sim.now = eventTime
 		if eventTime > sim.endTime {
 			break
 		}
-		sim.now = eventTime
-		fire(tranToFireNow)
-		if sim.DoEveryTimeChange != nil {
-			sim.DoEveryTimeChange()
-		}
+		fireEvent(tranToFireNow)
 
 	}
 

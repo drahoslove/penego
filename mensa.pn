@@ -9,6 +9,7 @@ o ( ) // odchod
 z ( ) // ohlášena žloutenka
 c ( ) // vyprazdňovací cyklus
 i ( ) "karanténa"
+x ( ) "restartů"
 
 // definice přechodů:
 
@@ -18,10 +19,10 @@ v	-> [exp(1m)] -> s,k
 s 	-> [10m..15m] -> o
 // o	-> [] "odchod"
 
-[exp(100d)]  -> z
+[exp(10d)]  -> z
 z,g -> [p=1] -> c
 c,f	-> [p=3] -> c,o
 c,v	-> [p=2] -> c,o,k
 c,s	-> [p=1] -> c,o
 c	-> [p=0] -> i
-i	-> [10d] -> g
+i	-> [1d] -> g, x
