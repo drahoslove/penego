@@ -6,6 +6,7 @@ import (
 	"penego/net"
 	"time"
 	"os"
+	"io/ioutil"
 	"github.com/pkg/profile"
 )
 
@@ -13,10 +14,25 @@ func main() {
 	if os.Getenv("PROFILE") != "" {
 		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
 	}
+
 	var (
 		network net.Net
 		err     error
 	)
+
+	// parse from file if given filename
+	if len(os.Args) == 2 {
+		filename := os.Args[1]
+		filecontent, err := ioutil.ReadFile(filename)
+		if err != nil {
+			panic(err)
+		}
+		network, err = net.Parse(string(filecontent))
+		if err != nil {
+			panic(err)
+		}
+	}
+
 
 	// this petri net:
 
@@ -29,7 +45,7 @@ func main() {
 	 *         exp(30s)
 	 */
 
-	if true {
+	if false {
 		// can be created like this:
 		g := &net.Place{Tokens: 1} // generator
 		e := &net.Place{Description: "exit"}
@@ -40,7 +56,8 @@ func main() {
 			Description: "gen",
 		}
 		network = net.New(net.Places{g, e}, net.Transitions{t})
-	} else {
+	}
+	if false {
 		// or like this:
 		network, err = net.Parse(`
 			g (1)

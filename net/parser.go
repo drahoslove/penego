@@ -90,6 +90,7 @@ func Parse(input string) (net Net, err error) {
 	/* ----------- parse places ----------- */
 
 	for i, line := range lines {
+		line = strings.TrimSpace(line)
 		if isPlaceDefinition(line) {
 
 			id := getSubmatchString(placeRE, line, "id")
@@ -120,6 +121,7 @@ func Parse(input string) (net Net, err error) {
 	/* ----------- parse transitions ----------- */
 
 	for i, line := range lines {
+		line = strings.TrimSpace(line)
 		if isTransitionDefinition(line) {
 
 			listin := getSubmatchString(transitionRE, line, "in")
@@ -130,6 +132,10 @@ func Parse(input string) (net Net, err error) {
 
 			getArcsByList := func(list string) Arcs {
 				arcs := Arcs{}
+				list = strings.TrimSpace(list)
+				if list == "" {
+					return arcs
+				}
 				for _, pair := range strings.Split(list, ",") {
 					pair := strings.Split(strings.TrimSpace(pair), "*")
 					id := strings.TrimSpace(pair[len(pair)-1])
