@@ -102,7 +102,7 @@ func Parse(input string) (net Net, err error) {
 			}
 			place := &Place{
 				Tokens: num,
-				Description: desc,
+				Description: unPack(desc), // strip first and last char
 				id: id,
 			}
 			namedPlaces[id] = place
@@ -235,4 +235,11 @@ func parseTime(tstr string) time.Duration {
 		t, _ := time.ParseDuration(tstr)
 		return t
 	}
+}
+
+func unPack(str string) string {
+	if len(str) > 2 {
+		return string(str[1:len(str)-1])
+	}
+	return str
 }

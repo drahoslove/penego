@@ -266,7 +266,7 @@ type Simulation struct {
 	now time.Duration
 	net Net
 	calendar Calendar
-	DoEveryTime func()
+	DoEveryTimeChange func()
 }
 
 func (sim *Simulation) GetNow() time.Duration {
@@ -359,8 +359,8 @@ func (sim *Simulation) Run() {
 		}
 		sim.now = eventTime
 		fire(tranToFireNow)
-		if sim.DoEveryTime != nil {
-			sim.DoEveryTime()
+		if sim.DoEveryTimeChange != nil {
+			sim.DoEveryTimeChange()
 		}
 
 	}

@@ -30,7 +30,7 @@ func main() {
 	 *         exp(30s)
 	 */
 
-	if true {
+	if false {
 		// can be done likek this:
 		g := &net.Place{Tokens: 1} // generator
 		e := &net.Place{Description: "exit"}
@@ -47,7 +47,7 @@ func main() {
 			g (1)
 			e ( ) "exit"
 			----
-			g -> [exp(30us)] "gen" -> g, 2*e
+			g -> [exp(30us)] -> g, 2*e
 		`)
 		if err != nil {
 			panic(err)
@@ -58,15 +58,15 @@ func main() {
 
 	fmt.Println(network)
 
-	sim := net.NewSimulation(0, time.Millisecond, network)
-	sim.DoEveryTime = func() {
-		fmt.Println(sim.GetNow(), network.Places())
-	}
+	// sim := net.NewSimulation(0, time.Millisecond, network)
+	// sim.DoEveryTime = func() {
+	// 	fmt.Println(sim.GetNow(), network.Places())
+	// }
 
-	for i := 0; i < 10; i++ {
-		net.TrueRandomSeed()
-		sim.Run()
-	}
+	// for i := 0; i < 10; i++ {
+	// 	net.TrueRandomSeed()
+	// 	sim.Run()
+	// }
 
 	////////////////////////////////
 
@@ -95,18 +95,17 @@ func main() {
 
 		})
 
-		// shake for 10 seconds
-		tick := time.After(time.Second * 10)
-		shake: for {
-			select {
-			case <-tick:
-				break shake
-			default:
-				gui.ForceRedraw() // synced with frameloop, waits for frame start
-				time.Sleep(time.Second/20)
-			}
+		sim := net.NewSimulation(0, time.Millisecond, network)
+		sim.DoEveryTimeChange = func() {
+			fmt.Println(sim.GetNow(), network.Places())
+			gui.ForceRedraw()
+			time.Sleep(time.Second/5)
 		}
-		// chill forever
+
+		net.TrueRandomSeed()
+		sim.Run()
+		fmt.Println("---")
+
 		for true {
 			time.Sleep(time.Second/1)
 		}
