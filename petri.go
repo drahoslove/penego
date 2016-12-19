@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"penego/gui"
 	"penego/net"
 	"time"
@@ -30,14 +29,14 @@ func main() {
 	 *         exp(30s)
 	 */
 
-	if false {
-		// can be done likek this:
+	if true {
+		// can be created like this:
 		g := &net.Place{Tokens: 1} // generator
 		e := &net.Place{Description: "exit"}
 		t := &net.Transition{
 			Origins:  net.Arcs{{1, g}},
 			Targets:  net.Arcs{{1, g}, {2, e}},
-			TimeFunc: net.GetExponentialTimeFunc(30 * time.Second),
+			TimeFunc: net.GetExponentialTimeFunc(30 * time.Microsecond),
 			Description: "gen",
 		}
 		network = net.New(net.Places{g, e}, net.Transitions{t})
@@ -70,27 +69,23 @@ func main() {
 
 	////////////////////////////////
 
-	gui.Run(func() { // runs this anon func in goroutine
+	gui.Run(func(screen *gui.Screen) { // runs this anon func in goroutine
 		// time.Sleep(time.Second * 2) // show splash for 2 seconds
 
-		noise := func() int {
-			return rand.Int() % 4
-		}
-		gui.OnRedraw(func() {
-			noise()
+		screen.SetRedrawFunc(func() {
 			places := network.Places()
 			transitions := network.Transitions()
 
 			for i, p := range places {
 				x := i * 90 - len(places)/2 * 90
 				y := -90
-				gui.DrawPlace(x, y, p.Tokens, p.Description)
+				screen.DrawPlace(x, y, p.Tokens, p.Description)
 			}
 
 			for i, t := range transitions {
 				x := i * 90 - len(transitions)/2 * 90 - 90/2
 				y := +60
-				gui.DrawTransition(x, y, t.TimeFunc.String(), t.Description)
+				screen.DrawTransition(x, y, t.TimeFunc.String(), t.Description)
 			}
 
 		})
@@ -98,13 +93,13 @@ func main() {
 		sim := net.NewSimulation(0, time.Millisecond, network)
 		sim.DoEveryTimeChange = func() {
 			fmt.Println(sim.GetNow(), network.Places())
-			gui.ForceRedraw()
+			screen.ForceRedraw()
 			time.Sleep(time.Second/5)
 		}
 
 		net.TrueRandomSeed()
 		sim.Run()
-		fmt.Println("---")
+		fmt.Println("----")
 
 		for true {
 			time.Sleep(time.Second/1)

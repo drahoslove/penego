@@ -29,18 +29,12 @@ func doInLoop(f func()) {
 	<-done
 }
 
-func ForceRedraw() {
-	doInLoop(func() {
-		contentInvalid = true
-	})
-}
-
-func Run(f func()) {
+func Run(handler func(*Screen)) {
 	var window * glfw.Window
 
 	go func() {
-		f()
-		doInLoop(func() { // close windows after f returns
+		handler(new(Screen))
+		doInLoop(func() { // close windows after handler returns
 			window.SetShouldClose(true)
 		})
 	}()
@@ -132,7 +126,6 @@ func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods 
 		}
 	}
 }
-
 
 func getResolution() (int, int) {
 	monitor := glfw.GetPrimaryMonitor()

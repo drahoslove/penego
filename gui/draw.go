@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-type OnRedrawFunc func()
+type RedrawFunc func()
 
 var ( // pseudo constants
 	WHITE = color.RGBA{255, 255, 255, 255}	// #ffffff
@@ -24,12 +24,12 @@ var ( // pseudo constants
 )
 
 var (
-	drawContent OnRedrawFunc = nil // function for drawing content, settable by OnRedraw
+	drawContentFunc RedrawFunc = nil // function for drawing content, settable by OnRedraw
 	ctx * draw2dgl.GraphicContext
 )
 
 func init () {
-	drawContent = func() {
+	drawContentFunc = func() {
 		if ctx != nil {
 			ctx.Save()
 			ctx.SetFontData(draw2d.FontData{Name:"gobold"})
@@ -38,27 +38,6 @@ func init () {
 			drawCenteredString(ctx, "Penego", 0, 0)
 			ctx.Restore()
 		}
-	}
-}
-
-
-func OnRedraw(f OnRedrawFunc) {
-	doInLoop(func() {
-		drawContent = f; // update drawContentFunc
-		contentInvalid = true // force draw
-	})
-}
-
-
-func DrawPlace(x, y, n int, description string) {
-	if ctx != nil {
-		drawPlace(ctx, float64(x), float64(y), n, description)
-	}
-}
-
-func DrawTransition(x, y int, attrs, description string) {
-	if ctx != nil {
-		drawTransition(ctx, float64(x), float64(y), attrs, description)
 	}
 }
 
@@ -81,8 +60,8 @@ func draw() {
 	ctx.Translate(float64(width/2), float64(height/2))
 
 	// draw shapes
-	if drawContent != nil {
-		drawContent()
+	if drawContentFunc != nil {
+		drawContentFunc()
 	}
 }
 
