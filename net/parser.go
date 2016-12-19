@@ -196,7 +196,7 @@ func Parse(input string) (net Net, err error) {
 				Targets: targets,
 				Priority: priority,
 				TimeFunc: timeFunc,
-				Description: desc,
+				Description: unPack(desc),
 			})
 
 		} else {
