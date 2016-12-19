@@ -50,18 +50,50 @@ func main() {
 			places := network.Places()
 			transitions := network.Transitions()
 
+			posOfPlace := func(i int) gui.Pos {
+				return gui.Pos{
+					X: i * 90 - len(places)/2 * 90,
+					Y: 0,
+				}
+			}
+
+			posOfTransition := func(i int) gui.Pos {
+				return gui.Pos{
+					X: i * 90 - len(transitions)/2 * 90 - 90/2,
+					Y: 300 * (i % 2) - 150,
+				}
+			}
+
 			for i, p := range places {
-				x := i * 90 - len(places)/2 * 90
-				y := -90
-				screen.DrawPlace(x, y, p.Tokens, p.Description)
+				screen.DrawPlace(posOfPlace(i), p.Tokens, p.Description)
 			}
 
 			for i, t := range transitions {
-				x := i * 90 - len(transitions)/2 * 90 - 90/2
-				y := +60
-				screen.DrawTransition(x, y, t.TimeFunc.String(), t.Description)
+				screen.DrawTransition(posOfTransition(i), t.TimeFunc.String(), t.Description)
+				// arcs:
+				for j, p := range places {
+					for _, arc := range t.Origins {
+						if arc.Place == p {
+							screen.DrawInArc(posOfPlace(j), posOfTransition(i), arc.Weight)
+						}
+					}
+					for _, arc := range t.Targets {
+						if arc.Place == p {
+							screen.DrawOutArc(posOfTransition(i), posOfPlace(j), arc.Weight)
+						}
+					}
+				}
 			}
+
+			// screen.DrawInArc(posOfPlace(0), posOfTransition(0), 0)
+			// screen.DrawOutArc(posOfTransition(2), posOfPlace(3), 0)
+
+
 		})
+
+		screen.ForceRedraw()
+
+		////////////////
 
 		sim := net.NewSimulation(0, time.Hour*24*10, network)
 
@@ -76,13 +108,13 @@ func main() {
 			screen.ForceRedraw()
 		})
 
-		for i:=0; i<10; i++ {
-			screen.ForceRedraw()
-			net.TrueRandomSeed()
-			sim.Run()
-			fmt.Println("----")
-			time.Sleep(time.Second*5)
-		}
+		// for i:=0; i<10; i++ {
+		// 	screen.ForceRedraw()
+		// 	net.TrueRandomSeed()
+		// 	sim.Run()
+		// 	fmt.Println("----")
+		// 	time.Sleep(time.Second*5)
+		// }
 
 		screen.SetTitle("done")
 		for true {

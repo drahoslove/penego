@@ -9,6 +9,12 @@ import (
 	"strconv"
 )
 
+const (
+	PLACE_READIUS = 24.0
+	TRANSITION_WIDTH = 18.0
+	TRANSITION_HEIGHT = 72.0
+)
+
 type RedrawFunc func()
 
 var ( // pseudo constants
@@ -66,7 +72,7 @@ func draw() {
 }
 
 func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int, description string) {
-	r := 24.0
+	r := PLACE_READIUS
 	ctx.Save()
 	defer ctx.Restore()
 
@@ -128,7 +134,7 @@ func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int, descr
 }
 
 func drawTransition(ctx * draw2dgl.GraphicContext, x, y float64, attrs, description string) {
-	w, h := 18.0, 72.0
+	w, h := TRANSITION_WIDTH, TRANSITION_HEIGHT
 	ctx.Save()
 	defer ctx.Restore()
 
@@ -150,7 +156,64 @@ func drawTransition(ctx * draw2dgl.GraphicContext, x, y float64, attrs, descript
 	}
 }
 
-func drawCenteredString(ctx * draw2dgl.GraphicContext , str string, x float64, y float64) {
+
+func drawArc(ctx * draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir Direction, weight int) {
+	r := PLACE_READIUS
+	w := TRANSITION_WIDTH
+	if dir == In { // ( ) -> [ ]
+		angle := math.Pi*+0.25
+		if fromy > toy {
+			angle += math.Pi
+		}
+		xo := math.Sin(angle)*r
+		yo := math.Cos(angle)*r
+		tox -= w/2
+		fromx += xo
+		fromy += yo
+		ctx.MoveTo(fromx, fromy)
+		ctx.CubicCurveTo(fromx + 4*xo, fromy + 4*yo, tox - 60, toy, tox, toy)
+		drawArrowHaed(ctx, tox, toy, -math.Pi/2)
+	}
+	if dir == Out { // [ ] -> ( )
+		angle := math.Pi*-0.25
+		if fromy < toy {
+			angle += math.Pi
+		}
+		xo := math.Sin(angle)*r
+		yo := math.Cos(angle)*r
+		fromx += w/2
+		tox += xo
+		toy += yo
+		ctx.MoveTo(fromx, fromy)
+		ctx.CubicCurveTo(fromx + 60, fromy, tox + 4*xo, toy + 4*yo, tox, toy)
+		drawArrowHaed(ctx, tox, toy, angle)
+	}
+	ctx.Stroke()
+}
+
+// help functions
+
+func drawArrowHaed(ctx * draw2dgl.GraphicContext, x float64, y float64, angle float64){
+	r := 18.0
+	w := math.Pi/8
+	xl := x + math.Sin(angle + w)*r
+	yl := y + math.Cos(angle + w)*r
+	xr := x + math.Sin(angle - w)*r
+	yr := y + math.Cos(angle - w)*r
+
+	ctx.Save()
+	ctx.SetFillColor(BLACKISH)
+	ctx.BeginPath()
+	ctx.MoveTo(x, y)
+	ctx.LineTo(xl,yl)
+	ctx.LineTo(xr,yr)
+	ctx.LineTo(x, y)
+	ctx.Close()
+	ctx.Fill()
+	ctx.Restore()
+}
+
+func drawCenteredString(ctx * draw2dgl.GraphicContext, str string, x float64, y float64) {
 	left, top, right, bottom := ctx.GetStringBounds(str)
 	width := right - left
 	height := bottom - top
