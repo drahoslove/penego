@@ -1,6 +1,7 @@
 # Penego
 *Multi-platform petri-net visualisator written in Go.*
 
+
 Penego can handle petri nets with following properties:   
 (I do not intend to implement those that are crossed out or not listed at all.)
 - [x] Timed transtions
@@ -14,6 +15,13 @@ Penego can handle petri nets with following properties:
 - [x] Weighted arcs
 - [ ] ~~Capacity of places~~
 - [ ] ~~Inhibitory edges~~
+
+
+## Screenshots
+
+| simple                      | simple after a while         | more complicated           | more complicated after a while |
+|-----------------------------|------------------------------|----------------------------|--------------------------------|
+| ![gui](examples/simple.png) | ![gui](examples/simple2.png) | ![gui](examples/mensa.png) | ![gui](examples/mensa2.png)    |
 
 
 
