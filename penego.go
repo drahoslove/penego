@@ -5,10 +5,40 @@ import (
 	"time"
 	"os"
 	"io/ioutil"
+	"flag"
 	"github.com/pkg/profile"
 	"penego/gui"
 	"penego/net"
 )
+
+type TimeFlow int
+
+const (
+	NoFlow TimeFlow = iota
+	ContinuousFlow
+	NaturalFlow
+)
+
+func (flow TimeFlow) String() string {
+	return map[TimeFlow]string{
+		NoFlow: "no",
+		ContinuousFlow: "continuous",
+		NaturalFlow: "natural",
+	}[flow]
+}
+
+func (flow *TimeFlow) Set(name string) error {
+	val, ok := map[string]TimeFlow{
+		"no": NoFlow,
+		"continuous": ContinuousFlow,
+		"natural": NaturalFlow,
+	}[name]
+	if !ok {
+		return fmt.Errorf("may be: no, continuous, natural")
+	}
+	*flow = val
+	return nil
+}
 
 func main() {
 	if os.Getenv("PROFILE") != "" {
@@ -19,19 +49,28 @@ func main() {
 		network net.Net
 		err error
 		startTime = time.Duration(0)
-		endTime = time.Duration(int(^uint(0) >> 1))
+		endTime = time.Duration(^uint(0) >> 1)
+		timeFlow = ContinuousFlow
+		timeSpeed = uint(10)
+		verbose = false
+		idle = true
 	)
 
-	// TODO parse additinal flags
-	_ = startTime
-	_ = endTime
+	flag.DurationVar(&startTime, "start", startTime, "start time of simulation")
+	flag.DurationVar(&endTime, "end", endTime, "end time of simulation")
+	flag.Var(&timeFlow, "flow", "type of time flow\n\tno, continuous, or natural")
+	flag.UintVar(&timeSpeed, "speed", timeSpeed, "time flow acceleration\n\tdifferent meaning for different -flow\n\t")
+	flag.BoolVar(&idle, "idle", idle, "preserve window after simulation ends")
+	flag.BoolVar(&verbose, "v", verbose, "be more verbose")
+	flag.Parse()
 
 	// parse from file if given filename
-	if len(os.Args) == 2 {
-		filename := os.Args[1]
+	if flag.NArg() >= 1 {
+		filename := flag.Arg(0)
 		filecontent, err := ioutil.ReadFile(filename)
 		if err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "%s", err)
+			return
 		}
 		network, err = net.Parse(string(filecontent))
 	} else {
@@ -44,13 +83,16 @@ func main() {
 		`)
 	}
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "%s", err)
+		return
 	}
 
 
 	////////////////////////////////
 
-	fmt.Println(network)
+	if verbose {
+		fmt.Println(network)
+	}
 
 
 	////////////////////////////////
@@ -116,29 +158,47 @@ func main() {
 		////////////////
 
 		// draw initial state
-		screen.ForceRedraw()
+		screen.ForceRedraw(true)
 
 		sim := net.NewSimulation(startTime, endTime, network)
 
 		sim.DoEveryStateChange(func(now, then time.Duration) {
-			fmt.Println(now, network.Places())
+			if verbose {
+				fmt.Println(now, network.Places())
+			}
 			screen.SetTitle(now.String())
-			screen.ForceRedraw()
 
-			// time.Sleep((then-now)/1000) // render 1000× faster than reality
-			// time.Sleep((then-now)) // render as fast as reality
-			time.Sleep(time.Second/5) // render to be comprehentable
+			switch timeFlow {
+
+			case NoFlow:
+				// nothing just jum to the end of simulation
+
+			case NaturalFlow:
+				// render as fast as reality, or proportionally faster/slower
+				screen.ForceRedraw(false)
+				time.Sleep((then-now) / time.Duration(timeSpeed))
+
+			case ContinuousFlow:
+				// render continuously, with fixed waits between events, independent of simulation time
+				screen.ForceRedraw(false) // dont block
+				time.Sleep(time.Second / time.Duration(timeSpeed))
+
+			}
+
 		})
 
 		// simulate
-		screen.ForceRedraw()
+		screen.ForceRedraw(true)
 		net.TrueRandomSeed()
 		sim.Run()
-		fmt.Println("----")
-		screen.SetTitle("done")
+		screen.ForceRedraw(true)
+		if verbose {
+			fmt.Println("----")
+		}
+		screen.SetTitle(sim.GetNow().String() + " done")
 
 		// idle
-		for true {
+		for idle {
 			time.Sleep(time.Second)
 		}
 

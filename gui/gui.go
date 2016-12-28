@@ -1,11 +1,11 @@
 package gui
 
 import (
+	"time"
 	"runtime"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 )
-
 
 var (
 	width = 800
@@ -17,16 +17,20 @@ var (
 
 func init() {
 	runtime.LockOSThread()
-	inLoopFuncChan = make(chan func())
+	inLoopFuncChan = make(chan func(), 100)
 }
 
-func doInLoop(f func()) {
+func doInLoop(f func(), block bool) {
 	done := make(chan bool, 1)
 	inLoopFuncChan <- func() {
 		f()
-		done <- true
+		if block {
+			done <- true
+		}
 	}
-	<-done
+	if block {
+		<-done
+	}
 }
 
 func Run(handler func(*Screen)) {
@@ -73,26 +77,27 @@ func Run(handler func(*Screen)) {
 		handler(&Screen{window})
 		doInLoop(func() { // close windows after handler returns
 			window.SetShouldClose(true)
-		})
+		}, false)
 	}()
 
 	// main loop
 	for !window.ShouldClose() {
-		select { // only one function call per loop cycle
-		case f := <-inLoopFuncChan:
-			f()
-		default:
+		empty: for {
+			select {
+			case f := <-inLoopFuncChan: // this must be buffer, to not block handler function
+				f()
+			default:
+				break empty
+			}
 		}
 
 		if contentInvalid {
 			draw()
 			window.SwapBuffers()
 			contentInvalid = false
-		} else {
-			glfw.WaitEventsTimeout(1.0/60) // do not waste CPU
 		}
-
 		glfw.PollEvents()
+		time.Sleep(time.Millisecond) // dont waste CPU
 	}
 
 }

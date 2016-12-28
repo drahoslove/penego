@@ -22,24 +22,26 @@ type Screen struct{
 }
 
 
-func (s * Screen) ForceRedraw() {
+func (s * Screen) ForceRedraw(block bool) {
 	doInLoop(func() {
 		contentInvalid = true
-	})
+	}, block)
 }
 
 func (s * Screen) SetRedrawFunc(f RedrawFunc) {
 	doInLoop(func() {
 		drawContentFunc = f; // update drawContentFunc
 		contentInvalid = true // force draw
-	})
+	}, true)
 }
 
 func (s * Screen) SetTitle(title string) {
-	if title != "" {
-		title = " - " + title
-	}
-	s.Window.SetTitle("Penego" + title)
+	doInLoop(func() {
+		if title != "" {
+			title = " - " + title
+		}
+		s.Window.SetTitle("Penego" + title)
+	}, false)
 }
 
 func (s * Screen) DrawPlace(pos Pos, n int, description string) {
