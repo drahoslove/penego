@@ -28,10 +28,13 @@ func init () {
 		ARCS = ARC+`(,`+ARC+`)*`
 		PRIO = `p=(?P<prio>`+NUM+`)`
 		TIME = `(?P<t>`+NUM+`)(?P<u>[smhd]|(ms)|(us))?`
-		FIX = `(?P<fix>`+TIME+`)`
-		UNIF = `(?P<unf0>`+TIME+`)(-|(..))(?P<unf1>`+TIME+`)`
-		EXP = `exp\((?P<exp>`+TIME+`)\)`
-		ATTR = `(`+PRIO+`)|(`+FIX+`)|(`+UNIF+`)|(`+EXP+`)`
+		FIX = `(`+TIME+`)`
+		UNIF0 = `(?P<from>`+TIME+`)(-|(..))(?P<to>`+TIME+`)`
+		UNIF1 = `unif\((?P<from>`+TIME+`),(?P<to>`+TIME+`)\)`
+		UNIF = `(` + UNIF0 + `|` + UNIF1 + `)`
+		EXP = `exp\((?P<mean>`+TIME+`)\)`
+		ERL = `erlang\((?P<k>`+NUM+`),(?P<mean>`+TIME+`)\)`
+		ATTR = `(`+PRIO+`)|(?P<fix>`+FIX+`)|(?P<unif>`+UNIF+`)|(?P<exp>`+EXP+`)|(?P<erl>`+ERL+`)`
 	)
 
 
@@ -170,18 +173,25 @@ func Parse(input string) (net Net, err error) {
 			if attr != "" {
 				prio := getSubmatchString(transitionRE, line, "prio")
 				fix := getSubmatchString(transitionRE, line, "fix")
-				unf0 := getSubmatchString(transitionRE, line, "unf0")
-				unf1 := getSubmatchString(transitionRE, line, "unf1")
+				unif := getSubmatchString(transitionRE, line, "unif")
 				exp := getSubmatchString(transitionRE, line, "exp")
+				erl := getSubmatchString(transitionRE, line, "erl")
 				switch {
 					case prio != "":
 						priority, _ = strconv.Atoi(prio)
 					case fix != "":
 						timeFunc = GetConstantTimeFunc(parseTime(fix))
-					case unf0 != "" && unf1 != "":
-						timeFunc = GetUniformTimeFunc(parseTime(unf0), parseTime(unf1))
+					case unif != "":
+						from := getSubmatchString(transitionRE, line, "from")
+						to := getSubmatchString(transitionRE, line, "to")
+						timeFunc = GetUniformTimeFunc(parseTime(from), parseTime(to))
 					case exp != "":
-						timeFunc = GetExponentialTimeFunc(parseTime(exp))
+						mean := getSubmatchString(transitionRE, line, "mean")
+						timeFunc = GetExponentialTimeFunc(parseTime(mean))
+					case erl != "":
+						mean := getSubmatchString(transitionRE, line, "mean")
+						k, _ := strconv.Atoi(getSubmatchString(transitionRE, line, "k"))
+						timeFunc = GetErlangTimeFunc(parseTime(mean), uint(k))
 				}
 			}
 

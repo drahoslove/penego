@@ -2,14 +2,14 @@
 *Multi-platform petri-net visualisator written in Go.*
 
 
-Penego can handle petri nets with following properties:   
+Penego can handle petri nets with following properties:
 (I do not intend to implement those that are crossed out or not listed at all.)
 - [x] Timed transtions
     - [x] Deterministic
     - [x] Random with given distribution function
       - [x] Uniform
       - [x] Exponential
-      - [ ] Erlang
+      - [x] Erlang
 - [x] Prioritized transitions
 - [ ] Propabilities of transitions
 - [x] Weighted arcs
@@ -45,7 +45,7 @@ e ( ) "exit"
 g -> [exp(30us)] -> g, 2*e
 ```
 ### Definition
-It consist of two types of lines: 
+It consist of two types of lines:
 - Place definition. The one with parenthesis `()`
     - Must start with place identificator. (These are used in Transition definitions.)
     - May contain marking of place (number of tokens in place) within parentheses.
@@ -60,8 +60,9 @@ It consist of two types of lines:
         - `[p=N]` where N is non-negative integer indicates transition with given priority N (graeter N means greater priority)
         - `[TIME]` where TIME is some time string (compatible with Duration String format of go's time package) eg. `1s`, `4h15m` or `45ns` indicates transition with constant duration time.
         - `[exp(TIME)]` indicates transition with timed duration given by exponential random function with mean TIME.
+         - `[erlang(k,TIME)]` indicates transition with timed duration given by erlang random function with mean TIME and shape k.
         - `[TIME..TIME]` or `[TIME-TIME]` indicates transition with timed duration given by uniform random function with given range.
-    
+
 
 The text beginning with `//` or `--` is ignored by parser until the end of the line (comments).
 

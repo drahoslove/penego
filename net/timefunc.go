@@ -1,6 +1,7 @@
 package net
 
 import(
+	"fmt"
 	"time"
 	"math"
 	"math/big"
@@ -39,7 +40,9 @@ func (fn *TimeFunc) SetTextRepr(name string, args... time.Duration) {
 		case "unif":
 			return arguments[0] + ".." + arguments[1]
 		case "exp":
-			return "exp(" + arguments[0] + ")"
+			return fmt.Sprintf("exp(%s)", arguments[0])
+		case "erlang":
+			return fmt.Sprintf("erlang(%d,%s)", uint(args[0]), arguments[1])
 		default:
 			return name + "(" + strings.Join(arguments, ",") + ")"
 		}
@@ -83,6 +86,14 @@ func GetExponentialTimeFunc(mean time.Duration) *TimeFunc {
 	return &fn
 }
 
+func GetErlangTimeFunc(mean time.Duration, k uint) *TimeFunc {
+	fn := TimeFunc(func () time.Duration {
+		return erlangTime(mean, k)
+	})
+	fn.SetTextRepr("erlang", time.Duration(k), mean)
+	return &fn
+}
+
 
 /**
  * Seed pseudo random generator with true random number.
@@ -118,4 +129,12 @@ func uniformTime(from, to time.Duration) time.Duration {
 
 func exponentialTime(mean time.Duration) time.Duration {
 	return time.Duration(rand.ExpFloat64() * float64(mean))
+}
+
+func erlangTime(mean time.Duration, k uint) time.Duration {
+	t := time.Duration(0)
+	for ; k > 0; k-- {
+		t += exponentialTime(mean)
+	}
+	return t
 }
