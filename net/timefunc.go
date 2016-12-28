@@ -95,10 +95,10 @@ func GetErlangTimeFunc(mean time.Duration, k uint) *TimeFunc {
 }
 
 
-/**
- * Seed pseudo random generator with true random number.
- * This same seed is used at beginning of every simulation.Run()
- */
+/*
+Seed pseudo random generator with true random number.
+This same seed is used at beginning of every simulation.Run()
+*/
 func TrueRandomSeed() {
 	max := big.NewInt(math.MaxInt32)
 	seed, _ := truerand.Int(truerand.Reader, max)
