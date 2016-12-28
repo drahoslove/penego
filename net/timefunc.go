@@ -17,59 +17,14 @@ import(
 type TimeFunc func() time.Duration
 
 func (fn *TimeFunc) String() string {
-	if repr, ok := textReprs[fn]; ok {
+	if repr, ok := timeFuncTextReprs[fn]; ok {
 		return repr
 	} else {
 		return ""
 	}
 }
 
-
-/******* global vars *******/
-
-var textReprs map[*TimeFunc] string
-var startSeed int64 = 1
-
-
-/******* exported functions *******/
-
-/* timeFunc factories */
-
-func GetConstantTimeFunc(duration time.Duration) *TimeFunc {
-	fn := TimeFunc(func() time.Duration {
-		return duration
-	})
-	RegisterFuncTextRepr(&fn, "const", duration)
-	return &fn
-}
-
-func GetUniformTimeFunc(from, to time.Duration) *TimeFunc {
-	if from > to {
-		from, to = to, from
-	}
-	fn := TimeFunc(func() time.Duration {
-		return uniformTime(from, to)
-	})
-	RegisterFuncTextRepr(&fn, "unif", from, to)
-	return &fn
-}
-
-func GetExponentialTimeFunc(mean time.Duration) *TimeFunc {
-	fn := TimeFunc(func() time.Duration {
-		return exponentialTime(mean)
-	})
-	RegisterFuncTextRepr(&fn, "exp", mean)
-	return &fn
-}
-
-func TrueRandomSeed() {
-	max := big.NewInt(math.MaxInt32)
-	seed, _ := truerand.Int(truerand.Reader, max)
-	startSeed = seed.Int64()
-	rand.Seed(startSeed)
-}
-
-func RegisterFuncTextRepr(fn *TimeFunc, name string, args... time.Duration) {
+func (fn *TimeFunc) SetTextRepr(name string, args... time.Duration) {
 
 	arguments := make([]string,0)
 
@@ -77,7 +32,7 @@ func RegisterFuncTextRepr(fn *TimeFunc, name string, args... time.Duration) {
 		arguments = append(arguments, trimZeroUnits(arg.String()))
 	}
 
-	textReprs[fn] = func() string {
+	timeFuncTextReprs[fn] = func() string {
 		switch name {
 		case "const":
 			return arguments[0]
@@ -91,11 +46,60 @@ func RegisterFuncTextRepr(fn *TimeFunc, name string, args... time.Duration) {
 	}()
 }
 
+/******* global vars *******/
+
+var timeFuncTextReprs map[*TimeFunc] string
+var startSeed int64 = 1
+
+
+/******* exported functions *******/
+
+/* timeFunc factories */
+
+func GetConstantTimeFunc(duration time.Duration) *TimeFunc {
+	fn := TimeFunc(func() time.Duration {
+		return duration
+	})
+	fn.SetTextRepr("const", duration)
+	return &fn
+}
+
+func GetUniformTimeFunc(from, to time.Duration) *TimeFunc {
+	if from > to {
+		from, to = to, from
+	}
+	fn := TimeFunc(func() time.Duration {
+		return uniformTime(from, to)
+	})
+	fn.SetTextRepr("unif", from, to)
+	return &fn
+}
+
+func GetExponentialTimeFunc(mean time.Duration) *TimeFunc {
+	fn := TimeFunc(func() time.Duration {
+		return exponentialTime(mean)
+	})
+	fn.SetTextRepr("exp", mean)
+	return &fn
+}
+
+
+/**
+ * Seed pseudo random generator with true random number.
+ * This same seed is used at beginning of every simulation.Run()
+ */
+func TrueRandomSeed() {
+	max := big.NewInt(math.MaxInt32)
+	seed, _ := truerand.Int(truerand.Reader, max)
+	startSeed = seed.Int64()
+	rand.Seed(startSeed)
+}
+
 
 /******* unexported functions *******/
 
 func init () {
-	textReprs = make(map[*TimeFunc]string)
+	timeFuncTextReprs = make(map[*TimeFunc]string)
 }
 
 func restartSeed() {

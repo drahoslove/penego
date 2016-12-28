@@ -16,7 +16,7 @@ var (
 	timeRE *regexp.Regexp
 )
 
-func compileRegExps () {
+func init () {
 
 	const (
 		SP = `[ \t]*`
@@ -72,12 +72,7 @@ func compileRegExps () {
 }
 
 
-
 func Parse(input string) (net Net, err error) {
-
-	if emptyLineRE == nil || placeRE == nil || transitionRE == nil {
-		compileRegExps()
-	}
 
 	net.places = Places{}
 	net.transitions = Transitions{}

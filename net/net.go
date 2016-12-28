@@ -311,7 +311,7 @@ func (sim *Simulation) cancelUnenabledTimed() {
 	}
 
 	// remove excess
-	for i := len(sim.calendar)-1; i >= 0; i-- { // TODO projít pokaždé v náhodném pořadí
+	for i := len(sim.calendar)-1; i >= 0; i-- { // TODO go through in random order each time
 		tran := sim.calendar[i].transition
 		if sub, ok := subtractions[tran]; ok && sub < 0 {
 			sim.calendar.Remove(i)
@@ -333,7 +333,7 @@ func (sim *Simulation) Run() {
 	copy(sortedTransitions, sim.net.transitions)
 	sort.Sort(sortedTransitions)
 
-	//todo change init state!
+	// TODO change init state!
 	restartSeed()
 	sim.now = sim.startTime
 	sim.calendar = Calendar{}
