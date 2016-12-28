@@ -5,8 +5,8 @@ import (
 )
 
 type Pos struct {
-	X int
-	Y int
+	X float64
+	Y float64
 }
 
 type Direction bool
@@ -44,24 +44,24 @@ func (s * Screen) SetTitle(title string) {
 
 func (s * Screen) DrawPlace(pos Pos, n int, description string) {
 	if ctx != nil {
-		drawPlace(ctx, float64(pos.X), float64(pos.Y), n, description)
+		drawPlace(ctx, pos.X, pos.Y, n, description)
 	}
 }
 
 func (s * Screen) DrawTransition(pos Pos, attrs, description string) {
 	if ctx != nil {
-		drawTransition(ctx, float64(pos.X), float64(pos.Y), attrs, description)
+		drawTransition(ctx, pos.X, pos.Y, attrs, description)
 	}
 }
 
 func (s * Screen) DrawInArc(from Pos, to Pos, weight int) {
 	if ctx != nil {
-		drawArc(ctx, float64(from.X), float64(from.Y), float64(to.X), float64(to.Y), In, weight)
+		drawArc(ctx, from.X, from.Y, to.X, to.Y, In, weight)
 	}
 }
 
 func (s * Screen) DrawOutArc(from Pos, to Pos, weight int) {
 	if ctx != nil {
-		drawArc(ctx, float64(from.X), float64(from.Y), float64(to.X), float64(to.Y), Out, weight)
+		drawArc(ctx, from.X, from.Y, to.X, to.Y, Out, weight)
 	}
 }

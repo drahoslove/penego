@@ -135,6 +135,9 @@ func (t Transition) String () string {
 	return fmt.Sprintf("%s -> [%s%s]%s -> %s", t.Origins, t.TimeFunc, prio, t.Description, t.Targets)
 }
 
+/**
+ * How many times can by transition fired with current marking on origins arcs
+ */
 func (t * Transition) getEnabilityMagnitude() int {
 	enability := math.MaxInt64
 	for _, arc := range t.Origins {
@@ -274,10 +277,12 @@ func (sim *Simulation) GetNow() time.Duration {
 }
 
 /**
- * check how much is enabled and how many times is already scheduled
+ * Check how much is enabled and how many times is already scheduled
  * and return difference
+ * positive number means how many event should be scheduled
+ * negative number means how many scheduled event should be canceled
  */
-func (sim *Simulation)  diffEnabilityVsScheduled(transition *Transition) int {
+func (sim *Simulation) diffEnabilityVsScheduled(transition *Transition) int {
 	enability := transition.getEnabilityMagnitude()
 	eventCount := 0
 	for _, event := range sim.calendar {
@@ -291,7 +296,7 @@ func (sim *Simulation)  diffEnabilityVsScheduled(transition *Transition) int {
 func (sim *Simulation) scheduleEnabledTimed() {
 	for _, tran := range sim.net.transitions {
 		if tran.TimeFunc != nil {
-			max := sim.diffEnabilityVsScheduled(tran)
+			max := sim.diffEnabilityVsScheduled(tran) // how many times schedule
 			for i := 0; i < max; i++ {
 				sim.calendar.insert(sim.now + (*tran.TimeFunc)(), tran)
 			}
@@ -306,7 +311,7 @@ func (sim *Simulation) cancelUnenabledTimed() {
 	}
 
 	// remove excess
-	for i := len(sim.calendar)-1; i >= 0; i-- {
+	for i := len(sim.calendar)-1; i >= 0; i-- { // TODO projít pokaždé v náhodném pořadí
 		tran := sim.calendar[i].transition
 		if sub, ok := subtractions[tran]; ok && sub < 0 {
 			sim.calendar.Remove(i)
@@ -345,9 +350,9 @@ func (sim *Simulation) Run() {
 		stabilize: // whenever transition is completed, start checking again from bigest priority
 		countOfPasses++
 		if countOfPasses > 1E6 {
-			panic("too many transitions done in zero time, possible loop")
+			panic("too many transitions done in same time, possible loop")
 		}
-		for _, tran := range sortedTransitions {
+		for _, tran := range sortedTransitions { // TODO cycle transitions with same priority in random order
 			if tran.TimeFunc != nil {
 				break // no need to go further, rest are timed due to sort
 			}
@@ -368,10 +373,10 @@ func (sim *Simulation) Run() {
 	for !sim.calendar.isEmpty() {
 		eventTime, tranToFireNow := sim.calendar.shift()
 		sim.stateChange(sim.now, eventTime) // current time and next time
-		sim.now = eventTime
 		if eventTime > sim.endTime {
 			break
 		}
+		sim.now = eventTime
 		fireEvent(tranToFireNow)
 
 	}
