@@ -11,8 +11,18 @@ import (
 	"penego/net"
 )
 
-type TimeFlow int
+type State int
+const (
+	Initial State = iota
+	Running
+	Paused
+	Stopped
+	Splash
+	Idle
+	Exit
+)
 
+type TimeFlow int
 const (
 	// no waits, just jum to the end of simulation
 	NoFlow TimeFlow = iota
@@ -111,11 +121,10 @@ func main() {
 
 	gui.Run(func(screen *gui.Screen) { // runs this anon func in goroutine
 
-		// show splash for 2 seconds
-		time.Sleep(time.Second * 2)
+		var state State = Splash
 
 		// how to draw
-		screen.SetRedrawFunc(func() {
+		var drawNet = func () {
 			places := network.Places()
 			transitions := network.Transitions()
 
@@ -164,17 +173,9 @@ func main() {
 				}
 			}
 
-		})
+		}
 
-
-		////////////////
-
-		// draw initial state
-		screen.ForceRedraw(true)
-
-		sim := net.NewSimulation(startTime, endTime, network)
-
-		sim.DoEveryStateChange(func(now, then time.Duration) {
+		var onStateChange = func(now, then time.Duration) {
 			if verbose {
 				fmt.Println(now, network.Places())
 			}
@@ -189,26 +190,60 @@ func main() {
 				time.Sleep(time.Second / time.Duration(timeSpeed))
 			}
 
+		}
+
+		var sim net.Simulation
+
+		screen.OnKey("space", func() {
+			switch state {
+			case Paused:
+				state = Running
+			case Running:
+				state = Paused
+				sim.Pause()
+			}
 		})
 
-		// simulate
-
-		if truerandom {
-			net.TrueRandomSeed()
+		for state != Exit {
+			switch state {
+			case Splash:
+				// show splash for 2 seconds
+				screen.SetRedrawFuncToSplash()
+				time.Sleep(time.Second * 2)
+				state = Initial
+			case Initial:
+				sim = net.NewSimulation(startTime, endTime, network)
+				sim.DoEveryStateChange(onStateChange)
+				if truerandom {
+					net.TrueRandomSeed()
+				}
+				state = Running
+			case Running:
+				screen.SetRedrawFunc(drawNet)
+				sim.Run() ////////////////// <--
+				if state != Running { // paused
+					continue
+				}
+				// draw initial state
+				screen.SetTitle(sim.GetNow().String() + " done")
+				screen.ForceRedraw(true)
+				if verbose {
+					fmt.Println("----")
+				}
+				if idle {
+					state = Idle
+				} else {
+					state = Exit
+				}
+			case Paused:
+				time.Sleep(time.Millisecond*20)
+				screen.SetTitle(sim.GetNow().String() + " paused")
+			case Idle:
+				time.Sleep(time.Second)
+				state = Idle
+			}
 		}
 
-		sim.Run() ////////////////// <--
-
-		screen.ForceRedraw(true)
-		if verbose {
-			fmt.Println("----")
-		}
-		screen.SetTitle(sim.GetNow().String() + " done")
-
-		// idle
-		for idle {
-			time.Sleep(time.Second)
-		}
 
 	}) // returns when func returns
 

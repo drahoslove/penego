@@ -32,10 +32,7 @@ var ( // pseudo constants
 var (
 	drawContentFunc RedrawFunc = nil // function for drawing content, settable by OnRedraw
 	ctx * draw2dgl.GraphicContext
-)
-
-func init () {
-	drawContentFunc = func() {
+	drawSplash = func() {
 		if ctx != nil {
 			ctx.Save()
 			ctx.SetFontData(draw2d.FontData{Name:"gobold"})
@@ -45,6 +42,10 @@ func init () {
 			ctx.Restore()
 		}
 	}
+)
+
+func init () {
+	drawContentFunc = drawSplash
 }
 
 // called by mainloop if context is invalid

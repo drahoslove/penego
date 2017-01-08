@@ -270,6 +270,7 @@ type Simulation struct {
 	net Net
 	calendar Calendar
 	stateChange func(time.Duration, time.Duration)
+	paused bool
 }
 
 func (sim *Simulation) GetNow() time.Duration {
@@ -328,17 +329,22 @@ func (sim *Simulation) DoEveryStateChange(fun func(time.Duration, time.Duration)
 	}
 }
 
+// Run starts running simulation or continue in running from previously paused state
 func (sim *Simulation) Run() {
+
+	if !sim.paused {
+		restartSeed()
+		sim.now = sim.startTime
+		sim.calendar = Calendar{}
+		sim.net.restoreState()
+	} // else use previous
+
+	sim.paused = false
+
+
 	sortedTransitions := make(Transitions, len(sim.net.transitions))
 	copy(sortedTransitions, sim.net.transitions)
 	sort.Sort(sortedTransitions)
-
-	// TODO change init state!
-	restartSeed()
-	sim.now = sim.startTime
-	sim.calendar = Calendar{}
-
-	sim.net.restoreState()
 
 	fireEvent := func(scheduledTran *Transition) {
 
@@ -371,6 +377,9 @@ func (sim *Simulation) Run() {
 	fireEvent(&Transition{})
 
 	for !sim.calendar.isEmpty() {
+		if sim.paused {
+			return
+		}
 		eventTime, tranToFireNow := sim.calendar.shift()
 		sim.stateChange(sim.now, eventTime) // current time and next time
 		if eventTime > sim.endTime {
@@ -383,10 +392,16 @@ func (sim *Simulation) Run() {
 
 }
 
+// Pause pauses current simulation Run
+// Intended to be called simultaneously with simulation.Run
+func (sim *Simulation) Pause() {
+	sim.paused = true
+}
+
 
 /******* exported functions *******/
 
 func NewSimulation(startTime, endTime time.Duration, net Net) Simulation {
 	net.saveState()
-	return Simulation{startTime, endTime, 0, net, Calendar{}, nil}
+	return Simulation{startTime, endTime, 0, net, Calendar{}, nil, false}
 }
