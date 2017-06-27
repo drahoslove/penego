@@ -271,6 +271,7 @@ type Simulation struct {
 	calendar Calendar
 	stateChange func(time.Duration, time.Duration)
 	paused bool
+	stopped bool
 }
 
 func (sim *Simulation) GetNow() time.Duration {
@@ -337,10 +338,10 @@ func (sim *Simulation) Run() {
 		sim.now = sim.startTime
 		sim.calendar = Calendar{}
 		sim.net.restoreState()
-	} // else use previous
+	} // else use previously used values
 
 	sim.paused = false
-
+	sim.stopped = false
 
 	sortedTransitions := make(Transitions, len(sim.net.transitions))
 	copy(sortedTransitions, sim.net.transitions)
@@ -377,8 +378,12 @@ func (sim *Simulation) Run() {
 	fireEvent(&Transition{})
 
 	for !sim.calendar.isEmpty() {
-		if sim.paused {
-			return
+		if sim.paused  {
+			break
+		}
+		if sim.stopped {
+			sim.net.restoreState()
+			break
 		}
 		eventTime, tranToFireNow := sim.calendar.shift()
 		sim.stateChange(sim.now, eventTime) // current time and next time
@@ -396,12 +401,20 @@ func (sim *Simulation) Run() {
 // Intended to be called simultaneously with simulation.Run
 func (sim *Simulation) Pause() {
 	sim.paused = true
+	sim.stopped = false
 }
 
+func (sim *Simulation) Stop() {
+	if sim.paused {
+		sim.net.restoreState()
+		sim.paused = false
+	}
+	sim.stopped = true
+}
 
 /******* exported functions *******/
 
 func NewSimulation(startTime, endTime time.Duration, net Net) Simulation {
 	net.saveState()
-	return Simulation{startTime, endTime, 0, net, Calendar{}, nil, false}
+	return Simulation{startTime, endTime, 0, net, Calendar{}, nil, false, false}
 }

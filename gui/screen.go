@@ -1,4 +1,5 @@
 package gui
+// exports GUI API functions for drawing items, screen manipulation, event handling
 
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
@@ -20,6 +21,7 @@ var (
 	nameToKey = map[string]glfw.Key{
 		"space": glfw.KeySpace,
 		"Q": glfw.KeyQ,
+		"R": glfw.KeyR,
 	}
 )
 

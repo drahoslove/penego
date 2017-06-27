@@ -71,8 +71,9 @@ func main() {
 		timeFlow = ContinuousFlow
 		timeSpeed = uint(10)
 		truerandom = false
-		idle = true
+		noclose = true
 		verbose = false
+		autostart = false
 	)
 
 	flag.DurationVar(&startTime, "start", startTime, "start time of simulation")
@@ -80,8 +81,9 @@ func main() {
 	flag.Var(&timeFlow, "flow", "type of time flow\n\tno, continuous, or natural")
 	flag.UintVar(&timeSpeed, "speed", timeSpeed, "time flow acceleration\n\tdifferent meaning for different -flow\n\t")
 	flag.BoolVar(&truerandom, "truerandom", truerandom, "seed pseudorandom generator with true random seed on start")
-	flag.BoolVar(&idle, "idle", idle, "preserve window after simulation ends")
+	flag.BoolVar(&noclose, "noclose", noclose, "preserve window after simulation ends")
 	flag.BoolVar(&verbose, "v", verbose, "be more verbose")
+	flag.BoolVar(&autostart, "autostart", autostart, "automatic start")
 	flag.Parse()
 
 
@@ -204,6 +206,14 @@ func main() {
 			}
 		})
 
+		screen.OnKey("R", func() {
+			switch state {
+			case Running, Paused:
+				state = Initial
+				sim.Stop()
+			}
+		})
+
 		for state != Exit {
 			switch state {
 			case Splash:
@@ -217,11 +227,15 @@ func main() {
 				if truerandom {
 					net.TrueRandomSeed()
 				}
-				state = Running
-			case Running:
 				screen.SetRedrawFunc(drawNet)
+				if autostart {
+					state = Running
+				} else {
+					state = Paused
+				}
+			case Running:
 				sim.Run() ////////////////// <--
-				if state != Running { // paused
+				if state != Running { // paused or stopped
 					continue
 				}
 				// draw initial state
@@ -230,7 +244,7 @@ func main() {
 				if verbose {
 					fmt.Println("----")
 				}
-				if idle {
+				if noclose {
 					state = Idle
 				} else {
 					state = Exit

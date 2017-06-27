@@ -1,4 +1,6 @@
 package gui
+// draw content
+// drawing routines definitions
 
 import (
 	"math"
@@ -30,8 +32,6 @@ var ( // pseudo constants
 )
 
 var (
-	drawContentFunc RedrawFunc = nil // function for drawing content, settable by OnRedraw
-	ctx * draw2dgl.GraphicContext
 	drawSplash = func() {
 		if ctx != nil {
 			ctx.Save()
@@ -42,6 +42,11 @@ var (
 			ctx.Restore()
 		}
 	}
+)
+
+var (
+	drawContentFunc RedrawFunc = nil // function for drawing content, settable by OnRedraw
+	ctx * draw2dgl.GraphicContext
 )
 
 func init () {
