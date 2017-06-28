@@ -104,7 +104,7 @@ func main() {
 	read := func(filename string) (pnstring string) {
 		filecontent, err := ioutil.ReadFile(filename)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s", err)
+			log.Fatal(err)
 			return
 		}
 		pnstring = string(filecontent)
@@ -122,14 +122,10 @@ func main() {
 		return
 	}
 
+	filename := flag.Arg(0)
 
-	if flag.NArg() >= 1 {
-		filename := flag.Arg(0)
+	if len(filename) > 0 {
 		pnstring = read(filename)
-		go OnFileChange(filename, func() {
-			pnstring = read(filename)
-			network = parse(pnstring)
-		})
 	} else {
 		fmt.Println("No pn file specified, using example")
 	}
@@ -150,7 +146,7 @@ func main() {
 				fmt.Println(now, network.Places())
 			}
 			screen.SetTitle(now.String())
-			screen.ForceRedraw(false) // donnt block
+			screen.ForceRedraw(false) // dont block
 
 			switch timeFlow {
 			case NoFlow:
@@ -182,6 +178,14 @@ func main() {
 			}
 		})
 
+		go OnFileChange(filename, func() {
+			pnstring = read(filename)
+			network = parse(pnstring)
+			drawNet = getDrawNet(network)
+			state = Initial
+			sim.Stop()
+		})
+
 		for state != Exit {
 			switch state {
 			case Splash:
@@ -206,7 +210,6 @@ func main() {
 				if state != Running { // paused or stopped
 					continue
 				}
-				// draw initial state
 				screen.SetTitle(sim.GetNow().String() + " done")
 				screen.ForceRedraw(true)
 				if verbose {
@@ -244,13 +247,11 @@ func OnFileChange(file string, callback func()) {
 		for {
 			select {
 			case event := <-watcher.Events:
-				log.Println("event:", event)
 				if (event.Op & fsnotify.Write) == fsnotify.Write {
-					log.Println("modified file:", event.Name)
 					callback()
 				}
 			case err := <-watcher.Errors:
-				log.Println("error:", err)
+				fmt.Fprintf(os.Stderr, "%s", err)
 			}
 		}
 	}()
