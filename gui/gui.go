@@ -10,10 +10,7 @@ import (
 )
 
 var (
-	width = 800
-	height = 600
-	contentInvalid = false
-	inLoopFuncChan chan func()
+	inLoopFuncChan chan func() // TODO remove global
 )
 
 
@@ -36,8 +33,7 @@ func doInLoop(f func(), block bool) {
 }
 
 func Run(handler func(*Screen)) {
-	var window * glfw.Window
-
+	var screen Screen
 
 	// init glfw
 	if err := glfw.Init(); err != nil {
@@ -46,44 +42,46 @@ func Run(handler func(*Screen)) {
 	defer glfw.Terminate()
 
 	// create window
-	screenWidth, screenHeight := getResolution()
-	width, height = screenWidth/2, screenHeight/2
+	displayWidth, displayHeight := getResolution()
+	screen.width, screen.height = displayWidth/2, displayHeight/2
 	glfw.WindowHint(glfw.Resizable, glfw.True)
 	glfw.WindowHint(glfw.Decorated, glfw.True)
 	glfw.WindowHint(glfw.Visible, glfw.False)
-	window, err := glfw.CreateWindow(width, height, "Penego", nil, nil)
+	window, err := glfw.CreateWindow(screen.width, screen.height, "Penego", nil, nil)
 	if err != nil {
 		panic(err)
 	}
-	window.MakeContextCurrent() // must be called before gl init
+	screen.Window = window
+	screen.MakeContextCurrent() // must be called before gl init
 	glfw.SwapInterval(1) // vsync - causes SwapBuffers to wait for frame
 
 	// center window on screen
-	window.SetPos((screenWidth-width)/2, (screenHeight-height)/2)
-	window.Show()
+	screen.SetPos((displayWidth-screen.width)/2, (displayHeight-screen.height)/2)
+	screen.Show()
 
 	// init gl
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
 
-	reshape(window, width, height)
-	window.SetSizeCallback(reshape)
-	window.SetKeyCallback(onKey)
-	window.SetRefreshCallback(func (window * glfw.Window) {
-		draw()
+	reshape(&screen, screen.width, screen.height)
+	screen.setSizeCallback(reshape)
+	screen.SetKeyCallback(onKey)
+	screen.SetRefreshCallback(func (window * glfw.Window) {
+		draw(screen)
 		window.SwapBuffers()
 	});
 
+
 	go func() {
-		handler(&Screen{window})
+		handler(&screen)
 		doInLoop(func() { // close windows after handler returns
-			window.SetShouldClose(true)
+			screen.SetShouldClose(true)
 		}, false)
 	}()
 
 	// main loop
-	for !window.ShouldClose() {
+	for !screen.ShouldClose() {
 		empty: for {
 			select {
 			case f := <-inLoopFuncChan: // this must be buffer, to not block handler function
@@ -93,10 +91,10 @@ func Run(handler func(*Screen)) {
 			}
 		}
 
-		if contentInvalid {
-			draw()
-			window.SwapBuffers()
-			contentInvalid = false
+		if screen.contentInvalid {
+			draw(screen)
+			screen.SwapBuffers()
+			screen.contentInvalid = false
 		}
 		glfw.PollEvents()
 		time.Sleep(time.Millisecond) // dont waste CPU
@@ -104,7 +102,7 @@ func Run(handler func(*Screen)) {
 
 }
 
-func reshape(window *glfw.Window, w, h int) {
+func reshape(screen * Screen, w, h int) {
 	gl.ClearColor(1, 1, 1, 1) // white
 	/* Establish viewing area to cover entire window. */
 	gl.Viewport(0, 0, int32(w), int32(h))
@@ -122,8 +120,8 @@ func reshape(window *glfw.Window, w, h int) {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.DEPTH_TEST)
 
-	width, height = w, h
-	contentInvalid = true
+	screen.width, screen.height = w, h
+	screen.contentInvalid = true
 }
 
 func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {

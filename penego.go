@@ -1,12 +1,14 @@
 package main
 
 import (
+	"log"
 	"fmt"
 	"time"
 	"os"
 	"io/ioutil"
 	"flag"
 	"github.com/pkg/profile"
+	"github.com/fsnotify/fsnotify"
 	"penego/gui"
 	"penego/net"
 )
@@ -97,26 +99,41 @@ func main() {
 		----
 		g -> [exp(1s)] -> g, 2*e
 	`
-	if flag.NArg() >= 1 {
-		filename := flag.Arg(0)
+
+
+	read := func(filename string) (pnstring string) {
 		filecontent, err := ioutil.ReadFile(filename)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s", err)
 			return
 		}
 		pnstring = string(filecontent)
-	} else {
-		fmt.Println("No pn file specified, using example")
+		return
 	}
-	network, err = net.Parse(pnstring)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err)
+	parse := func(pnstring string) (network net.Net) {
+		network, err = net.Parse(pnstring)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s", err)
+			return
+		}
+		if verbose {
+			fmt.Println(network)
+		}
 		return
 	}
 
-	if verbose {
-		fmt.Println(network)
+
+	if flag.NArg() >= 1 {
+		filename := flag.Arg(0)
+		pnstring = read(filename)
+		go OnFileChange(filename, func() {
+			pnstring = read(filename)
+			network = parse(pnstring)
+		})
+	} else {
+		fmt.Println("No pn file specified, using example")
 	}
+	network = parse(pnstring)
 
 
 	////////////////////////////////
@@ -126,56 +143,7 @@ func main() {
 		var state State = Splash
 
 		// how to draw
-		var drawNet = func () {
-			places := network.Places()
-			transitions := network.Transitions()
-
-			const BASE = 90.0
-
-			posOfPlace := func(i int) gui.Pos {
-				pos := gui.Pos{
-					X: float64(i) * BASE - (float64(len(places))/2 - 0.5) * BASE,
-					Y: 0,
-				}
-				if len(transitions) <= 1 {
-					pos.Y += BASE
-				}
-				return pos
-			}
-
-			posOfTransition := func(i int) gui.Pos {
-				pos := gui.Pos{
-					X: float64(i) * BASE - (float64(len(transitions))/2) * BASE + BASE/2,
-					Y: 4 * BASE * float64(i % 2) - 2 * BASE,
-				}
-				if len(transitions) <= 1 {
-					pos.Y += BASE
-				}
-				return pos
-			}
-
-			for i, p := range places {
-				screen.DrawPlace(posOfPlace(i), p.Tokens, p.Description)
-			}
-
-			for ti, t := range transitions {
-				screen.DrawTransition(posOfTransition(ti), t.TimeFunc.String(), t.Description)
-				// arcs:
-				for pi, p := range places {
-					for _, arc := range t.Origins {
-						if arc.Place == p {
-							screen.DrawInArc(posOfPlace(pi), posOfTransition(ti), arc.Weight)
-						}
-					}
-					for _, arc := range t.Targets {
-						if arc.Place == p {
-							screen.DrawOutArc(posOfTransition(ti), posOfPlace(pi), arc.Weight)
-						}
-					}
-				}
-			}
-
-		}
+		var drawNet = getDrawNet(network)
 
 		var onStateChange = func(now, then time.Duration) {
 			if verbose {
@@ -261,4 +229,35 @@ func main() {
 
 	}) // returns when func returns
 
+}
+
+
+func OnFileChange(file string, callback func()) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				log.Println("event:", event)
+				if (event.Op & fsnotify.Write) == fsnotify.Write {
+					log.Println("modified file:", event.Name)
+					callback()
+				}
+			case err := <-watcher.Errors:
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	err = watcher.Add(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	<-done
 }

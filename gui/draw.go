@@ -1,6 +1,7 @@
 package gui
 // draw content
 // drawing routines definitions
+// exports nothing
 
 import (
 	"math"
@@ -17,7 +18,7 @@ const (
 	TRANSITION_HEIGHT = 72.0
 )
 
-type RedrawFunc func()
+type RedrawFunc func(* Screen)
 
 var ( // pseudo constants
 	WHITE = color.RGBA{255, 255, 255, 255}	// #ffffff
@@ -32,7 +33,8 @@ var ( // pseudo constants
 )
 
 var (
-	drawSplash = func() {
+	drawSplash = RedrawFunc(func(screen * Screen) {
+		ctx := screen.ctx
 		if ctx != nil {
 			ctx.Save()
 			ctx.SetFontData(draw2d.FontData{Name:"gobold"})
@@ -41,23 +43,16 @@ var (
 			drawCenteredString(ctx, "Penego", 0, 0)
 			ctx.Restore()
 		}
-	}
+	})
 )
-
-var (
-	drawContentFunc RedrawFunc = nil // function for drawing content, settable by OnRedraw
-	ctx * draw2dgl.GraphicContext
-)
-
-func init () {
-	drawContentFunc = drawSplash
-}
 
 // called by mainloop if context is invalid
-func draw() {
+func draw(screen Screen) {
 
 	/* create graphic context and set styles */
-	ctx = draw2dgl.NewGraphicContext(width, height)
+	screen.ctx = draw2dgl.NewGraphicContext(screen.width, screen.height)
+	ctx := screen.ctx
+
 	ctx.SetFontData(draw2d.FontData{Name:"goregular"})
 	ctx.SetFontSize(14)
 	ctx.SetFillColor(WHITISH)
@@ -65,16 +60,14 @@ func draw() {
 	ctx.SetLineWidth(3)
 
 	/* background */
-	draw2dkit.Rectangle(ctx, 0, 0, float64(width), float64(height))
+	draw2dkit.Rectangle(ctx, 0, 0, float64(screen.width), float64(screen.height))
 	ctx.Fill()
 
 	/* translate origin to center */
-	ctx.Translate(float64(width/2), float64(height/2))
+	ctx.Translate(float64(screen.width/2), float64(screen.height/2))
 
-	// draw shapes
-	if drawContentFunc != nil {
-		drawContentFunc()
-	}
+	// draw shapes or whatever
+	screen.drawContent()
 }
 
 func drawPlace(ctx * draw2dgl.GraphicContext, x float64, y float64, n int, description string) {
@@ -178,7 +171,7 @@ func drawArc(ctx * draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir 
 		fromy += yo
 		ctx.MoveTo(fromx, fromy)
 		ctx.CubicCurveTo(fromx + 4*xo, fromy + 4*yo, tox - 60, toy, tox, toy)
-		drawArrowHaed(ctx, tox, toy, -math.Pi/2)
+		drawArrowHead(ctx, tox, toy, -math.Pi/2)
 	}
 	if dir == Out { // [ ] -> ( )
 		angle := math.Pi*-0.25
@@ -192,14 +185,14 @@ func drawArc(ctx * draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir 
 		toy += yo
 		ctx.MoveTo(fromx, fromy)
 		ctx.CubicCurveTo(fromx + 60, fromy, tox + 4*xo, toy + 4*yo, tox, toy)
-		drawArrowHaed(ctx, tox, toy, angle)
+		drawArrowHead(ctx, tox, toy, angle)
 	}
 	ctx.Stroke()
 }
 
 // help functions
 
-func drawArrowHaed(ctx * draw2dgl.GraphicContext, x float64, y float64, angle float64){
+func drawArrowHead(ctx * draw2dgl.GraphicContext, x float64, y float64, angle float64){
 	r := 18.0
 	w := math.Pi/8
 	xl := x + math.Sin(angle + w)*r
