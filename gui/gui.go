@@ -1,18 +1,17 @@
 package gui
+
 // exports Run function
 
-
 import (
-	"time"
-	"runtime"
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
+	"runtime"
+	"time"
 )
 
 var (
 	inLoopFuncChan chan func() // TODO remove global
 )
-
 
 func init() {
 	runtime.LockOSThread()
@@ -53,7 +52,7 @@ func Run(handler func(*Screen)) {
 	}
 	screen.Window = window
 	screen.MakeContextCurrent() // must be called before gl init
-	glfw.SwapInterval(1) // vsync - causes SwapBuffers to wait for frame
+	glfw.SwapInterval(1)        // vsync - causes SwapBuffers to wait for frame
 
 	// center window on screen
 	screen.SetPos((displayWidth-screen.width)/2, (displayHeight-screen.height)/2)
@@ -67,11 +66,10 @@ func Run(handler func(*Screen)) {
 	reshape(&screen, screen.width, screen.height)
 	screen.setSizeCallback(reshape)
 	screen.SetKeyCallback(onKey)
-	screen.SetRefreshCallback(func (window * glfw.Window) {
+	screen.SetRefreshCallback(func(window *glfw.Window) {
 		draw(screen)
 		window.SwapBuffers()
-	});
-
+	})
 
 	go func() {
 		handler(&screen)
@@ -82,7 +80,8 @@ func Run(handler func(*Screen)) {
 
 	// main loop
 	for !screen.ShouldClose() {
-		empty: for {
+	empty:
+		for {
 			select {
 			case f := <-inLoopFuncChan: // this must be buffer, to not block handler function
 				f()
@@ -102,7 +101,7 @@ func Run(handler func(*Screen)) {
 
 }
 
-func reshape(screen * Screen, w, h int) {
+func reshape(screen *Screen, w, h int) {
 	gl.ClearColor(1, 1, 1, 1) // white
 	/* Establish viewing area to cover entire window. */
 	gl.Viewport(0, 0, int32(w), int32(h))
@@ -127,7 +126,7 @@ func reshape(screen * Screen, w, h int) {
 func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Press {
 		switch {
-		case key == glfw.KeyEscape,	key == glfw.KeyQ:
+		case key == glfw.KeyEscape, key == glfw.KeyQ:
 			w.SetShouldClose(true)
 		}
 	}
@@ -144,4 +143,3 @@ func getResolution() (int, int) {
 	}
 	return vidMode.Width, vidMode.Height
 }
-

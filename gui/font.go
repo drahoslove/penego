@@ -1,14 +1,15 @@
 package gui
+
 // create font cache with roboto
 
 import (
 	"fmt"
-	"github.com/llgcode/draw2d"
 	"github.com/golang/freetype/truetype"
-	"golang.org/x/image/font/gofont/goregular"
+	"github.com/llgcode/draw2d"
 	"golang.org/x/image/font/gofont/gobold"
 	"golang.org/x/image/font/gofont/goitalic"
 	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/gofont/goregular"
 )
 
 type customFontCache map[string]*truetype.Font
@@ -25,14 +26,14 @@ func (fc customFontCache) Load(fd draw2d.FontData) (*truetype.Font, error) {
 	return font, nil
 }
 
-func init () {
+func init() {
 	fontCache := customFontCache{}
 
 	TTFs := map[string]([]byte){
 		"goregular": goregular.TTF,
-		"gobold": gobold.TTF,
-		"goitalic": goitalic.TTF,
-		"gomono": gomono.TTF,
+		"gobold":    gobold.TTF,
+		"goitalic":  goitalic.TTF,
+		"gomono":    gomono.TTF,
 	}
 
 	for fontName, TTF := range TTFs {

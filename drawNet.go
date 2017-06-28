@@ -1,8 +1,8 @@
 package main
 
 import (
-	"penego/net"
 	"penego/gui"
+	"penego/net"
 )
 
 func getDrawNet(network net.Net) gui.RedrawFunc {
@@ -13,7 +13,7 @@ func getDrawNet(network net.Net) gui.RedrawFunc {
 
 	posOfPlace := func(i int) gui.Pos {
 		pos := gui.Pos{
-			X: float64(i) * BASE - (float64(len(places))/2 - 0.5) * BASE,
+			X: float64(i)*BASE - (float64(len(places))/2-0.5)*BASE,
 			Y: 0,
 		}
 		if len(transitions) <= 1 {
@@ -24,8 +24,8 @@ func getDrawNet(network net.Net) gui.RedrawFunc {
 
 	posOfTransition := func(i int) gui.Pos {
 		pos := gui.Pos{
-			X: float64(i) * BASE - (float64(len(transitions))/2) * BASE + BASE/2,
-			Y: 4 * BASE * float64(i % 2) - 2 * BASE,
+			X: float64(i)*BASE - (float64(len(transitions))/2)*BASE + BASE/2,
+			Y: 4*BASE*float64(i%2) - 2*BASE,
 		}
 		if len(transitions) <= 1 {
 			pos.Y += BASE
@@ -33,7 +33,7 @@ func getDrawNet(network net.Net) gui.RedrawFunc {
 		return pos
 	}
 
-	return func(screen * gui.Screen) {
+	return func(screen *gui.Screen) {
 		for i, p := range places {
 			screen.DrawPlace(posOfPlace(i), p.Tokens, p.Description)
 		}

@@ -1,19 +1,20 @@
 package main
 
 import (
-	"log"
-	"fmt"
-	"time"
-	"os"
-	"io/ioutil"
 	"flag"
-	"github.com/pkg/profile"
+	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/profile"
+	"io/ioutil"
+	"log"
+	"os"
 	"penego/gui"
 	"penego/net"
+	"time"
 )
 
 type State int
+
 const (
 	Initial State = iota
 	Running
@@ -25,6 +26,7 @@ const (
 )
 
 type TimeFlow int
+
 const (
 	// no waits, just jum to the end of simulation
 	NoFlow TimeFlow = iota
@@ -36,17 +38,17 @@ const (
 
 func (flow TimeFlow) String() string {
 	return map[TimeFlow]string{
-		NoFlow: "no",
+		NoFlow:         "no",
 		ContinuousFlow: "continuous",
-		NaturalFlow: "natural",
+		NaturalFlow:    "natural",
 	}[flow]
 }
 
 func (flow *TimeFlow) Set(name string) error {
 	val, ok := map[string]TimeFlow{
-		"no": NoFlow,
+		"no":         NoFlow,
 		"continuous": ContinuousFlow,
-		"natural": NaturalFlow,
+		"natural":    NaturalFlow,
 	}[name]
 	if !ok {
 		return fmt.Errorf("may be: no, continuous, natural")
@@ -62,20 +64,20 @@ func main() {
 
 	var (
 		network net.Net
-		err error
+		err     error
 	)
 
 	// flags
 
 	var (
-		startTime = time.Duration(0)
-		endTime = time.Hour * 24 * 1e5
-		timeFlow = ContinuousFlow
-		timeSpeed = uint(10)
+		startTime  = time.Duration(0)
+		endTime    = time.Hour * 24 * 1e5
+		timeFlow   = ContinuousFlow
+		timeSpeed  = uint(10)
 		truerandom = false
-		noclose = true
-		verbose = false
-		autostart = false
+		noclose    = true
+		verbose    = false
+		autostart  = false
 	)
 
 	flag.DurationVar(&startTime, "start", startTime, "start time of simulation")
@@ -88,7 +90,6 @@ func main() {
 	flag.BoolVar(&autostart, "autostart", autostart, "automatic start")
 	flag.Parse()
 
-
 	////////////////////////////////
 
 	// load network from file if given filename
@@ -99,7 +100,6 @@ func main() {
 		----
 		g -> [exp(1s)] -> g, 2*e
 	`
-
 
 	read := func(filename string) (pnstring string) {
 		filecontent, err := ioutil.ReadFile(filename)
@@ -131,7 +131,6 @@ func main() {
 	}
 	network = parse(pnstring)
 
-
 	////////////////////////////////
 
 	gui.Run(func(screen *gui.Screen) { // runs this anon func in goroutine
@@ -151,7 +150,7 @@ func main() {
 			switch timeFlow {
 			case NoFlow:
 			case NaturalFlow:
-				time.Sleep((then-now) / time.Duration(timeSpeed))
+				time.Sleep((then - now) / time.Duration(timeSpeed))
 			case ContinuousFlow:
 				time.Sleep(time.Second / time.Duration(timeSpeed))
 			}
@@ -206,7 +205,7 @@ func main() {
 					state = Paused
 				}
 			case Running:
-				sim.Run() ////////////////// <--
+				sim.Run()             ////////////////// <--
 				if state != Running { // paused or stopped
 					continue
 				}
@@ -221,7 +220,7 @@ func main() {
 					state = Exit
 				}
 			case Paused:
-				time.Sleep(time.Millisecond*20)
+				time.Sleep(time.Millisecond * 20)
 				screen.SetTitle(sim.GetNow().String() + " paused")
 			case Idle:
 				time.Sleep(time.Second)
@@ -229,11 +228,9 @@ func main() {
 			}
 		}
 
-
 	}) // returns when func returns
 
 }
-
 
 func OnFileChange(file string, callback func()) {
 	watcher, err := fsnotify.NewWatcher()
