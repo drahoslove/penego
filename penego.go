@@ -140,21 +140,19 @@ func main() {
 		// how to draw
 		var drawNet = getDrawNet(network)
 
-		var onStateChange = func(now, then time.Duration) {
+		var onStateChange = func(before, now time.Duration) {
+			switch timeFlow {
+			case NoFlow:
+			case NaturalFlow:
+				time.Sleep((now - before) / time.Duration(timeSpeed))
+			case ContinuousFlow:
+				time.Sleep(time.Second / time.Duration(timeSpeed))
+			}
 			if verbose {
 				fmt.Println(now, network.Places())
 			}
 			screen.SetTitle(now.String())
-			screen.ForceRedraw(false) // dont block
-
-			switch timeFlow {
-			case NoFlow:
-			case NaturalFlow:
-				time.Sleep((then - now) / time.Duration(timeSpeed))
-			case ContinuousFlow:
-				time.Sleep(time.Second / time.Duration(timeSpeed))
-			}
-
+			screen.ForceRedraw(false) // block
 		}
 
 		var sim net.Simulation
@@ -171,7 +169,7 @@ func main() {
 
 		screen.OnKey("R", func() {
 			switch state {
-			case Running, Paused:
+			case Running, Paused, Idle:
 				state = Initial
 				sim.Stop()
 			}
@@ -181,8 +179,8 @@ func main() {
 			pnstring = read(filename)
 			network = parse(pnstring)
 			drawNet = getDrawNet(network)
-			state = Initial
 			sim.Stop()
+			state = Initial
 		})
 
 		for state != Exit {

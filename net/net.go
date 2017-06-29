@@ -208,7 +208,7 @@ func (trans Transitions) Less(i, j int) bool {
 /* Event */
 
 type Event struct {
-	t time.Duration
+	time time.Duration
 	transition *Transition
 }
 
@@ -220,7 +220,7 @@ type Calendar []Event
 func (c Calendar) String() string {
 	str := "c: "
 	for _, event := range c {
-		str += fmt.Sprintf("T=%s,%s | ", event.t, event.transition.Description)
+		str += fmt.Sprintf("T=%s,%s | ", event.time, event.transition.Description)
 	}
 	return str
 }
@@ -241,17 +241,17 @@ func (c *Calendar) shift() (time.Duration, *Transition) {
 	defer func() {
 		*c = (*c)[1:]
 	}()
-	return (*c)[0].t, (*c)[0].transition
+	return (*c)[0].time, (*c)[0].transition
 }
 
-func (c *Calendar) insert(newTime time.Duration, tran *Transition) {
+func (c *Calendar) insertByTime(newTime time.Duration, tran *Transition) {
 	if c.isEmpty() {
 		c.Insert(Event{newTime, tran}, 0)
 		return
 	}
 	i, event := 0, Event{};
 	for i, event = range *c {
-		if newTime < event.t {
+		if newTime < event.time {
 			c.Insert(Event{newTime, tran}, i)
 			return
 		}
@@ -300,7 +300,7 @@ func (sim *Simulation) scheduleEnabledTimed() {
 		if tran.TimeFunc != nil {
 			max := sim.diffEnabilityVsScheduled(tran) // how many times schedule
 			for i := 0; i < max; i++ {
-				sim.calendar.insert(sim.now + (*tran.TimeFunc)(), tran)
+				sim.calendar.insertByTime(sim.now + (*tran.TimeFunc)(), tran)
 			}
 		}
 	}
@@ -337,7 +337,6 @@ func (sim *Simulation) Run() {
 		restartSeed()
 		sim.now = sim.startTime
 		sim.calendar = Calendar{}
-		sim.net.restoreState()
 	} // else use previously used values
 
 	sim.paused = false
@@ -347,27 +346,35 @@ func (sim *Simulation) Run() {
 	copy(sortedTransitions, sim.net.transitions)
 	sort.Sort(sortedTransitions)
 
-	fireEvent := func(scheduledTran *Transition) {
+	fireEvent := func(scheduledTran *Transition, before, now time.Duration) {
 
 		scheduledTran.doIn()
 		sim.cancelUnenabledTimed()
 		scheduledTran.doOut()
+		sim.stateChange(before, now)
 
 		countOfPasses := 0
 		stabilize: // whenever transition is completed, start checking again from bigest priority
 		countOfPasses++
-		if countOfPasses > 1E6 {
+		if countOfPasses > 1E3 {
 			panic("too many transitions done in same time, possible loop")
 		}
 		for _, tran := range sortedTransitions { // TODO cycle transitions with same priority in random order
 			if tran.TimeFunc != nil {
 				break // no need to go further, rest are timed due to sort
 			}
+			if sim.stopped {
+				return
+			}
 			if tran.isEnabled() {
-				sim.stateChange(sim.now, sim.now)
+				if sim.paused {
+					sim.calendar.Insert(Event{now, tran}, 0)
+					return
+				}
 				tran.doIn()
 				sim.cancelUnenabledTimed()
 				tran.doOut()
+				sim.stateChange(now, now)
 				goto stabilize
 			}
 		}
@@ -375,26 +382,25 @@ func (sim *Simulation) Run() {
 		sim.scheduleEnabledTimed() // might create new event in current time
 	}
 
-	fireEvent(&Transition{})
+	fireEvent(&Transition{}, sim.startTime, sim.startTime) // todo schedule empty tarn isntead?
 
 	for !sim.calendar.isEmpty() {
 		if sim.paused  {
-			break
+			return
 		}
 		if sim.stopped {
-			sim.net.restoreState()
 			break
 		}
 		eventTime, tranToFireNow := sim.calendar.shift()
-		sim.stateChange(sim.now, eventTime) // current time and next time
 		if eventTime > sim.endTime {
 			break
 		}
+		before := sim.now
 		sim.now = eventTime
-		fireEvent(tranToFireNow)
-
+		fireEvent(tranToFireNow, before, sim.now)  // current time and time of event
 	}
 
+	sim.net.restoreState()
 }
 
 // Pause pauses current simulation Run
