@@ -1,16 +1,16 @@
-package main
+package main // import "git.yo2.cz/drahoslav/penego"
 
 import (
 	"flag"
 	"fmt"
-	"github.com/fsnotify/fsnotify"
-	"github.com/pkg/profile"
 	"io/ioutil"
 	"log"
 	"os"
-	"penego/gui"
-	"penego/net"
 	"time"
+	"github.com/pkg/profile"
+	"github.com/fsnotify/fsnotify"
+	"git.yo2.cz/drahoslav/penego/gui"
+	"git.yo2.cz/drahoslav/penego/net"
 )
 
 type State int

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"penego/gui"
-	"penego/net"
+	"git.yo2.cz/drahoslav/penego/gui"
+	"git.yo2.cz/drahoslav/penego/net"
 )
 
 func getDrawNet(network net.Net) gui.RedrawFunc {
