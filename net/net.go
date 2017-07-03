@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 	"sort"
-	"math"
 	"strings"
 	"strconv"
 )
 
+const MaxInt = int(^uint(0) >> 1)
 
 /******* types *******/
 
@@ -139,7 +139,7 @@ func (t Transition) String () string {
  * How many times can by transition fired with current marking on origins arcs
  */
 func (t * Transition) getEnabilityMagnitude() int {
-	enability := math.MaxInt64
+	enability := MaxInt
 	for _, arc := range t.Origins {
 		arcEnability := arc.Place.Tokens / arc.Weight // posible fires for this arc
 		if arcEnability < enability {
