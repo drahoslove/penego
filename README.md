@@ -2,19 +2,19 @@
 *Multi-platform petri-net visualisator written in Go.*
 
 
-Penego can handle petri nets with following properties:
-(I do not intend to implement those that are crossed out or not listed at all.)
+Penego can work with Petri nets having following properties:
+- [x] Standard Petri net with indistinguishable tokens
+- [x] Prioritized transitions
 - [x] Timed transtions
     - [x] Deterministic
-    - [x] Random with given distribution function
+    - [x] Stochastic (Random time with given distribution function)
       - [x] Uniform
       - [x] Exponential
       - [x] Erlang
-- [x] Prioritized transitions
 - [ ] Propabilities of transitions
 - [x] Weighted arcs
-- [ ] ~~Capacity of places~~
-- [ ] ~~Inhibitory edges~~
+- [ ] Inhibitory edges
+- [ ] Capacity of places
 
 
 ## Screenshots
@@ -38,7 +38,7 @@ Penego uses its own language to represent Petri nets.
 It's meant to be easy to learn, and easier to use.
 ### Example
 
-```js
+```java
 g (1)
 e ( ) "exit"
 ----
@@ -69,7 +69,7 @@ The text beginning with `//` or `--` is ignored by parser until the end of the l
 
 ### Example of more complex network described in penego notation
 
-```js
+```java
 // common places
 g (1) // generator of students
 f (0) "queue"
