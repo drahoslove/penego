@@ -24,6 +24,11 @@ Penego can work with Petri nets having following properties:
 | ![gui](examples/simple.png) | ![gui](examples/simple2.png) | ![gui](examples/mensa.png) | ![gui](examples/mensa2.png)    |
 
 
+## Build
+```
+go get -u git.yo2.cz/drahoslav/penego/
+```
+(packages `libgl1-mesa-dev` and `xorg-dev` or similar are required for building on linux)
 
 ## Usage
 ```bash
