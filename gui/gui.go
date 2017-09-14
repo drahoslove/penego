@@ -41,7 +41,7 @@ func Run(handler func(*Screen)) {
 	defer glfw.Terminate()
 
 	// create window
-	displayWidth, displayHeight := getResolution()
+	displayWidth, displayHeight := getMonitorResolution()
 	screen.width, screen.height = displayWidth/2, displayHeight/2
 	glfw.WindowHint(glfw.Resizable, glfw.True)
 	glfw.WindowHint(glfw.Decorated, glfw.True)
@@ -132,7 +132,7 @@ func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods 
 	}
 }
 
-func getResolution() (int, int) {
+func getMonitorResolution() (int, int) {
 	monitor := glfw.GetPrimaryMonitor()
 	if monitor == nil {
 		return 800, 600

@@ -5,6 +5,7 @@ package gui
 // exports nothing
 
 import (
+	mgl "github.com/go-gl/mathgl/mgl64"
 	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dgl"
 	"github.com/llgcode/draw2d/draw2dkit"
@@ -14,7 +15,7 @@ import (
 )
 
 const (
-	PLACE_READIUS     = 24.0
+	PLACE_RADIUS      = 24.0
 	TRANSITION_WIDTH  = 18.0
 	TRANSITION_HEIGHT = 72.0
 )
@@ -38,11 +39,11 @@ var (
 		ctx := screen.ctx
 		if ctx != nil {
 			ctx.Save()
+			defer ctx.Restore()
 			ctx.SetFontData(draw2d.FontData{Name: "gobold"})
 			ctx.SetFontSize(48)
 			ctx.SetFillColor(DARK_GRAY)
 			drawCenteredString(ctx, "Penego", 0, 0)
-			ctx.Restore()
 		}
 	})
 )
@@ -72,13 +73,11 @@ func draw(screen Screen) {
 }
 
 func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, description string) {
-	r := PLACE_READIUS
+	r := PLACE_RADIUS
 	ctx.Save()
 	defer ctx.Restore()
 
-	ctx.BeginPath()
 	draw2dkit.Circle(ctx, x, y, r)
-	ctx.Close()
 
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
@@ -88,7 +87,6 @@ func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, descri
 	switch {
 	case n == 1: // draw dot
 		draw2dkit.Circle(ctx, x, y, 6)
-		ctx.Close()
 		ctx.SetFillColor(BLACKISH)
 		ctx.Fill()
 	case 1 < n && n < 6: // draw dots
@@ -99,11 +97,9 @@ func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, descri
 			yy := y + math.Cos(angle)*rr
 
 			draw2dkit.Circle(ctx, xx, yy, 5)
-			ctx.Close()
-
-			ctx.SetFillColor(BLACKISH)
-			ctx.Fill()
 		}
+		ctx.SetFillColor(BLACKISH)
+		ctx.Fill()
 
 	case n >= 6: // draw numbers
 		ctx.Save()
@@ -138,9 +134,7 @@ func drawTransition(ctx *draw2dgl.GraphicContext, x, y float64, attrs, descripti
 	ctx.Save()
 	defer ctx.Restore()
 
-	ctx.BeginPath()
 	draw2dkit.Rectangle(ctx, x-w/2, y-h/2, x+w/2, y+h/2)
-	ctx.Close()
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
 	ctx.FillStroke()
@@ -157,20 +151,30 @@ func drawTransition(ctx *draw2dgl.GraphicContext, x, y float64, attrs, descripti
 }
 
 func drawArc(ctx *draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir Direction, weight int) {
-	r := PLACE_READIUS
+	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH
+	var cPs []mgl.Vec2 // control point of arcs curve
+
+	ctx.Save()
+	defer ctx.Restore()
+
 	if dir == In { // ( ) -> [ ]
-		angle := math.Pi * +0.25
+		angle := math.Pi * +0.25 // outgoing angle from place
 		if fromy > toy {
 			angle += math.Pi
 		}
-		xo := math.Sin(angle) * r
+		xo := math.Sin(angle) * r // start position on place edge related to its center
 		yo := math.Cos(angle) * r
 		tox -= w / 2
 		fromx += xo
 		fromy += yo
-		ctx.MoveTo(fromx, fromy)
-		ctx.CubicCurveTo(fromx+4*xo, fromy+4*yo, tox-60, toy, tox, toy)
+
+		cPs = []mgl.Vec2{
+			{fromx, fromy},
+			{fromx + 4*xo, fromy + 4*yo},
+			{tox - 60, toy},
+			{tox, toy},
+		}
 		drawArrowHead(ctx, tox, toy, -math.Pi/2)
 	}
 	if dir == Out { // [ ] -> ( )
@@ -183,11 +187,30 @@ func drawArc(ctx *draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir D
 		fromx += w / 2
 		tox += xo
 		toy += yo
-		ctx.MoveTo(fromx, fromy)
-		ctx.CubicCurveTo(fromx+60, fromy, tox+4*xo, toy+4*yo, tox, toy)
+		cPs = []mgl.Vec2{
+			{fromx, fromy},
+			{fromx + 60, fromy},
+			{tox + 4*xo, toy + 4*yo},
+			{tox, toy},
+		}
 		drawArrowHead(ctx, tox, toy, angle)
 	}
+
+	ctx.MoveTo(cPs[0].X(), cPs[0].Y())
+	ctx.CubicCurveTo(
+		cPs[1].X(), cPs[1].Y(),
+		cPs[2].X(), cPs[2].Y(),
+		cPs[3].X(), cPs[3].Y(),
+	)
 	ctx.Stroke()
+
+	if weight > 1 {
+		arcCntr := mgl.CubicBezierCurve2D(0.5, cPs[0], cPs[1], cPs[2], cPs[3])
+		draw2dkit.Circle(ctx, arcCntr.X(), arcCntr.Y()-6, 12)
+		ctx.SetFillColor(WHITISH)
+		ctx.Fill()
+		drawCenteredString(ctx, strconv.Itoa(weight), arcCntr.X()-1, arcCntr.Y())
+	}
 }
 
 // help functions
@@ -201,15 +224,14 @@ func drawArrowHead(ctx *draw2dgl.GraphicContext, x float64, y float64, angle flo
 	yr := y + math.Cos(angle-w)*r
 
 	ctx.Save()
-	ctx.SetFillColor(BLACKISH)
-	ctx.BeginPath()
+	defer ctx.Restore()
+
 	ctx.MoveTo(x, y)
 	ctx.LineTo(xl, yl)
 	ctx.LineTo(xr, yr)
 	ctx.LineTo(x, y)
-	ctx.Close()
+	ctx.SetFillColor(BLACKISH)
 	ctx.Fill()
-	ctx.Restore()
 }
 
 func drawCenteredString(ctx *draw2dgl.GraphicContext, str string, x float64, y float64) {
@@ -217,8 +239,10 @@ func drawCenteredString(ctx *draw2dgl.GraphicContext, str string, x float64, y f
 	width := right - left
 	height := bottom - top
 	_ = height
+
 	ctx.Save()
+	defer ctx.Restore()
+
 	ctx.SetFillColor(BLACKISH)
 	ctx.FillStringAt(str, x-width/2, y)
-	ctx.Restore()
 }

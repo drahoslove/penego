@@ -13,6 +13,13 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
+const EXAMPLE = `
+	g (1)
+	e ( ) "exit"
+	----
+	g -> [exp(1s)] -> g, 2*e
+`
+
 type State int
 
 const (
@@ -94,12 +101,7 @@ func main() {
 
 	// load network from file if given filename
 
-	pnstring := `
-		g (1)
-		e ( ) "exit"
-		----
-		g -> [exp(1s)] -> g, 2*e
-	`
+	pnstring := EXAMPLE
 
 	read := func(filename string) (pnstring string) {
 		filecontent, err := ioutil.ReadFile(filename)
@@ -175,7 +177,7 @@ func main() {
 			}
 		})
 
-		go OnFileChange(filename, func() {
+		go watchFileChange(filename, func() {
 			pnstring = read(filename)
 			network = parse(pnstring)
 			drawNet = getDrawNet(network)
@@ -230,7 +232,7 @@ func main() {
 
 }
 
-func OnFileChange(file string, callback func()) {
+func watchFileChange(file string, callback func()) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
