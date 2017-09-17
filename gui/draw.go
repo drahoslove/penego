@@ -48,28 +48,24 @@ var (
 	})
 )
 
-// called by mainloop if context is invalid
-func draw(screen Screen) {
-
+func newCtx(width, height int) *draw2dgl.GraphicContext {
 	/* create graphic context and set styles */
-	screen.ctx = draw2dgl.NewGraphicContext(screen.width, screen.height)
-	ctx := screen.ctx
-
+	var ctx = draw2dgl.NewGraphicContext(width, height)
 	ctx.SetFontData(draw2d.FontData{Name: "goregular"})
 	ctx.SetFontSize(14)
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
 	ctx.SetLineWidth(3)
 
-	/* background */
-	draw2dkit.Rectangle(ctx, 0, 0, float64(screen.width), float64(screen.height))
-	ctx.Fill()
-
 	/* translate origin to center */
-	ctx.Translate(float64(screen.width/2), float64(screen.height/2))
+	ctx.Translate(float64(width)/2, float64(height)/2)
+	return ctx
+}
 
-	// draw shapes or whatever
-	screen.drawContent()
+func clean(ctx *draw2dgl.GraphicContext, width, height int) {
+	/* background */
+	draw2dkit.Rectangle(ctx, -float64(width)/2, -float64(height)/2, float64(width)/2, float64(height)/2)
+	ctx.Fill()
 }
 
 func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, description string) {

@@ -127,7 +127,7 @@ type Transition struct {
 	Description string
 }
 
-func (t Transition) String () string {
+func (t Transition) String() string {
 	prio := ""
 	if t.Priority != 0 {
 		prio = "p=" + strconv.Itoa(t.Priority)
@@ -186,6 +186,7 @@ func (trans *Transitions) Remove(i int) {
 	*trans = append((*trans)[:i], (*trans)[i+1:]...)
 }
 
+/* following 3 methods are implemented to satisfy sort.Interface */
 func (trans Transitions) Len() int {
 	return len(trans)
 }
@@ -195,12 +196,14 @@ func (trans Transitions) Swap(i, j int) {
 }
 
 func (trans Transitions) Less(i, j int) bool {
+	// timed have always lower priority
 	if trans[i].TimeFunc == nil && trans[j].TimeFunc != nil {
 		return true
 	}
 	if trans[j].TimeFunc == nil && trans[i].TimeFunc != nil {
 		return false
 	}
+	// if both or niether are timed copmpare priority
 	return trans[i].Priority > trans[j].Priority
 }
 

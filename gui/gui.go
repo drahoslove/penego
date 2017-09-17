@@ -67,8 +67,8 @@ func Run(handler func(*Screen)) {
 	screen.setSizeCallback(reshape)
 	screen.SetKeyCallback(onKey)
 	screen.SetRefreshCallback(func(window *glfw.Window) {
-		draw(screen)
-		window.SwapBuffers()
+		screen.drawContent()
+		screen.SwapBuffers()
 	})
 
 	go func() {
@@ -91,7 +91,7 @@ func Run(handler func(*Screen)) {
 		}
 
 		if screen.contentInvalid {
-			draw(screen)
+			screen.drawContent()
 			screen.SwapBuffers()
 			screen.contentInvalid = false
 		}
@@ -120,7 +120,9 @@ func reshape(screen *Screen, w, h int) {
 	gl.Disable(gl.DEPTH_TEST)
 
 	screen.width, screen.height = w, h
+	screen.ctx = newCtx(w, h)
 	screen.contentInvalid = true
+
 }
 
 func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {

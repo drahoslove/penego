@@ -159,6 +159,8 @@ func main() {
 
 		var sim net.Simulation
 
+		// TODO screen.setMenuButtons
+
 		screen.OnKey("space", func() {
 			switch state {
 			case Paused:

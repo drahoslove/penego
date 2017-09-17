@@ -39,6 +39,7 @@ type Screen struct {
 
 func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
+		clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
 	}
 }
