@@ -34,12 +34,16 @@ var ( // pseudo constants
 	BLACK    = color.RGBA{0, 0, 0, 255}    // #000000
 )
 
+func opaque (clr color.RGBA, opacity float32) color.RGBA {
+	clr.A = uint8(255 * opacity)
+	return clr
+}
+
 var (
 	drawSplash = RedrawFunc(func(screen *Screen) {
 		ctx := screen.ctx
 		if ctx != nil {
-			ctx.Save()
-			defer ctx.Restore()
+			defer tempContext(ctx)()
 			ctx.SetFontData(draw2d.FontData{Name: "gobold"})
 			ctx.SetFontSize(48)
 			ctx.SetFillColor(DARK_GRAY)
@@ -68,10 +72,40 @@ func clean(ctx *draw2dgl.GraphicContext, width, height int) {
 	ctx.Fill()
 }
 
+func tempContext(ctx *draw2dgl.GraphicContext) (func()) {
+	ctx.Save()
+	return func () {
+		ctx.Restore()
+	}
+}
+
+// GUI entities
+
+func drawMenu(ctx *draw2dgl.GraphicContext, width, height int, itemsNames []string) {
+	defer tempContext(ctx)()
+	ctx.Translate(-float64(width)/2, -float64(height)/2)
+
+	ctx.SetFillColor(opaque(DARK_GRAY, 0.9))
+	draw2dkit.Rectangle(ctx, 0, 0, float64(width), 36)
+	ctx.Fill()
+
+	l := len(itemsNames)
+	btnW := width/l
+
+	ctx.SetFillColor(WHITISH)
+	ctx.SetFontSize(12)
+	for i, name := range itemsNames {
+		drawCenteredString(ctx, name, float64(i*btnW + btnW/2), 23)
+	}
+
+}
+
+
+// NET entities
+
 func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, description string) {
 	r := PLACE_RADIUS
-	ctx.Save()
-	defer ctx.Restore()
+	defer tempContext(ctx)()
 
 	draw2dkit.Circle(ctx, x, y, r)
 
@@ -100,6 +134,7 @@ func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, descri
 	case n >= 6: // draw numbers
 		ctx.Save()
 		ctx.SetFontData(draw2d.FontData{Name: "gomono"})
+		ctx.SetFillColor(BLACKISH)
 		switch {
 		case n < 100:
 			ctx.SetFontSize(24)
@@ -127,8 +162,7 @@ func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, descri
 
 func drawTransition(ctx *draw2dgl.GraphicContext, x, y float64, attrs, description string) {
 	w, h := TRANSITION_WIDTH, TRANSITION_HEIGHT
-	ctx.Save()
-	defer ctx.Restore()
+	defer tempContext(ctx)()
 
 	draw2dkit.Rectangle(ctx, x-w/2, y-h/2, x+w/2, y+h/2)
 	ctx.SetFillColor(WHITISH)
@@ -137,11 +171,13 @@ func drawTransition(ctx *draw2dgl.GraphicContext, x, y float64, attrs, descripti
 
 	// timed or priority
 	if attrs != "" {
+		ctx.SetFillColor(BLACKISH)
 		drawCenteredString(ctx, attrs, x, y+h/2+20) // under
 	}
 
 	// description
 	if description != "" {
+		ctx.SetFillColor(BLACKISH)
 		drawCenteredString(ctx, description, x, y-h/2-10) //ahove
 	}
 }
@@ -151,8 +187,7 @@ func drawArc(ctx *draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir D
 	w := TRANSITION_WIDTH
 	var cPs []mgl.Vec2 // control point of arcs curve
 
-	ctx.Save()
-	defer ctx.Restore()
+	defer tempContext(ctx)()
 
 	if dir == In { // ( ) -> [ ]
 		angle := math.Pi * +0.25 // outgoing angle from place
@@ -205,6 +240,8 @@ func drawArc(ctx *draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir D
 		draw2dkit.Circle(ctx, arcCntr.X(), arcCntr.Y()-6, 12)
 		ctx.SetFillColor(WHITISH)
 		ctx.Fill()
+
+		ctx.SetFillColor(BLACKISH)
 		drawCenteredString(ctx, strconv.Itoa(weight), arcCntr.X()-1, arcCntr.Y())
 	}
 }
@@ -219,8 +256,7 @@ func drawArrowHead(ctx *draw2dgl.GraphicContext, x float64, y float64, angle flo
 	xr := x + math.Sin(angle-w)*r
 	yr := y + math.Cos(angle-w)*r
 
-	ctx.Save()
-	defer ctx.Restore()
+	defer tempContext(ctx)()
 
 	ctx.MoveTo(x, y)
 	ctx.LineTo(xl, yl)
@@ -236,9 +272,5 @@ func drawCenteredString(ctx *draw2dgl.GraphicContext, str string, x float64, y f
 	height := bottom - top
 	_ = height
 
-	ctx.Save()
-	defer ctx.Restore()
-
-	ctx.SetFillColor(BLACKISH)
 	ctx.FillStringAt(str, x-width/2, y)
 }

@@ -41,6 +41,9 @@ func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
 		clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
+		// if s.drawContentFunc != drawSplash {
+			drawMenu(s.ctx, s.width, s.height, []string{"Quit", "Reload", "Play/Pause"}) // TODO pas button state (select/higlight/pressed)
+		// }
 	}
 }
 
