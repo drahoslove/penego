@@ -34,6 +34,7 @@ func init() {
 		"gobold":    gobold.TTF,
 		"goitalic":  goitalic.TTF,
 		"gomono":    gomono.TTF,
+		"awesome":   fontawesomeTTF,
 	}
 
 	for fontName, TTF := range TTFs {
