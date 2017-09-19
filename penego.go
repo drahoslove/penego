@@ -159,9 +159,7 @@ func main() {
 
 		var sim net.Simulation
 
-		// TODO screen.setMenuButtons
-
-		screen.OnKey("space", func() {
+		playPause := func() {
 			switch state {
 			case Paused:
 				state = Running
@@ -169,15 +167,25 @@ func main() {
 				state = Paused
 				sim.Pause()
 			}
-		})
-
-		screen.OnKey("R", func() {
+		}
+		reload := func() {
 			switch state {
 			case Running, Paused, Idle:
 				sim.Stop()
 				state = Initial
 			}
-		})
+		}
+		quit := func() {
+			screen.SetShouldClose(true)
+		}
+		// TODO refactor menu - use something like screen.setMenuButtons?
+		screen.OnKey("R", reload)
+		screen.OnMenu(1, reload)
+		screen.OnKey("space", playPause)
+		screen.OnMenu(2, playPause)
+		screen.OnKey("Q", quit)
+		screen.OnMenu(0, quit)
+
 
 		go watchFileChange(filename, func() {
 			pnstring = read(filename)
@@ -192,7 +200,7 @@ func main() {
 			case Splash:
 				// show splash for 2 seconds
 				screen.SetRedrawFuncToSplash()
-				time.Sleep(time.Second * 2)
+				time.Sleep(time.Second * 1)
 				state = Initial
 			case Initial:
 				sim = net.NewSimulation(startTime, endTime, network)

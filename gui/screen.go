@@ -5,6 +5,7 @@ package gui
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
+	mgl "github.com/go-gl/mathgl/mgl64"
 )
 
 type Pos struct {
@@ -35,12 +36,72 @@ type Screen struct {
 	contentInvalid  bool
 	width           int
 	height          int
+	menuVisible     bool
+	menu            Menu
+}
+
+// TODO move to its own file
+type Menu struct {
+	items []MenuItem
+	activeIndex int
+}
+
+type MenuItem struct {
+	name string
+	bound Bound
+}
+
+type Bound struct {
+	from mgl.Vec2 // left top coord
+	to mgl.Vec2 // right bottom coord
+}
+
+func (b *Bound) hits(x, y float64) bool {
+	return x >= b.from.X() && x < b.to.X() &&
+		y >= b.from.Y() && y < b.to.Y()
+}
+
+func newMenu(names []string) Menu {
+	var menu Menu
+	menu.items = make([]MenuItem, len(names))
+	for i, name := range names {
+		menu.items[i] = MenuItem{name:name}
+	}
+	menu.activeIndex = -1
+	return menu
+}
+
+func (m *Menu) itemNames() []string {
+	var names = make([]string, len(m.items))
+	for i, item := range m.items { // TODO this is not sorted
+		names[i] = item.name
+		i++
+	}
+	return names
+}
+
+func (m *Menu) setBounds(widths []int, height int) {
+	from := mgl.Vec2{0, 0}
+	to := mgl.Vec2{0, float64(height)}
+	for i := range m.items {
+		to[0] += float64(widths[i])
+		m.items[i].bound = Bound{from, to}
+		from[0] += float64(widths[i])
+	}
+}
+
+func (m *Menu) setActive(index int) {
+	m.activeIndex = index
 }
 
 func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
 		clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
+		if s.menuVisible {
+			widths, height := drawMenu(s.ctx, s.width, s.height, s.menu.itemNames(), s.menu.activeIndex) // TODO pas button state (select/higlight/pressed)
+			s.menu.setBounds(widths, height)
+		}
 	}
 }
 
@@ -60,6 +121,7 @@ func (s *Screen) SetRedrawFunc(f RedrawFunc) {
 	doInLoop(func() {
 		s.drawContentFunc = f   // update drawContentFunc
 		s.contentInvalid = true // force draw
+		s.menuVisible = true
 	}, true)
 }
 
@@ -67,6 +129,7 @@ func (s *Screen) SetRedrawFuncToSplash() {
 	doInLoop(func() {
 		s.drawContentFunc = drawSplash
 		s.contentInvalid = true
+		s.menuVisible = false
 	}, true)
 }
 
@@ -109,6 +172,22 @@ func (s *Screen) OnKey(keyname string, cb func()) {
 		if action == glfw.Press && nameToKey[keyname] == key {
 			doInLoop(cb, false)
 		}
-		prevcb(w, key, scancode, action, mods)
+		if prevcb != nil {
+			prevcb(w, key, scancode, action, mods)
+		}
+	})
+}
+
+func (s *Screen) OnMenu(menuIndex int, cb func()) {
+	var prevcb glfw.MouseButtonCallback
+	prevcb = s.Window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
+		if action == glfw.Release && button == glfw.MouseButton1 {
+			if s.menu.activeIndex == menuIndex {
+				doInLoop(cb, false)
+			}
+		}
+		if prevcb != nil {
+			prevcb(w, button, action, mod)
+		}
 	})
 }
