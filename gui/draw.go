@@ -81,23 +81,38 @@ func tempContext(ctx *draw2dgl.GraphicContext) (func()) {
 
 // GUI entities
 
-func drawMenu(ctx *draw2dgl.GraphicContext, width, height int, itemsNames []string) {
+func drawMenu(ctx *draw2dgl.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int) ([]int, int) {
 	defer tempContext(ctx)()
-	ctx.Translate(-float64(width)/2, -float64(height)/2)
+
+	const (
+		padding = 14
+		height = 36
+		fontSize = 12
+	)
+
+	var widths = make([]int, len(itemsNames))
+
+	ctx.Translate(-float64(sWidth)/2, -float64(sHeight)/2)
 
 	ctx.SetFillColor(opaque(DARK_GRAY, 0.9))
-	draw2dkit.Rectangle(ctx, 0, 0, float64(width), 36)
+	draw2dkit.Rectangle(ctx, 0, 0, float64(sWidth), height)
 	ctx.Fill()
 
-	l := len(itemsNames)
-	btnW := width/l
-
-	ctx.SetFillColor(WHITISH)
-	ctx.SetFontSize(12)
+	ctx.SetFontSize(14)
+	ctx.SetFontData(draw2d.FontData{Name: "awesome"})
+	sum := 0
 	for i, name := range itemsNames {
-		drawCenteredString(ctx, name, float64(i*btnW + btnW/2), 23)
+		if i == activeIndex {
+			ctx.SetFillColor(WHITE)
+		} else {
+			ctx.SetFillColor(LIGHT_GRAY)
+		}
+		w := ctx.FillStringAt(name, float64(sum + padding), height*2/3)
+		width := int(math.Ceil(w)) + 2 * padding
+		widths[i] = int(width)
+		sum += width
 	}
-
+	return widths, height
 }
 
 

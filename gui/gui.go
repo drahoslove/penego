@@ -11,6 +11,8 @@ import (
 
 var (
 	inLoopFuncChan chan func() // TODO remove global
+	handCursor     *glfw.Cursor
+	arrowCursor    *glfw.Cursor
 )
 
 func init() {
@@ -40,6 +42,10 @@ func Run(handler func(*Screen)) {
 	}
 	defer glfw.Terminate()
 
+	// create cursors
+	arrowCursor = glfw.CreateStandardCursor(glfw.ArrowCursor)
+	handCursor = glfw.CreateStandardCursor(glfw.HandCursor)
+
 	// create window
 	displayWidth, displayHeight := getMonitorResolution()
 	screen.width, screen.height = displayWidth/2, displayHeight/2
@@ -65,10 +71,25 @@ func Run(handler func(*Screen)) {
 
 	reshape(&screen, screen.width, screen.height)
 	screen.setSizeCallback(reshape)
-	screen.SetKeyCallback(onKey)
 	screen.SetRefreshCallback(func(window *glfw.Window) {
 		screen.drawContent()
 		screen.SwapBuffers()
+	})
+
+	screen.menu = newMenu([]string{"\uf00d", "\uf021", "\uf04b \uf04c"})
+
+	// change cursor hovering over buttons
+	screen.SetCursorPosCallback(func(w *glfw.Window, xpos float64, ypos float64) {
+		screen.contentInvalid = true
+		for i, menuItem := range screen.menu.items {
+			if menuItem.bound.hits(xpos, ypos) {
+				w.SetCursor(handCursor)
+				screen.menu.setActive(i)
+				return
+			}
+		}
+		w.SetCursor(arrowCursor)
+		screen.menu.setActive(-1)
 	})
 
 	go func() {
@@ -123,15 +144,6 @@ func reshape(screen *Screen, w, h int) {
 	screen.ctx = newCtx(w, h)
 	screen.contentInvalid = true
 
-}
-
-func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	if action == glfw.Press {
-		switch {
-		case key == glfw.KeyEscape, key == glfw.KeyQ:
-			w.SetShouldClose(true)
-		}
-	}
 }
 
 func getMonitorResolution() (int, int) {
