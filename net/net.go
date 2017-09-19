@@ -402,8 +402,6 @@ func (sim *Simulation) Run() {
 		sim.now = eventTime
 		fireEvent(tranToFireNow, before, sim.now)  // current time and time of event
 	}
-
-	sim.net.restoreState()
 }
 
 // Pause pauses current simulation Run
@@ -415,9 +413,9 @@ func (sim *Simulation) Pause() {
 
 func (sim *Simulation) Stop() {
 	if sim.paused {
-		sim.net.restoreState()
 		sim.paused = false
 	}
+	sim.net.restoreState()
 	sim.stopped = true
 }
 

@@ -79,8 +79,8 @@ func main() {
 	var (
 		startTime  = time.Duration(0)
 		endTime    = time.Hour * 24 * 1e5
-		timeFlow   = ContinuousFlow
-		timeSpeed  = uint(10)
+		timeFlow   = NaturalFlow
+		timeSpeed  = uint(1)
 		truerandom = false
 		noclose    = true
 		verbose    = false
@@ -171,8 +171,8 @@ func main() {
 		reload := func() {
 			switch state {
 			case Running, Paused, Idle:
-				state = Initial
 				sim.Stop()
+				state = Initial
 			}
 		}
 		quit := func() {
@@ -214,6 +214,7 @@ func main() {
 				} else {
 					state = Paused
 				}
+				screen.SetTitle(sim.GetNow().String() + " init")
 			case Running:
 				sim.Run()             ////////////////// <--
 				if state != Running { // paused or stopped
@@ -233,8 +234,7 @@ func main() {
 				time.Sleep(time.Millisecond * 20)
 				screen.SetTitle(sim.GetNow().String() + " paused")
 			case Idle:
-				time.Sleep(time.Second)
-				state = Idle
+				time.Sleep(time.Millisecond * 20)
 			}
 		}
 

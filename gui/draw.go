@@ -170,6 +170,7 @@ func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, descri
 
 	// description
 	if description != "" {
+		ctx.SetFillColor(BLACKISH)
 		drawCenteredString(ctx, description, x, y-r-8)
 	}
 
