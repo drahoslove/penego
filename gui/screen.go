@@ -20,13 +20,16 @@ const (
 	Out Direction = false
 )
 
-var (
-	nameToKey = map[string]glfw.Key{
-		"space": glfw.KeySpace,
-		"Q":     glfw.KeyQ,
-		"R":     glfw.KeyR,
+func nameToKey (key string) glfw.Key {
+	switch {
+	case key >= "A" && key <= "Z":
+		return glfw.Key(rune(key[0]) - 'A') + glfw.KeyA
+	case key == "space":
+		return glfw.KeySpace
+	default:
+		return glfw.KeyUnknown
 	}
-)
+}
 
 // Screen provide exported functions for drawing graphic content
 type Screen struct {
@@ -47,7 +50,8 @@ type Menu struct {
 }
 
 type MenuItem struct {
-	name string
+	label string
+	getIcon func() rune
 	bound Bound
 }
 
@@ -61,23 +65,25 @@ func (b *Bound) hits(x, y float64) bool {
 		y >= b.from.Y() && y < b.to.Y()
 }
 
-func newMenu(names []string) Menu {
+func newMenu() Menu {
 	var menu Menu
-	menu.items = make([]MenuItem, len(names))
-	for i, name := range names {
-		menu.items[i] = MenuItem{name:name}
-	}
+	menu.items = make([]MenuItem, 0)
 	menu.activeIndex = -1
 	return menu
 }
 
-func (m *Menu) itemNames() []string {
-	var names = make([]string, len(m.items))
+func (m *Menu) addItem(getIcon func() rune, label string) int {
+	m.items = append(m.items, MenuItem{label, getIcon, Bound{}})
+	return len(m.items) - 1
+}
+
+func (m *Menu) itemIcons() []string {
+	var icons = make([]string, len(m.items))
 	for i, item := range m.items { // TODO this is not sorted
-		names[i] = item.name
+		icons[i] = string(item.getIcon())
 		i++
 	}
-	return names
+	return icons
 }
 
 func (m *Menu) setBounds(widths []int, height int) {
@@ -99,7 +105,7 @@ func (s *Screen) drawContent() {
 		clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
 		if s.menuVisible {
-			widths, height := drawMenu(s.ctx, s.width, s.height, s.menu.itemNames(), s.menu.activeIndex) // TODO pas button state (select/higlight/pressed)
+			widths, height := drawMenu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex) // TODO pas button state (select/higlight/pressed)
 			s.menu.setBounds(widths, height)
 		}
 	}
@@ -169,7 +175,7 @@ func (s *Screen) DrawOutArc(from Pos, to Pos, weight int) {
 func (s *Screen) OnKey(keyname string, cb func()) {
 	var prevcb glfw.KeyCallback
 	prevcb = s.Window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-		if action == glfw.Press && nameToKey[keyname] == key {
+		if action == glfw.Press && nameToKey(keyname) == key {
 			doInLoop(cb, false)
 		}
 		if prevcb != nil {
@@ -190,4 +196,10 @@ func (s *Screen) OnMenu(menuIndex int, cb func()) {
 			prevcb(w, button, action, mod)
 		}
 	})
+}
+
+func (s *Screen) RegisterControl (key string, getIcon func() rune, label string, handler func()) {
+	s.OnKey(key, handler)
+	i := s.menu.addItem(getIcon, label)
+	s.OnMenu(i, handler)
 }

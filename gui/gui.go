@@ -76,7 +76,8 @@ func Run(handler func(*Screen)) {
 		screen.SwapBuffers()
 	})
 
-	screen.menu = newMenu([]string{"\uf00d", "\uf021", "\uf04b \uf04c"})
+
+	screen.menu = newMenu()
 
 	// change cursor hovering over buttons
 	screen.SetCursorPosCallback(func(w *glfw.Window, xpos float64, ypos float64) {

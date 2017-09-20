@@ -19,6 +19,18 @@ const EXAMPLE = `
 	----
 	g -> [exp(1s)] -> g, 2*e
 `
+const (
+	quitIcon = '\uf00d'
+	playIcon = '\uf04b'
+	pauseIcon = '\uf04c'
+	reloadIcon = '\uf021'
+)
+
+func alwaysIcon(icon rune) (func() rune) {
+	return func() rune {
+		return icon
+	}
+}
 
 type State int
 
@@ -178,14 +190,23 @@ func main() {
 		quit := func() {
 			screen.SetShouldClose(true)
 		}
-		// TODO refactor menu - use something like screen.setMenuButtons?
-		screen.OnKey("R", reload)
-		screen.OnMenu(1, reload)
-		screen.OnKey("space", playPause)
-		screen.OnMenu(2, playPause)
-		screen.OnKey("Q", quit)
-		screen.OnMenu(0, quit)
 
+		// open := func() {
+		// 	fmt.Println("open file")
+		// }
+
+		// TODO modifiers
+
+		screen.RegisterControl("Q", alwaysIcon(quitIcon), "quit", quit)
+		screen.RegisterControl("R", alwaysIcon(reloadIcon), "reload", reload)
+		screen.RegisterControl("space", func() rune {
+			if state != Running {
+				return playIcon
+			} else {
+				return pauseIcon
+			}
+		}, "play/pause", playPause)
+		// screen.RegisterControl("O", alwaysIcon('\uf15b'), "open", open)
 
 		go watchFileChange(filename, func() {
 			pnstring = read(filename)
