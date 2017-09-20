@@ -9,6 +9,7 @@ import (
 	"time"
 	"github.com/pkg/profile"
 	"github.com/fsnotify/fsnotify"
+	"github.com/sqweek/dialog"
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
 )
@@ -23,7 +24,7 @@ const (
 	quitIcon = '\uf00d'
 	playIcon = '\uf04b'
 	pauseIcon = '\uf04c'
-	reloadIcon = '\uf021'
+	resetIcon = '\uf021'
 )
 
 func alwaysIcon(icon rune) (func() rune) {
@@ -91,8 +92,8 @@ func main() {
 	var (
 		startTime  = time.Duration(0)
 		endTime    = time.Hour * 24 * 1e5
-		timeFlow   = NaturalFlow
-		timeSpeed  = uint(1)
+		timeFlow   = ContinuousFlow
+		timeSpeed  = uint(10)
 		truerandom = false
 		noclose    = true
 		verbose    = false
@@ -171,6 +172,16 @@ func main() {
 
 		var sim net.Simulation
 
+		reload := func(filename string) {
+			pnstring = read(filename)
+			network = parse(pnstring)
+			drawNet = getDrawNet(network)
+			sim.Stop()
+			state = Initial
+		}
+
+		watchFile := makeFileWatcher(reload)
+
 		playPause := func() {
 			switch state {
 			case Paused:
@@ -180,7 +191,7 @@ func main() {
 				sim.Pause()
 			}
 		}
-		reload := func() {
+		reset := func() {
 			switch state {
 			case Running, Paused, Idle:
 				sim.Stop()
@@ -191,14 +202,24 @@ func main() {
 			screen.SetShouldClose(true)
 		}
 
-		// open := func() {
-		// 	fmt.Println("open file")
-		// }
+		open := func() {
+			go func() {
+				filename, err = dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
+				if verbose {
+					fmt.Println(filename)
+				}
+				if err != nil {
+					return
+				}
+				watchFile(filename)
+				reload(filename)
+			}()
+		}
 
 		// TODO modifiers
-
 		screen.RegisterControl("Q", alwaysIcon(quitIcon), "quit", quit)
-		screen.RegisterControl("R", alwaysIcon(reloadIcon), "reload", reload)
+		screen.RegisterControl("O", alwaysIcon('\uf15b'), "open", open)
+		screen.RegisterControl("R", alwaysIcon(resetIcon), "reset", reset)
 		screen.RegisterControl("space", func() rune {
 			if state != Running {
 				return playIcon
@@ -206,15 +227,8 @@ func main() {
 				return pauseIcon
 			}
 		}, "play/pause", playPause)
-		// screen.RegisterControl("O", alwaysIcon('\uf15b'), "open", open)
 
-		go watchFileChange(filename, func() {
-			pnstring = read(filename)
-			network = parse(pnstring)
-			drawNet = getDrawNet(network)
-			sim.Stop()
-			state = Initial
-		})
+		watchFile(filename)
 
 		for state != Exit {
 			switch state {
@@ -263,20 +277,21 @@ func main() {
 
 }
 
-func watchFileChange(file string, callback func()) {
+func makeFileWatcher(callback func(string)) func(string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer watcher.Close()
+	// defer watcher.Close() // TODO call somewhere
+	var currentFile = ""
 
-	done := make(chan bool)
+
 	go func() {
 		for {
 			select {
 			case event := <-watcher.Events:
 				if (event.Op & fsnotify.Write) == fsnotify.Write {
-					callback()
+					callback(currentFile)
 				}
 			case err := <-watcher.Errors:
 				fmt.Fprintf(os.Stderr, "%s", err)
@@ -284,9 +299,23 @@ func watchFileChange(file string, callback func()) {
 		}
 	}()
 
-	err = watcher.Add(file)
-	if err != nil {
-		log.Fatal(err)
+
+	return func(file string) {
+		if currentFile == file {
+			return
+		}
+		if currentFile != "" {
+			err = watcher.Remove(currentFile)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+		}
+		err = watcher.Add(file)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		currentFile = file
 	}
-	<-done
 }
