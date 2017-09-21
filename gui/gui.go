@@ -81,16 +81,21 @@ func Run(handler func(*Screen)) {
 
 	// change cursor hovering over buttons
 	screen.SetCursorPosCallback(func(w *glfw.Window, xpos float64, ypos float64) {
-		screen.contentInvalid = true
 		for i, menuItem := range screen.menu.items {
 			if menuItem.bound.hits(xpos, ypos) {
 				w.SetCursor(handCursor)
-				screen.menu.setActive(i)
+				screen.setActiveMenuIndex(i)
 				return
 			}
 		}
 		w.SetCursor(arrowCursor)
-		screen.menu.setActive(-1)
+		screen.setActiveMenuIndex(-1)
+	})
+	// lost hover efect of button on window leave
+	screen.SetCursorEnterCallback(func(w *glfw.Window, entered bool) {
+		if entered == false { // leaved
+			screen.setActiveMenuIndex(-1)
+		}
 	})
 
 	go func() {

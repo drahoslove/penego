@@ -96,18 +96,21 @@ func (m *Menu) setBounds(widths []int, height int) {
 	}
 }
 
-func (m *Menu) setActive(index int) {
-	m.activeIndex = index
-}
-
 func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
 		clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
 		if s.menuVisible {
-			widths, height := drawMenu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex) // TODO pas button state (select/higlight/pressed)
+			widths, height := drawMenu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex)
 			s.menu.setBounds(widths, height)
 		}
+	}
+}
+
+func (s *Screen) setActiveMenuIndex(i int) {
+	if s.menu.activeIndex != i {
+		s.menu.activeIndex = i
+		s.contentInvalid = true
 	}
 }
 

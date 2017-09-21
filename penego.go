@@ -204,7 +204,7 @@ func main() {
 
 		open := func() {
 			go func() {
-				filename, err = dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
+				filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
 				if verbose {
 					fmt.Println(filename)
 				}
@@ -285,7 +285,6 @@ func makeFileWatcher(callback func(string)) func(string) {
 	// defer watcher.Close() // TODO call somewhere
 	var currentFile = ""
 
-
 	go func() {
 		for {
 			select {
@@ -298,7 +297,6 @@ func makeFileWatcher(callback func(string)) func(string) {
 			}
 		}
 	}()
-
 
 	return func(file string) {
 		if currentFile == file {
