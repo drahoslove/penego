@@ -252,7 +252,7 @@ func (c *Calendar) insertByTime(newTime time.Duration, tran *Transition) {
 		c.Insert(Event{newTime, tran}, 0)
 		return
 	}
-	i, event := 0, Event{};
+	i, event := 0, Event{}
 	for i, event = range *c {
 		if newTime < event.time {
 			c.Insert(Event{newTime, tran}, i)
@@ -385,7 +385,7 @@ func (sim *Simulation) Run() {
 		sim.scheduleEnabledTimed() // might create new event in current time
 	}
 
-	fireEvent(&Transition{}, sim.startTime, sim.startTime) // todo schedule empty tarn isntead?
+	fireEvent(&Transition{}, sim.startTime, sim.startTime) // todo schedule empty tarn instead?
 
 	for !sim.calendar.isEmpty() {
 		if sim.paused  {

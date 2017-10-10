@@ -34,23 +34,23 @@ var ( // pseudo constants
 	BLACK    = color.RGBA{0, 0, 0, 255}    // #000000
 )
 
-func opaque (clr color.RGBA, opacity float32) color.RGBA {
+func opaque(clr color.RGBA, opacity float32) color.RGBA {
 	clr.A = uint8(255 * opacity)
 	return clr
 }
 
-var (
-	drawSplash = RedrawFunc(func(screen *Screen) {
+func getDrawSplash(title string) RedrawFunc {
+	return RedrawFunc(func(screen *Screen) {
 		ctx := screen.ctx
 		if ctx != nil {
 			defer tempContext(ctx)()
 			ctx.SetFontData(draw2d.FontData{Name: "gobold"})
 			ctx.SetFontSize(48)
 			ctx.SetFillColor(DARK_GRAY)
-			drawCenteredString(ctx, "Penego", 0, 0)
+			drawCenteredString(ctx, title, 0, 0)
 		}
 	})
-)
+}
 
 func newCtx(width, height int) *draw2dgl.GraphicContext {
 	/* create graphic context and set styles */
@@ -72,9 +72,9 @@ func clean(ctx *draw2dgl.GraphicContext, width, height int) {
 	ctx.Fill()
 }
 
-func tempContext(ctx *draw2dgl.GraphicContext) (func()) {
+func tempContext(ctx *draw2dgl.GraphicContext) func() {
 	ctx.Save()
-	return func () {
+	return func() {
 		ctx.Restore()
 	}
 }
@@ -86,8 +86,7 @@ func drawMenu(ctx *draw2dgl.GraphicContext, sWidth, sHeight int, itemsNames []st
 
 	const (
 		padding = 14
-		height = 36
-		fontSize = 12
+		height  = 36
 	)
 
 	var widths = make([]int, len(itemsNames))
@@ -107,14 +106,13 @@ func drawMenu(ctx *draw2dgl.GraphicContext, sWidth, sHeight int, itemsNames []st
 		} else {
 			ctx.SetFillColor(LIGHT_GRAY)
 		}
-		w := ctx.FillStringAt(name, float64(sum + padding), height*2/3)
-		width := int(math.Ceil(w)) + 2 * padding
+		w := ctx.FillStringAt(name, float64(sum+padding), height*2/3)
+		width := int(math.Ceil(w)) + 2*padding
 		widths[i] = int(width)
 		sum += width
 	}
 	return widths, height
 }
-
 
 // NET entities
 

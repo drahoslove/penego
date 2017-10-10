@@ -1,11 +1,11 @@
 package gui
 
-// exports GUI API functions for drawing items, screen manipulation, event handling
+// GUI API functions for drawing items, screen manipulation, event handling, menu init etc.
+// exports Screen
 
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
-	mgl "github.com/go-gl/mathgl/mgl64"
 )
 
 type Pos struct {
@@ -20,10 +20,10 @@ const (
 	Out Direction = false
 )
 
-func nameToKey (key string) glfw.Key {
+func nameToKey(key string) glfw.Key {
 	switch {
 	case key >= "A" && key <= "Z":
-		return glfw.Key(rune(key[0]) - 'A') + glfw.KeyA
+		return glfw.Key(rune(key[0])-'A') + glfw.KeyA
 	case key == "space":
 		return glfw.KeySpace
 	default:
@@ -40,61 +40,10 @@ type Screen struct {
 	width           int
 	height          int
 	menuVisible     bool
-	menu            Menu
+	menu            menu
 }
 
-// TODO move to its own file
-type Menu struct {
-	items []MenuItem
-	activeIndex int
-}
-
-type MenuItem struct {
-	label string
-	getIcon func() rune
-	bound Bound
-}
-
-type Bound struct {
-	from mgl.Vec2 // left top coord
-	to mgl.Vec2 // right bottom coord
-}
-
-func (b *Bound) hits(x, y float64) bool {
-	return x >= b.from.X() && x < b.to.X() &&
-		y >= b.from.Y() && y < b.to.Y()
-}
-
-func newMenu() Menu {
-	var menu Menu
-	menu.items = make([]MenuItem, 0)
-	menu.activeIndex = -1
-	return menu
-}
-
-func (m *Menu) addItem(getIcon func() rune, label string) int {
-	m.items = append(m.items, MenuItem{label, getIcon, Bound{}})
-	return len(m.items) - 1
-}
-
-func (m *Menu) itemIcons() []string {
-	var icons = make([]string, len(m.items))
-	for i, item := range m.items { // TODO this is not sorted
-		icons[i] = string(item.getIcon())
-		i++
-	}
-	return icons
-}
-
-func (m *Menu) setBounds(widths []int, height int) {
-	from := mgl.Vec2{0, 0}
-	to := mgl.Vec2{0, float64(height)}
-	for i := range m.items {
-		to[0] += float64(widths[i])
-		m.items[i].bound = Bound{from, to}
-		from[0] += float64(widths[i])
-	}
-}
+/* non-exported methods */
 
 func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
@@ -120,6 +69,8 @@ func (s *Screen) setSizeCallback(f func(*Screen, int, int)) {
 	})
 }
 
+/* exported methods */
+
 func (s *Screen) ForceRedraw(block bool) {
 	doInLoop(func() {
 		s.contentInvalid = true
@@ -134,9 +85,9 @@ func (s *Screen) SetRedrawFunc(f RedrawFunc) {
 	}, true)
 }
 
-func (s *Screen) SetRedrawFuncToSplash() {
+func (s *Screen) SetRedrawFuncToSplash(title string) {
 	doInLoop(func() {
-		s.drawContentFunc = drawSplash
+		s.drawContentFunc = getDrawSplash(title)
 		s.contentInvalid = true
 		s.menuVisible = false
 	}, true)
@@ -175,14 +126,14 @@ func (s *Screen) DrawOutArc(from Pos, to Pos, weight int) {
 	}
 }
 
-func (s *Screen) OnKey(keyname string, cb func()) {
+func (s *Screen) OnKey(keyName string, cb func()) {
 	var prevcb glfw.KeyCallback
-	prevcb = s.Window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-		if action == glfw.Press && nameToKey(keyname) == key {
+	prevcb = s.Window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scanCode int, action glfw.Action, mods glfw.ModifierKey) {
+		if action == glfw.Press && nameToKey(keyName) == key {
 			doInLoop(cb, false)
 		}
 		if prevcb != nil {
-			prevcb(w, key, scancode, action, mods)
+			prevcb(w, key, scanCode, action, mods)
 		}
 	})
 }
@@ -201,7 +152,7 @@ func (s *Screen) OnMenu(menuIndex int, cb func()) {
 	})
 }
 
-func (s *Screen) RegisterControl (key string, getIcon func() rune, label string, handler func()) {
+func (s *Screen) RegisterControl(key string, getIcon func() Icon, label string, handler func()) {
 	s.OnKey(key, handler)
 	i := s.menu.addItem(getIcon, label)
 	s.OnMenu(i, handler)

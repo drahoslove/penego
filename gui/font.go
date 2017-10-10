@@ -1,6 +1,6 @@
 package gui
 
-// create font cache with roboto
+// create font cache with Go font and Awesome font
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func init() {
 		"gobold":    gobold.TTF,
 		"goitalic":  goitalic.TTF,
 		"gomono":    gomono.TTF,
-		"awesome":   fontawesomeTTF,
+		"awesome":   fontAwesomeTTF,
 	}
 
 	for fontName, TTF := range TTFs {

@@ -3,15 +3,14 @@ package main // import "git.yo2.cz/drahoslav/penego"
 import (
 	"flag"
 	"fmt"
+	"git.yo2.cz/drahoslav/penego/gui"
+	"git.yo2.cz/drahoslav/penego/net"
+	"github.com/pkg/profile"
+	"github.com/sqweek/dialog"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
-	"github.com/pkg/profile"
-	"github.com/fsnotify/fsnotify"
-	"github.com/sqweek/dialog"
-	"git.yo2.cz/drahoslav/penego/gui"
-	"git.yo2.cz/drahoslav/penego/net"
 )
 
 const EXAMPLE = `
@@ -20,18 +19,6 @@ const EXAMPLE = `
 	----
 	g -> [exp(1s)] -> g, 2*e
 `
-const (
-	quitIcon = '\uf00d'
-	playIcon = '\uf04b'
-	pauseIcon = '\uf04c'
-	resetIcon = '\uf021'
-)
-
-func alwaysIcon(icon rune) (func() rune) {
-	return func() rune {
-		return icon
-	}
-}
 
 type State int
 
@@ -48,12 +35,9 @@ const (
 type TimeFlow int
 
 const (
-	// no waits, just jum to the end of simulation
-	NoFlow TimeFlow = iota
-	// render as fast as reality, or proportionally faster/slower
-	ContinuousFlow
-	// render continuously, with fixed waits between events, independent of simulation time
-	NaturalFlow
+	NoFlow         TimeFlow = iota // no waits, just jum to the end of simulation
+	ContinuousFlow                 // render as fast as reality, or proportionally faster/slower
+	NaturalFlow                    // render continuously, with fixed waits between events, independent of simulation time
 )
 
 func (flow TimeFlow) String() string {
@@ -94,39 +78,38 @@ func main() {
 		endTime    = time.Hour * 24 * 1e5
 		timeFlow   = ContinuousFlow
 		timeSpeed  = uint(10)
-		truerandom = false
-		noclose    = true
+		trueRandom = false
+		noClose    = true
 		verbose    = false
-		autostart  = false
+		autoStart  = false
 	)
 
-	flag.DurationVar(&startTime, "start", startTime, "start time of simulation")
-	flag.DurationVar(&endTime, "end", endTime, "end time of simulation")
+	flag.DurationVar(&startTime, "start", startTime, "start `time` of simulation")
+	flag.DurationVar(&endTime, "end", endTime, "end `time` of simulation")
 	flag.Var(&timeFlow, "flow", "type of time flow\n\tno, continuous, or natural")
 	flag.UintVar(&timeSpeed, "speed", timeSpeed, "time flow acceleration\n\tdifferent meaning for different -flow\n\t")
-	flag.BoolVar(&truerandom, "truerandom", truerandom, "seed pseudorandom generator with true random seed on start")
-	flag.BoolVar(&noclose, "noclose", noclose, "preserve window after simulation ends")
+	flag.BoolVar(&trueRandom, "truerandom", trueRandom, "seed pseudo random generator with true random seed on start")
+	flag.BoolVar(&noClose, "noclose", noClose, "preserve window after simulation ends")
 	flag.BoolVar(&verbose, "v", verbose, "be more verbose")
-	flag.BoolVar(&autostart, "autostart", autostart, "automatic start")
+	flag.BoolVar(&autoStart, "autostart", autoStart, "automatic start")
 	flag.Parse()
 
 	////////////////////////////////
 
 	// load network from file if given filename
 
-	pnstring := EXAMPLE
+	pnString := EXAMPLE
 
-	read := func(filename string) (pnstring string) {
-		filecontent, err := ioutil.ReadFile(filename)
+	read := func(filename string) string {
+		fileContent, err := ioutil.ReadFile(filename)
 		if err != nil {
 			log.Fatal(err)
-			return
+			return ""
 		}
-		pnstring = string(filecontent)
-		return
+		return string(fileContent)
 	}
-	parse := func(pnstring string) (network net.Net) {
-		network, err = net.Parse(pnstring)
+	parse := func(pnString string) (network net.Net) {
+		network, err = net.Parse(pnString)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s", err)
 			return
@@ -140,11 +123,11 @@ func main() {
 	filename := flag.Arg(0)
 
 	if len(filename) > 0 {
-		pnstring = read(filename)
+		pnString = read(filename)
 	} else {
 		fmt.Println("No pn file specified, using example")
 	}
-	network = parse(pnstring)
+	network = parse(pnString)
 
 	////////////////////////////////
 
@@ -173,14 +156,15 @@ func main() {
 		var sim net.Simulation
 
 		reload := func(filename string) {
-			pnstring = read(filename)
-			network = parse(pnstring)
+			pnString = read(filename)
+			network = parse(pnString)
 			drawNet = getDrawNet(network)
 			sim.Stop()
 			state = Initial
 		}
 
-		watchFile := makeFileWatcher(reload)
+		watchFile, closeWatcher := makeFileWatcher(reload)
+		defer closeWatcher()
 
 		playPause := func() {
 			switch state {
@@ -217,14 +201,14 @@ func main() {
 		}
 
 		// TODO modifiers
-		screen.RegisterControl("Q", alwaysIcon(quitIcon), "quit", quit)
-		screen.RegisterControl("O", alwaysIcon('\uf15b'), "open", open)
-		screen.RegisterControl("R", alwaysIcon(resetIcon), "reset", reset)
-		screen.RegisterControl("space", func() rune {
+		screen.RegisterControl("Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit)
+		screen.RegisterControl("O", gui.AlwaysIcon(gui.FileIcon), "open", open)
+		screen.RegisterControl("R", gui.AlwaysIcon(gui.ResetIcon), "reset", reset)
+		screen.RegisterControl("space", func() gui.Icon {
 			if state != Running {
-				return playIcon
+				return gui.PlayIcon
 			} else {
-				return pauseIcon
+				return gui.PauseIcon
 			}
 		}, "play/pause", playPause)
 
@@ -234,17 +218,17 @@ func main() {
 			switch state {
 			case Splash:
 				// show splash for 2 seconds
-				screen.SetRedrawFuncToSplash()
+				screen.SetRedrawFuncToSplash("Penego")
 				time.Sleep(time.Second * 1)
 				state = Initial
 			case Initial:
 				sim = net.NewSimulation(startTime, endTime, network)
 				sim.DoEveryStateChange(onStateChange)
-				if truerandom {
+				if trueRandom {
 					net.TrueRandomSeed()
 				}
 				screen.SetRedrawFunc(drawNet)
-				if autostart {
+				if autoStart {
 					state = Running
 				} else {
 					state = Paused
@@ -260,7 +244,7 @@ func main() {
 				if verbose {
 					fmt.Println("----")
 				}
-				if noclose {
+				if noClose {
 					state = Idle
 				} else {
 					state = Exit
@@ -275,45 +259,4 @@ func main() {
 
 	}) // returns when func returns
 
-}
-
-func makeFileWatcher(callback func(string)) func(string) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// defer watcher.Close() // TODO call somewhere
-	var currentFile = ""
-
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Events:
-				if (event.Op & fsnotify.Write) == fsnotify.Write {
-					callback(currentFile)
-				}
-			case err := <-watcher.Errors:
-				fmt.Fprintf(os.Stderr, "%s", err)
-			}
-		}
-	}()
-
-	return func(file string) {
-		if currentFile == file {
-			return
-		}
-		if currentFile != "" {
-			err = watcher.Remove(currentFile)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-		}
-		err = watcher.Add(file)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-		currentFile = file
-	}
 }
