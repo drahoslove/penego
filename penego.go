@@ -155,6 +155,9 @@ func main() {
 
 		var sim net.Simulation
 
+		foo := func(){}
+		_ = foo
+
 		reload := func(filename string) {
 			pnString = read(filename)
 			network = parse(pnString)
@@ -200,10 +203,13 @@ func main() {
 			}()
 		}
 
+
 		// TODO modifiers
 		screen.RegisterControl("Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit)
+
 		screen.RegisterControl("O", gui.AlwaysIcon(gui.FileIcon), "open", open)
-		screen.RegisterControl("R", gui.AlwaysIcon(gui.ResetIcon), "reset", reset)
+
+		screen.RegisterControl("R", gui.AlwaysIcon(gui.PrevIcon), "reset", reset)
 		screen.RegisterControl("space", func() gui.Icon {
 			if state != Running {
 				return gui.PlayIcon
@@ -211,6 +217,7 @@ func main() {
 				return gui.PauseIcon
 			}
 		}, "play/pause", playPause)
+
 
 		watchFile(filename)
 

@@ -98,7 +98,7 @@ func drawMenu(ctx *draw2dgl.GraphicContext, sWidth, sHeight int, itemsNames []st
 	ctx.Fill()
 
 	ctx.SetFontSize(14)
-	ctx.SetFontData(draw2d.FontData{Name: "awesome"})
+	ctx.SetFontData(draw2d.FontData{Name: "ico"})
 	sum := 0
 	for i, name := range itemsNames {
 		if i == activeIndex {
