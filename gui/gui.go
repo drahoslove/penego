@@ -5,6 +5,7 @@ package gui
 import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/llgcode/draw2d/draw2dgl"
 	"runtime"
 	"time"
 )
@@ -147,7 +148,8 @@ func reshape(screen *Screen, w, h int) {
 	gl.Disable(gl.DEPTH_TEST)
 
 	screen.width, screen.height = w, h
-	screen.ctx = newCtx(w, h)
+	screen.ctx = draw2dgl.NewGraphicContext(w, h)
+	initCtx(screen.ctx, w, h)
 	screen.contentInvalid = true
 
 }

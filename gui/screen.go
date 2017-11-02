@@ -6,12 +6,8 @@ package gui
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
+	"git.yo2.cz/drahoslav/penego/draw" // TODO find a way to not depend on this
 )
-
-type Pos struct {
-	X float64
-	Y float64
-}
 
 type Direction bool
 
@@ -31,6 +27,8 @@ func nameToKey(key string) glfw.Key {
 	}
 }
 
+type RedrawFunc func(*Screen)
+
 // Screen provide exported functions for drawing graphic content
 type Screen struct {
 	*glfw.Window
@@ -44,6 +42,7 @@ type Screen struct {
 }
 
 /* non-exported methods */
+
 
 func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
@@ -87,7 +86,12 @@ func (s *Screen) SetRedrawFunc(f RedrawFunc) {
 
 func (s *Screen) SetRedrawFuncToSplash(title string) {
 	doInLoop(func() {
-		s.drawContentFunc = getDrawSplash(title)
+		s.drawContentFunc = RedrawFunc(func(screen *Screen) {
+			ctx := screen.ctx
+			if ctx != nil {
+				drawSplash(ctx, title)
+			}
+		})
 		s.contentInvalid = true
 		s.menuVisible = false
 	}, true)
@@ -102,25 +106,25 @@ func (s *Screen) SetTitle(title string) {
 	}, false)
 }
 
-func (s *Screen) DrawPlace(pos Pos, n int, description string) {
+func (s *Screen) DrawPlace(pos draw.Pos, n int, description string) {
 	if s.ctx != nil {
 		drawPlace(s.ctx, pos.X, pos.Y, n, description)
 	}
 }
 
-func (s *Screen) DrawTransition(pos Pos, attrs, description string) {
+func (s *Screen) DrawTransition(pos draw.Pos, attrs, description string) {
 	if s.ctx != nil {
 		drawTransition(s.ctx, pos.X, pos.Y, attrs, description)
 	}
 }
 
-func (s *Screen) DrawInArc(from Pos, to Pos, weight int) {
+func (s *Screen) DrawInArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
 		drawArc(s.ctx, from.X, from.Y, to.X, to.Y, In, weight)
 	}
 }
 
-func (s *Screen) DrawOutArc(from Pos, to Pos, weight int) {
+func (s *Screen) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
 		drawArc(s.ctx, from.X, from.Y, to.X, to.Y, Out, weight)
 	}

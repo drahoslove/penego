@@ -7,7 +7,6 @@ package gui
 import (
 	mgl "github.com/go-gl/mathgl/mgl64"
 	"github.com/llgcode/draw2d"
-	"github.com/llgcode/draw2d/draw2dgl"
 	"github.com/llgcode/draw2d/draw2dkit"
 	"image/color"
 	"math"
@@ -19,8 +18,6 @@ const (
 	TRANSITION_WIDTH  = 18.0
 	TRANSITION_HEIGHT = 72.0
 )
-
-type RedrawFunc func(*Screen)
 
 var ( // pseudo constants
 	WHITE   = color.RGBA{255, 255, 255, 255} // #ffffff
@@ -39,22 +36,16 @@ func opaque(clr color.RGBA, opacity float32) color.RGBA {
 	return clr
 }
 
-func getDrawSplash(title string) RedrawFunc {
-	return RedrawFunc(func(screen *Screen) {
-		ctx := screen.ctx
-		if ctx != nil {
-			defer tempContext(ctx)()
-			ctx.SetFontData(draw2d.FontData{Name: "gobold"})
-			ctx.SetFontSize(48)
-			ctx.SetFillColor(DARK_GRAY)
-			drawCenteredString(ctx, title, 0, 0)
-		}
-	})
+func drawSplash(ctx draw2d.GraphicContext, title string) {
+	defer tempContext(ctx)()
+	ctx.SetFontData(draw2d.FontData{Name: "gobold"})
+	ctx.SetFontSize(48)
+	ctx.SetFillColor(DARK_GRAY)
+	drawCenteredString(ctx, title, 0, 0)
 }
 
-func newCtx(width, height int) *draw2dgl.GraphicContext {
+func initCtx(ctx draw2d.GraphicContext, width, height int) {
 	/* create graphic context and set styles */
-	var ctx = draw2dgl.NewGraphicContext(width, height)
 	ctx.SetFontData(draw2d.FontData{Name: "goregular"})
 	ctx.SetFontSize(14)
 	ctx.SetFillColor(WHITISH)
@@ -63,16 +54,15 @@ func newCtx(width, height int) *draw2dgl.GraphicContext {
 
 	/* translate origin to center */
 	ctx.Translate(float64(width)/2, float64(height)/2)
-	return ctx
 }
 
-func clean(ctx *draw2dgl.GraphicContext, width, height int) {
+func clean(ctx draw2d.GraphicContext, width, height int) {
 	/* background */
 	draw2dkit.Rectangle(ctx, -float64(width)/2, -float64(height)/2, float64(width)/2, float64(height)/2)
 	ctx.Fill()
 }
 
-func tempContext(ctx *draw2dgl.GraphicContext) func() {
+func tempContext(ctx draw2d.GraphicContext) func() {
 	ctx.Save()
 	return func() {
 		ctx.Restore()
@@ -81,7 +71,7 @@ func tempContext(ctx *draw2dgl.GraphicContext) func() {
 
 // GUI entities
 
-func drawMenu(ctx *draw2dgl.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int) ([]int, int) {
+func drawMenu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int) ([]int, int) {
 	defer tempContext(ctx)()
 
 	const (
@@ -116,7 +106,7 @@ func drawMenu(ctx *draw2dgl.GraphicContext, sWidth, sHeight int, itemsNames []st
 
 // NET entities
 
-func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, description string) {
+func drawPlace(ctx draw2d.GraphicContext, x float64, y float64, n int, description string) {
 	r := PLACE_RADIUS
 	defer tempContext(ctx)()
 
@@ -174,7 +164,7 @@ func drawPlace(ctx *draw2dgl.GraphicContext, x float64, y float64, n int, descri
 
 }
 
-func drawTransition(ctx *draw2dgl.GraphicContext, x, y float64, attrs, description string) {
+func drawTransition(ctx draw2d.GraphicContext, x, y float64, attrs, description string) {
 	w, h := TRANSITION_WIDTH, TRANSITION_HEIGHT
 	defer tempContext(ctx)()
 
@@ -196,7 +186,7 @@ func drawTransition(ctx *draw2dgl.GraphicContext, x, y float64, attrs, descripti
 	}
 }
 
-func drawArc(ctx *draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir Direction, weight int) {
+func drawArc(ctx draw2d.GraphicContext, fromx, fromy, tox, toy float64, dir Direction, weight int) {
 	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH
 	var cPs []mgl.Vec2 // control point of arcs curve
@@ -262,7 +252,7 @@ func drawArc(ctx *draw2dgl.GraphicContext, fromx, fromy, tox, toy float64, dir D
 
 // help functions
 
-func drawArrowHead(ctx *draw2dgl.GraphicContext, x float64, y float64, angle float64) {
+func drawArrowHead(ctx draw2d.GraphicContext, x float64, y float64, angle float64) {
 	r := 18.0
 	w := math.Pi / 8
 	xl := x + math.Sin(angle+w)*r
@@ -280,7 +270,7 @@ func drawArrowHead(ctx *draw2dgl.GraphicContext, x float64, y float64, angle flo
 	ctx.Fill()
 }
 
-func drawCenteredString(ctx *draw2dgl.GraphicContext, str string, x float64, y float64) {
+func drawCenteredString(ctx draw2d.GraphicContext, str string, x float64, y float64) {
 	left, top, right, bottom := ctx.GetStringBounds(str)
 	width := right - left
 	height := bottom - top
