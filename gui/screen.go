@@ -6,14 +6,7 @@ package gui
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
-	"git.yo2.cz/drahoslav/penego/draw" // TODO find a way to not depend on this
-)
-
-type Direction bool
-
-const (
-	In  Direction = true
-	Out Direction = false
+	"git.yo2.cz/drahoslav/penego/draw"
 )
 
 func nameToKey(key string) glfw.Key {
@@ -43,13 +36,17 @@ type Screen struct {
 
 /* non-exported methods */
 
+func (s *Screen) newCtx(w, h int) {
+	s.ctx = draw2dgl.NewGraphicContext(w, h)
+	draw.Init(s.ctx, w, h)
+}
 
 func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
-		clean(s.ctx, s.width, s.height)
+		draw.Clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
 		if s.menuVisible {
-			widths, height := drawMenu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex)
+			widths, height := draw.Menu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex)
 			s.menu.setBounds(widths, height)
 		}
 	}
@@ -89,7 +86,7 @@ func (s *Screen) SetRedrawFuncToSplash(title string) {
 		s.drawContentFunc = RedrawFunc(func(screen *Screen) {
 			ctx := screen.ctx
 			if ctx != nil {
-				drawSplash(ctx, title)
+				draw.Splash(ctx, title)
 			}
 		})
 		s.contentInvalid = true
@@ -108,25 +105,25 @@ func (s *Screen) SetTitle(title string) {
 
 func (s *Screen) DrawPlace(pos draw.Pos, n int, description string) {
 	if s.ctx != nil {
-		drawPlace(s.ctx, pos.X, pos.Y, n, description)
+		draw.Place(s.ctx, pos.X, pos.Y, n, description)
 	}
 }
 
 func (s *Screen) DrawTransition(pos draw.Pos, attrs, description string) {
 	if s.ctx != nil {
-		drawTransition(s.ctx, pos.X, pos.Y, attrs, description)
+		draw.Transition(s.ctx, pos.X, pos.Y, attrs, description)
 	}
 }
 
 func (s *Screen) DrawInArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
-		drawArc(s.ctx, from.X, from.Y, to.X, to.Y, In, weight)
+		draw.Arc(s.ctx, from.X, from.Y, to.X, to.Y, draw.In, weight)
 	}
 }
 
 func (s *Screen) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
-		drawArc(s.ctx, from.X, from.Y, to.X, to.Y, Out, weight)
+		draw.Arc(s.ctx, from.X, from.Y, to.X, to.Y, draw.Out, weight)
 	}
 }
 

@@ -4,11 +4,6 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
-type Pos struct {
-	X float64
-	Y float64
-}
-
 type NetDrawer interface {
 	DrawPlace(pos Pos, n int, description string)
 	DrawTransition(pos Pos, attrs, description string)

@@ -1,4 +1,4 @@
-package gui
+package draw
 
 // draw content
 // drawing routines definitions
@@ -11,6 +11,18 @@ import (
 	"image/color"
 	"math"
 	"strconv"
+)
+
+type Pos struct {
+	X float64
+	Y float64
+}
+
+type Direction bool
+
+const (
+	In  Direction = true
+	Out Direction = false
 )
 
 const (
@@ -31,20 +43,7 @@ var ( // pseudo constants
 	BLACK    = color.RGBA{0, 0, 0, 255}    // #000000
 )
 
-func opaque(clr color.RGBA, opacity float32) color.RGBA {
-	clr.A = uint8(255 * opacity)
-	return clr
-}
-
-func drawSplash(ctx draw2d.GraphicContext, title string) {
-	defer tempContext(ctx)()
-	ctx.SetFontData(draw2d.FontData{Name: "gobold"})
-	ctx.SetFontSize(48)
-	ctx.SetFillColor(DARK_GRAY)
-	drawCenteredString(ctx, title, 0, 0)
-}
-
-func initCtx(ctx draw2d.GraphicContext, width, height int) {
+func Init(ctx draw2d.GraphicContext, width, height int) {
 	/* create graphic context and set styles */
 	ctx.SetFontData(draw2d.FontData{Name: "goregular"})
 	ctx.SetFontSize(14)
@@ -56,22 +55,23 @@ func initCtx(ctx draw2d.GraphicContext, width, height int) {
 	ctx.Translate(float64(width)/2, float64(height)/2)
 }
 
-func clean(ctx draw2d.GraphicContext, width, height int) {
+func Clean(ctx draw2d.GraphicContext, width, height int) {
 	/* background */
 	draw2dkit.Rectangle(ctx, -float64(width)/2, -float64(height)/2, float64(width)/2, float64(height)/2)
 	ctx.Fill()
 }
 
-func tempContext(ctx draw2d.GraphicContext) func() {
-	ctx.Save()
-	return func() {
-		ctx.Restore()
-	}
-}
-
 // GUI entities
 
-func drawMenu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int) ([]int, int) {
+func Splash(ctx draw2d.GraphicContext, title string) {
+	defer tempContext(ctx)()
+	ctx.SetFontData(draw2d.FontData{Name: "gobold"})
+	ctx.SetFontSize(48)
+	ctx.SetFillColor(DARK_GRAY)
+	drawCenteredString(ctx, title, 0, 0)
+}
+
+func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int) ([]int, int) {
 	defer tempContext(ctx)()
 
 	const (
@@ -106,7 +106,7 @@ func drawMenu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []strin
 
 // NET entities
 
-func drawPlace(ctx draw2d.GraphicContext, x float64, y float64, n int, description string) {
+func Place(ctx draw2d.GraphicContext, x float64, y float64, n int, description string) {
 	r := PLACE_RADIUS
 	defer tempContext(ctx)()
 
@@ -164,7 +164,7 @@ func drawPlace(ctx draw2d.GraphicContext, x float64, y float64, n int, descripti
 
 }
 
-func drawTransition(ctx draw2d.GraphicContext, x, y float64, attrs, description string) {
+func Transition(ctx draw2d.GraphicContext, x, y float64, attrs, description string) {
 	w, h := TRANSITION_WIDTH, TRANSITION_HEIGHT
 	defer tempContext(ctx)()
 
@@ -186,7 +186,7 @@ func drawTransition(ctx draw2d.GraphicContext, x, y float64, attrs, description 
 	}
 }
 
-func drawArc(ctx draw2d.GraphicContext, fromx, fromy, tox, toy float64, dir Direction, weight int) {
+func Arc(ctx draw2d.GraphicContext, fromx, fromy, tox, toy float64, dir Direction, weight int) {
 	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH
 	var cPs []mgl.Vec2 // control point of arcs curve
@@ -277,4 +277,16 @@ func drawCenteredString(ctx draw2d.GraphicContext, str string, x float64, y floa
 	_ = height
 
 	ctx.FillStringAt(str, x-width/2, y)
+}
+
+func tempContext(ctx draw2d.GraphicContext) func() {
+	ctx.Save()
+	return func() {
+		ctx.Restore()
+	}
+}
+
+func opaque(clr color.RGBA, opacity float32) color.RGBA {
+	clr.A = uint8(255 * opacity)
+	return clr
 }
