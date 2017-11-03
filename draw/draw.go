@@ -2,7 +2,11 @@ package draw
 
 // draw content
 // drawing routines definitions
-// exports nothing
+// exports:
+//   Drawer
+//   Pos, Direction
+//   Init, Clean, Splash, Menu
+//   Place, Transition, Arc
 
 import (
 	mgl "github.com/go-gl/mathgl/mgl64"
@@ -12,6 +16,13 @@ import (
 	"math"
 	"strconv"
 )
+
+type Drawer interface {
+	DrawPlace(pos Pos, n int, description string)
+	DrawTransition(pos Pos, attrs, description string)
+	DrawInArc(from, to Pos, weight int)
+	DrawOutArc(from, to Pos, weight int)
+}
 
 type Pos struct {
 	X float64
@@ -106,8 +117,9 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 
 // NET entities
 
-func Place(ctx draw2d.GraphicContext, x float64, y float64, n int, description string) {
+func Place(ctx draw2d.GraphicContext, pos Pos, n int, description string) {
 	r := PLACE_RADIUS
+	x, y := pos.X, pos.Y
 	defer tempContext(ctx)()
 
 	draw2dkit.Circle(ctx, x, y, r)
@@ -164,8 +176,9 @@ func Place(ctx draw2d.GraphicContext, x float64, y float64, n int, description s
 
 }
 
-func Transition(ctx draw2d.GraphicContext, x, y float64, attrs, description string) {
+func Transition(ctx draw2d.GraphicContext, pos Pos, attrs, description string) {
 	w, h := TRANSITION_WIDTH, TRANSITION_HEIGHT
+	x, y := pos.X, pos.Y
 	defer tempContext(ctx)()
 
 	draw2dkit.Rectangle(ctx, x-w/2, y-h/2, x+w/2, y+h/2)
@@ -186,7 +199,7 @@ func Transition(ctx draw2d.GraphicContext, x, y float64, attrs, description stri
 	}
 }
 
-func Arc(ctx draw2d.GraphicContext, fromx, fromy, tox, toy float64, dir Direction, weight int) {
+func Arc(ctx draw2d.GraphicContext, from, to Pos, dir Direction, weight int) {
 	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH
 	var cPs []mgl.Vec2 // control point of arcs curve
@@ -195,40 +208,40 @@ func Arc(ctx draw2d.GraphicContext, fromx, fromy, tox, toy float64, dir Directio
 
 	if dir == In { // ( ) -> [ ]
 		angle := math.Pi * +0.25 // outgoing angle from place
-		if fromy > toy {
+		if from.Y > to.Y {
 			angle += math.Pi
 		}
 		xo := math.Sin(angle) * r // start position on place edge related to its center
 		yo := math.Cos(angle) * r
-		tox -= w / 2
-		fromx += xo
-		fromy += yo
+		to.X -= w / 2
+		from.X += xo
+		from.Y += yo
 
 		cPs = []mgl.Vec2{
-			{fromx, fromy},
-			{fromx + 4*xo, fromy + 4*yo},
-			{tox - 60, toy},
-			{tox, toy},
+			{from.X, from.Y},
+			{from.X + 4*xo, from.Y + 4*yo},
+			{to.X - 60, to.Y},
+			{to.X, to.Y},
 		}
-		drawArrowHead(ctx, tox, toy, -math.Pi/2)
+		drawArrowHead(ctx, to.X, to.Y, -math.Pi/2)
 	}
 	if dir == Out { // [ ] -> ( )
 		angle := math.Pi * -0.25
-		if fromy < toy {
+		if from.Y < to.Y {
 			angle += math.Pi
 		}
 		xo := math.Sin(angle) * r
 		yo := math.Cos(angle) * r
-		fromx += w / 2
-		tox += xo
-		toy += yo
+		from.X += w / 2
+		to.X += xo
+		to.Y += yo
 		cPs = []mgl.Vec2{
-			{fromx, fromy},
-			{fromx + 60, fromy},
-			{tox + 4*xo, toy + 4*yo},
-			{tox, toy},
+			{from.X, from.Y},
+			{from.X + 60, from.Y},
+			{to.X + 4*xo, to.Y + 4*yo},
+			{to.X, to.Y},
 		}
-		drawArrowHead(ctx, tox, toy, angle)
+		drawArrowHead(ctx, to.X, to.Y, angle)
 	}
 
 	ctx.MoveTo(cPs[0].X(), cPs[0].Y())
@@ -252,7 +265,7 @@ func Arc(ctx draw2d.GraphicContext, fromx, fromy, tox, toy float64, dir Directio
 
 // help functions
 
-func drawArrowHead(ctx draw2d.GraphicContext, x float64, y float64, angle float64) {
+func drawArrowHead(ctx draw2d.GraphicContext, x, y float64, angle float64) {
 	r := 18.0
 	w := math.Pi / 8
 	xl := x + math.Sin(angle+w)*r
@@ -270,7 +283,7 @@ func drawArrowHead(ctx draw2d.GraphicContext, x float64, y float64, angle float6
 	ctx.Fill()
 }
 
-func drawCenteredString(ctx draw2d.GraphicContext, str string, x float64, y float64) {
+func drawCenteredString(ctx draw2d.GraphicContext, str string, x, y float64) {
 	left, top, right, bottom := ctx.GetStringBounds(str)
 	width := right - left
 	height := bottom - top

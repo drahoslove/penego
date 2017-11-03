@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
-	"git.yo2.cz/drahoslav/penego/draw"
+	"git.yo2.cz/drahoslav/penego/compose"
 	"github.com/pkg/profile"
 	"github.com/sqweek/dialog"
 	"io/ioutil"
@@ -137,7 +137,7 @@ func main() {
 		var state State = Splash
 
 		// how to draw
-		var drawNet = draw.GetDrawNet(network)
+		var composeNet = compose.GetSimple(network)
 
 		var onStateChange = func(before, now time.Duration) {
 			switch timeFlow {
@@ -162,7 +162,7 @@ func main() {
 		reload := func(filename string) {
 			pnString = read(filename)
 			network = parse(pnString)
-			drawNet = draw.GetDrawNet(network)
+			composeNet = compose.GetSimple(network)
 			sim.Stop()
 			state = Initial
 		}
@@ -235,7 +235,7 @@ func main() {
 				if trueRandom {
 					net.TrueRandomSeed()
 				}
-				screen.SetRedrawFunc(func(s *gui.Screen){drawNet(s)})
+				screen.SetRedrawFunc(gui.RedrawFunc(composeNet))
 				if autoStart {
 					state = Running
 				} else {

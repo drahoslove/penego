@@ -1,25 +1,22 @@
-package draw
+package compose
 
 import (
 	"git.yo2.cz/drahoslav/penego/net"
+	"git.yo2.cz/drahoslav/penego/draw"
+
 )
 
-type NetDrawer interface {
-	DrawPlace(pos Pos, n int, description string)
-	DrawTransition(pos Pos, attrs, description string)
-	DrawInArc(from, to Pos, weight int)
-	DrawOutArc(from, to Pos, weight int)
-}
+type Composer func(draw.Drawer)
 
 // basic "dumb" way to draw a net
-func GetDrawNet(network net.Net) func(NetDrawer) {
+func GetSimple(network net.Net) func(draw.Drawer) {
 	places := network.Places()
 	transitions := network.Transitions()
 
 	const BASE = 90.0
 
-	posOfPlace := func(i int) Pos {
-		pos := Pos{
+	posOfPlace := func(i int) draw.Pos {
+		pos := draw.Pos{
 			X: float64(i)*BASE - (float64(len(places))/2-0.5)*BASE,
 			Y: 0,
 		}
@@ -29,8 +26,8 @@ func GetDrawNet(network net.Net) func(NetDrawer) {
 		return pos
 	}
 
-	posOfTransition := func(i int) Pos {
-		pos := Pos{
+	posOfTransition := func(i int) draw.Pos {
+		pos := draw.Pos{
 			X: float64(i)*BASE - (float64(len(transitions))/2)*BASE + BASE/2,
 			Y: 4*BASE*float64(i%2) - 2*BASE,
 		}
@@ -40,7 +37,7 @@ func GetDrawNet(network net.Net) func(NetDrawer) {
 		return pos
 	}
 
-	return func(drawer NetDrawer) {
+	return Composer(func(drawer draw.Drawer) {
 		for i, p := range places {
 			drawer.DrawPlace(posOfPlace(i), p.Tokens, p.Description)
 		}
@@ -61,5 +58,5 @@ func GetDrawNet(network net.Net) func(NetDrawer) {
 				}
 			}
 		}
-	}
+	})
 }

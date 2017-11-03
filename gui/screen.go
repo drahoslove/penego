@@ -20,7 +20,7 @@ func nameToKey(key string) glfw.Key {
 	}
 }
 
-type RedrawFunc func(*Screen)
+type RedrawFunc func(draw.Drawer)
 
 // Screen provide exported functions for drawing graphic content
 type Screen struct {
@@ -83,8 +83,8 @@ func (s *Screen) SetRedrawFunc(f RedrawFunc) {
 
 func (s *Screen) SetRedrawFuncToSplash(title string) {
 	doInLoop(func() {
-		s.drawContentFunc = RedrawFunc(func(screen *Screen) {
-			ctx := screen.ctx
+		s.drawContentFunc = RedrawFunc(func(drawer draw.Drawer) {
+			ctx := s.ctx
 			if ctx != nil {
 				draw.Splash(ctx, title)
 			}
@@ -105,25 +105,25 @@ func (s *Screen) SetTitle(title string) {
 
 func (s *Screen) DrawPlace(pos draw.Pos, n int, description string) {
 	if s.ctx != nil {
-		draw.Place(s.ctx, pos.X, pos.Y, n, description)
+		draw.Place(s.ctx, pos, n, description)
 	}
 }
 
 func (s *Screen) DrawTransition(pos draw.Pos, attrs, description string) {
 	if s.ctx != nil {
-		draw.Transition(s.ctx, pos.X, pos.Y, attrs, description)
+		draw.Transition(s.ctx, pos, attrs, description)
 	}
 }
 
 func (s *Screen) DrawInArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
-		draw.Arc(s.ctx, from.X, from.Y, to.X, to.Y, draw.In, weight)
+		draw.Arc(s.ctx, from, to, draw.In, weight)
 	}
 }
 
 func (s *Screen) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
-		draw.Arc(s.ctx, from.X, from.Y, to.X, to.Y, draw.Out, weight)
+		draw.Arc(s.ctx, from, to, draw.Out, weight)
 	}
 }
 
