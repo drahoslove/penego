@@ -26,3 +26,7 @@ func AlwaysIcon(icon Icon) func() Icon {
 		return icon
 	}
 }
+
+func True() bool {
+	return true
+}

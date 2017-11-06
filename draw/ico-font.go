@@ -1,4 +1,4 @@
-package gui
+package draw
 
 var icoTTF = []byte{
 	0, 1, 0, 0, 0, 12, 0, 128, 0, 3, 0, 64, 71, 83, 85, 66, 255, 218, 1, 132,

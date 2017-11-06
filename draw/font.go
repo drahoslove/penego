@@ -1,6 +1,6 @@
-package gui
+package draw
 
-// create font cache with Go font and Awesome font
+// create font cache with Go font and icomoon
 
 import (
 	"fmt"

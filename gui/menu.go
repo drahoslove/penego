@@ -13,9 +13,10 @@ type menu struct {
 }
 
 type menuItem struct {
-	label   string
-	getIcon func() Icon
-	bound   bound
+	label      string
+	getIcon    func() Icon
+	isDisabled func() bool
+	bound      bound
 }
 
 type bound struct {
@@ -35,8 +36,8 @@ func newMenu() menu {
 	return menu
 }
 
-func (m *menu) addItem(getIcon func() Icon, label string) int {
-	m.items = append(m.items, menuItem{label, getIcon, bound{}})
+func (m *menu) addItem(getIcon func() Icon, isDisabled func() bool, label string) int {
+	m.items = append(m.items, menuItem{label, getIcon, isDisabled, bound{}})
 	return len(m.items) - 1
 }
 
@@ -44,9 +45,16 @@ func (m *menu) itemIcons() []string {
 	var icons = make([]string, len(m.items))
 	for i, item := range m.items {
 		icons[i] = string(item.getIcon())
-		i++
 	}
 	return icons
+}
+
+func (m *menu) disabled() []bool {
+	var disabled = make([]bool, len(m.items))
+	for i, item := range m.items {
+		disabled[i] = item.isDisabled()
+	}
+	return disabled
 }
 
 func (m *menu) setBounds(widths []int, height int) {

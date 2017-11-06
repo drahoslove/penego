@@ -3,9 +3,9 @@ package main // import "git.yo2.cz/drahoslav/penego"
 import (
 	"flag"
 	"fmt"
+	"git.yo2.cz/drahoslav/penego/compose"
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
-	"git.yo2.cz/drahoslav/penego/compose"
 	"github.com/pkg/profile"
 	"github.com/sqweek/dialog"
 	"io/ioutil"
@@ -156,19 +156,20 @@ func main() {
 
 		var sim net.Simulation
 
-		foo := func(){}
+		foo := func() {}
 		_ = foo
 
-		reload := func(filename string) {
+		reloader := makeFileWatcher(func(filename string) {
 			pnString = read(filename)
 			network = parse(pnString)
 			composeNet = compose.GetSimple(network)
 			sim.Stop()
 			state = Initial
-		}
+		})
+		defer reloader.close()
 
-		watchFile, closeWatcher := makeFileWatcher(reload)
-		defer closeWatcher()
+		reloader.watch(filename)
+		reloader.action()
 
 		playPause := func() {
 			switch state {
@@ -199,28 +200,29 @@ func main() {
 				if err != nil {
 					return
 				}
-				watchFile(filename)
-				reload(filename)
+				reloader.watch(filename)
+				reloader.action()
 			}()
 		}
 
+		// up bar commands
+		screen.RegisterControl("Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
+		screen.RegisterControl("O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
+		screen.RegisterControl("R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
 
-		// TODO modifiers
-		screen.RegisterControl("Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit)
-
-		screen.RegisterControl("O", gui.AlwaysIcon(gui.FileIcon), "open", open)
-
-		screen.RegisterControl("R", gui.AlwaysIcon(gui.PrevIcon), "reset", reset)
+		// down bar commands (simulation related)
+		screen.RegisterControl("R", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
 		screen.RegisterControl("space", func() gui.Icon {
-			if state != Running {
-				return gui.PlayIcon
-			} else {
-				return gui.PauseIcon
-			}
-		}, "play/pause", playPause)
-
-
-		watchFile(filename)
+			// if state != Running {
+			// 	return gui.PlayIcon
+			// } else {
+			// 	return gui.PauseIcon
+			// }
+			return map[bool]gui.Icon{
+				true:  gui.PlayIcon,
+				false: gui.PauseIcon,
+			}[state != Running]
+		}, "play/pause", playPause, gui.True)
 
 		for state != Exit {
 			switch state {

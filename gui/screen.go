@@ -4,9 +4,9 @@ package gui
 // exports Screen
 
 import (
+	"git.yo2.cz/drahoslav/penego/draw"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
-	"git.yo2.cz/drahoslav/penego/draw"
 )
 
 func nameToKey(key string) glfw.Key {
@@ -46,7 +46,7 @@ func (s *Screen) drawContent() {
 		draw.Clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
 		if s.menuVisible {
-			widths, height := draw.Menu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex)
+			widths, height := draw.Menu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex, s.menu.disabled())
 			s.menu.setBounds(widths, height)
 		}
 	}
@@ -153,8 +153,8 @@ func (s *Screen) OnMenu(menuIndex int, cb func()) {
 	})
 }
 
-func (s *Screen) RegisterControl(key string, getIcon func() Icon, label string, handler func()) {
+func (s *Screen) RegisterControl(key string, getIcon func() Icon, label string, handler func(), isEnabled func() bool) {
 	s.OnKey(key, handler)
-	i := s.menu.addItem(getIcon, label)
+	i := s.menu.addItem(getIcon, func() bool { return !isEnabled() }, label)
 	s.OnMenu(i, handler)
 }

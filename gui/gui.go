@@ -76,13 +76,15 @@ func Run(handler func(*Screen)) {
 		screen.SwapBuffers()
 	})
 
-
 	screen.menu = newMenu()
 
 	// change cursor hovering over buttons
 	screen.SetCursorPosCallback(func(w *glfw.Window, xpos float64, ypos float64) {
 		for i, menuItem := range screen.menu.items {
 			if menuItem.bound.hits(xpos, ypos) {
+				if menuItem.isDisabled() {
+					break
+				}
 				w.SetCursor(handCursor)
 				screen.setActiveMenuIndex(i)
 				return

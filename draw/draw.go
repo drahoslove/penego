@@ -82,7 +82,7 @@ func Splash(ctx draw2d.GraphicContext, title string) {
 	drawCenteredString(ctx, title, 0, 0)
 }
 
-func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int) ([]int, int) {
+func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int, disabled []bool) ([]int, int) {
 	defer tempContext(ctx)()
 
 	const (
@@ -106,6 +106,9 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 			ctx.SetFillColor(WHITE)
 		} else {
 			ctx.SetFillColor(LIGHT_GRAY)
+		}
+		if disabled[i] {
+			ctx.SetFillColor(DARK_GRAY)
 		}
 		w := ctx.FillStringAt(name, float64(sum+padding), height*2/3)
 		width := int(math.Ceil(w)) + 2*padding

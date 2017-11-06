@@ -7,7 +7,14 @@ import (
 	"os"
 )
 
-func makeFileWatcher(callback func(string)) (func(string), func()) {
+type Watcher struct {
+	watch  func(string)
+	close  func()
+	action func()
+	isOn   func() bool
+}
+
+func makeFileWatcher(callback func(string)) Watcher {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -50,6 +57,14 @@ func makeFileWatcher(callback func(string)) (func(string), func()) {
 	end := func() {
 		watcher.Close()
 	}
+	action := func() {
+		if currentFile != "" {
+			callback(currentFile)
+		}
+	}
+	isOn := func() bool {
+		return currentFile != ""
+	}
 
-	return watch, end
+	return Watcher{watch, end, action, isOn}
 }
