@@ -76,27 +76,30 @@ func Run(handler func(*Screen)) {
 		screen.SwapBuffers()
 	})
 
-	screen.menu = newMenu()
+	screen.mainMenu = newMenu()
+	screen.minorMenu = newMenu()
 
 	// change cursor hovering over buttons
 	screen.SetCursorPosCallback(func(w *glfw.Window, xpos float64, ypos float64) {
-		for i, menuItem := range screen.menu.items {
-			if menuItem.bound.hits(xpos, ypos) {
-				if menuItem.isDisabled() {
-					break
+		for _, menu := range []*menu{&screen.mainMenu, &screen.minorMenu} {
+			for i, menuItem := range menu.items {
+				if menuItem.bound.hits(xpos, ypos) {
+					if menuItem.isDisabled() {
+						break
+					}
+					w.SetCursor(handCursor)
+					screen.setActiveMenuIndex(menu, i)
+					return
 				}
-				w.SetCursor(handCursor)
-				screen.setActiveMenuIndex(i)
-				return
 			}
+			w.SetCursor(arrowCursor)
+			screen.setActiveMenuIndex(menu, -1)
 		}
-		w.SetCursor(arrowCursor)
-		screen.setActiveMenuIndex(-1)
 	})
 	// lost hover efect of button on window leave
 	screen.SetCursorEnterCallback(func(w *glfw.Window, entered bool) {
 		if entered == false { // leaved
-			screen.setActiveMenuIndex(-1)
+			screen.setActiveMenuIndex(&screen.mainMenu, -1)
 		}
 	})
 

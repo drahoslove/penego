@@ -30,8 +30,9 @@ type Screen struct {
 	contentInvalid  bool
 	width           int
 	height          int
-	menuVisible     bool
-	menu            menu
+	menusVisible     bool
+	mainMenu        menu
+	minorMenu		menu
 }
 
 /* non-exported methods */
@@ -45,16 +46,20 @@ func (s *Screen) drawContent() {
 	if s.drawContentFunc != nil {
 		draw.Clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
-		if s.menuVisible {
-			widths, height := draw.Menu(s.ctx, s.width, s.height, s.menu.itemIcons(), s.menu.activeIndex, s.menu.disabled())
-			s.menu.setBounds(widths, height)
+		if s.menusVisible {
+			widths, height, top := draw.Menu(s.ctx, s.width, s.height,
+				s.mainMenu.itemIcons(), s.mainMenu.activeIndex, s.mainMenu.disabled(), draw.Up)
+			s.mainMenu.setBounds(widths, height, top)
+			widths, height, top = draw.Menu(s.ctx, s.width, s.height,
+				s.minorMenu.itemIcons(), s.minorMenu.activeIndex, s.minorMenu.disabled(), draw.Down)
+			s.minorMenu.setBounds(widths, height, top)
 		}
 	}
 }
 
-func (s *Screen) setActiveMenuIndex(i int) {
-	if s.menu.activeIndex != i {
-		s.menu.activeIndex = i
+func (s *Screen) setActiveMenuIndex(menu *menu, i int) {
+	if menu.activeIndex != i {
+		menu.activeIndex = i
 		s.contentInvalid = true
 	}
 }
@@ -77,7 +82,7 @@ func (s *Screen) SetRedrawFunc(f RedrawFunc) {
 	doInLoop(func() {
 		s.drawContentFunc = f   // update drawContentFunc
 		s.contentInvalid = true // force draw
-		s.menuVisible = true
+		s.menusVisible = true
 	}, true)
 }
 
@@ -90,7 +95,7 @@ func (s *Screen) SetRedrawFuncToSplash(title string) {
 			}
 		})
 		s.contentInvalid = true
-		s.menuVisible = false
+		s.menusVisible = false
 	}, true)
 }
 
@@ -139,11 +144,11 @@ func (s *Screen) OnKey(keyName string, cb func()) {
 	})
 }
 
-func (s *Screen) OnMenu(menuIndex int, cb func()) {
+func (s *Screen) OnMenu(menu *menu, menuIndex int, cb func()) {
 	var prevcb glfw.MouseButtonCallback
 	prevcb = s.Window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 		if action == glfw.Release && button == glfw.MouseButton1 {
-			if s.menu.activeIndex == menuIndex {
+			if menu.activeIndex == menuIndex {
 				doInLoop(cb, false)
 			}
 		}
@@ -153,8 +158,15 @@ func (s *Screen) OnMenu(menuIndex int, cb func()) {
 	})
 }
 
-func (s *Screen) RegisterControl(key string, getIcon func() Icon, label string, handler func(), isEnabled func() bool) {
+func (s *Screen) RegisterControl(which int, key string, getIcon func() Icon, label string, handler func(), isEnabled func() bool) {
+	var menu * menu
+	if which == 0 {
+		menu = &s.mainMenu
+	}
+	if which == 1 {
+		menu = &s.minorMenu
+	}
 	s.OnKey(key, handler)
-	i := s.menu.addItem(getIcon, func() bool { return !isEnabled() }, label)
-	s.OnMenu(i, handler)
+	i := menu.addItem(getIcon, func() bool { return !isEnabled() }, label)
+	s.OnMenu(menu, i, handler)
 }

@@ -29,8 +29,13 @@ type Pos struct {
 	Y float64
 }
 
-type Direction bool
+type Gravity bool
+const (
+	Up Gravity = true
+	Down Gravity = false
+)
 
+type Direction bool
 const (
 	In  Direction = true
 	Out Direction = false
@@ -82,25 +87,33 @@ func Splash(ctx draw2d.GraphicContext, title string) {
 	drawCenteredString(ctx, title, 0, 0)
 }
 
-func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int, disabled []bool) ([]int, int) {
+func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int, disabled []bool, pos Gravity) ([]float64, float64, float64) {
 	defer tempContext(ctx)()
 
 	const (
-		padding = 14
-		height  = 36
+		padding = 14.0
+		height  = 36.0
 	)
 
-	var widths = make([]int, len(itemsNames))
+	var widths = make([]float64, len(itemsNames))
+	top := 0.0
+	bot := height
+	if pos == Down {
+		top = float64(sHeight)-height
+		bot = float64(sHeight)
+	}
 
 	ctx.Translate(-float64(sWidth)/2, -float64(sHeight)/2)
 
 	ctx.SetFillColor(opaque(DARK_GRAY, 0.9))
-	draw2dkit.Rectangle(ctx, 0, 0, float64(sWidth), height)
+
+	draw2dkit.Rectangle(ctx, 0, top, float64(sWidth), bot)
+
 	ctx.Fill()
 
 	ctx.SetFontSize(14)
 	ctx.SetFontData(draw2d.FontData{Name: "ico"})
-	sum := 0
+	sum := 0.0
 	for i, name := range itemsNames {
 		if i == activeIndex {
 			ctx.SetFillColor(WHITE)
@@ -110,12 +123,13 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 		if disabled[i] {
 			ctx.SetFillColor(DARK_GRAY)
 		}
-		w := ctx.FillStringAt(name, float64(sum+padding), height*2/3)
-		width := int(math.Ceil(w)) + 2*padding
-		widths[i] = int(width)
+		linePos := top + height*2/3
+		w := ctx.FillStringAt(name, sum+padding, linePos)
+		width := math.Ceil(w) + 2*padding
+		widths[i] = width
 		sum += width
 	}
-	return widths, height
+	return widths, height, top
 }
 
 // NET entities

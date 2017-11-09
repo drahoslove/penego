@@ -206,22 +206,18 @@ func main() {
 		}
 
 		// up bar commands
-		screen.RegisterControl("Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
-		screen.RegisterControl("O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
-		screen.RegisterControl("R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
+		screen.RegisterControl(0, "Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
+		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
+		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
 
 		// down bar commands (simulation related)
-		screen.RegisterControl("R", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
-		screen.RegisterControl("space", func() gui.Icon {
-			// if state != Running {
-			// 	return gui.PlayIcon
-			// } else {
-			// 	return gui.PauseIcon
-			// }
-			return map[bool]gui.Icon{
-				true:  gui.PlayIcon,
-				false: gui.PauseIcon,
-			}[state != Running]
+		screen.RegisterControl(1, "R", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
+		screen.RegisterControl(1, "space", func() gui.Icon {
+			if state != Running {
+				return gui.PlayIcon
+			} else {
+				return gui.PauseIcon
+			}
 		}, "play/pause", playPause, gui.True)
 
 		for state != Exit {
