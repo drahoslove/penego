@@ -15,6 +15,8 @@ func nameToKey(key string) glfw.Key {
 		return glfw.Key(rune(key[0])-'A') + glfw.KeyA
 	case key == "space":
 		return glfw.KeySpace
+	case key == "home":
+		return glfw.KeyHome
 	default:
 		return glfw.KeyUnknown
 	}

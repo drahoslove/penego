@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"git.yo2.cz/drahoslav/penego/compose"
+	"git.yo2.cz/drahoslav/penego/export"
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
 	"github.com/pkg/profile"
@@ -171,6 +172,8 @@ func main() {
 		reloader.watch(filename)
 		reloader.action()
 
+		// action functions:
+
 		playPause := func() {
 			switch state {
 			case Paused:
@@ -205,13 +208,18 @@ func main() {
 			}()
 		}
 
+		doExport := func() {
+			export.Png(composeNet)
+		}
+
 		// up bar commands
 		screen.RegisterControl(0, "Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
 		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
+		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True)
 
 		// down bar commands (simulation related)
-		screen.RegisterControl(1, "R", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
+		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
 		screen.RegisterControl(1, "space", func() gui.Icon {
 			if state != Running {
 				return gui.PlayIcon
