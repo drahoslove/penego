@@ -210,6 +210,8 @@ func main() {
 
 		doExport := func() {
 			export.Png(composeNet)
+			export.Pdf(composeNet)
+			fmt.Println("images exported")
 		}
 
 		// up bar commands
