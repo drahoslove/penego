@@ -211,6 +211,7 @@ func main() {
 		doExport := func() {
 			export.Png(composeNet)
 			export.Pdf(composeNet)
+			export.Svg(composeNet)
 			fmt.Println("images exported")
 		}
 
