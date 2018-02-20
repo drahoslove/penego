@@ -19,7 +19,7 @@ type Net struct {
 	transitions Transitions
 }
 
-func New(places Places, transitions Transitions) Net {
+func New(places Places, transitions Transitions) Net { // TODO make this a pointer type?
 	return Net{places, transitions}
 }
 
@@ -42,6 +42,34 @@ func (net Net) String() (str string) {
 	return
 }
 
+func (net *Net) Equals(another *Net) (bool, error) {
+	if a, b := len(net.places), len(another.places); a != b {
+		return false, fmt.Errorf("num of places does not match (%d != %d)", a, b)
+	}
+	if a, b := len(net.transitions), len(another.transitions); a != b {
+		return false, fmt.Errorf("num of transitions does not match (%d != %d)", a, b)
+	}
+
+	pairedPs := map[int]bool{}
+
+	pair:
+	for _, p := range net.places {
+		for j, pp := range another.places {
+			if p.Equals(pp) {
+				if pairedPs[j] { // j already paired with prev i
+					continue
+				}
+				pairedPs[j] = true
+				continue pair
+			}
+		}
+		return false, fmt.Errorf("no matching place") // no j pair for i
+	}
+
+
+	return true, nil
+}
+
 func (net *Net) saveState() {
 	for _, place := range net.places {
 		place.initTokens = place.Tokens
@@ -54,7 +82,6 @@ func (net *Net) restoreState() {
 	}
 }
 
-
 /* Place */
 
 type Place struct {
@@ -66,6 +93,16 @@ type Place struct {
 
 func (p Place) String () string {
 	return fmt.Sprintf("%s(%d)%s", p.id, p.Tokens, p.Description)
+}
+
+func (p *Place) Equals (pp *Place) bool {
+	if p.Tokens != pp.Tokens {
+		return false
+	}
+	if p.Description != pp.Description {
+		return false
+	}
+	return true
 }
 
 
