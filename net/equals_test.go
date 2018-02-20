@@ -12,14 +12,45 @@ func TestNetEquals(test *testing.T) {
 		Origins: Arcs{{1, g}},
 		Targets: Arcs{{1, g}, {2, e}},
 	}
-	refNet := New(
+	v := &Transition{
+		Origins: Arcs{{1, g}},
+		Targets: Arcs{{2, e}, {1, g}},
+	}
+	u := &Transition{
+		Origins: Arcs{{1, g}},
+		Targets: Arcs{{1, e}, {2, g}},
+	}
+	netA := New(
 		Places{g, e},
 		Transitions{t},
 	)
 
+	netB := New(
+		Places{e, g},
+		Transitions{t},
+	)
 
-	if ok, err := refNet.Equals(&refNet); !ok {
-		test.Errorf("Nets are not equal, %s", err)
+	netC := New(
+		Places{e, g},
+		Transitions{v},
+	)
+
+	netD := New(
+		Places{e, g},
+		Transitions{u},
+	)
+
+
+	if eq, err := netA.Equals(&netB); !eq {
+		test.Errorf("Nets shoud be equal but, %s", err)
+	}
+
+	if eq, err := netA.Equals(&netC); !eq {
+		test.Errorf("Nets should also be equal but, %s", err)
+	}
+
+	if eq, _ := netA.Equals(&netD); eq {
+		test.Errorf("Nets should no equal but they are")
 	}
 
 }

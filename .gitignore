@@ -12,3 +12,9 @@
 
 # Ignore sublime files
 *.sublime*
+
+# go dep files
+Gopkg.*
+
+# iletilliJIDEA (goland)
+.idea
