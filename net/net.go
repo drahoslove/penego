@@ -52,7 +52,7 @@ func (net *Net) Equals(another *Net) (bool, error) {
 
 	pairedPs := map[int]bool{}
 
-	pair:
+	pairPlace:
 	for _, p := range net.places {
 		for j, pp := range another.places {
 			if p.Equals(pp) {
@@ -60,10 +60,26 @@ func (net *Net) Equals(another *Net) (bool, error) {
 					continue
 				}
 				pairedPs[j] = true
-				continue pair
+				continue pairPlace
 			}
 		}
 		return false, fmt.Errorf("no matching place") // no j pair for i
+	}
+
+	pairedTs := map[int]bool{}
+
+	pairTran:
+	for _, t := range net.transitions {
+		for j, tt := range another.transitions {
+			if t.Equals(tt) {
+				if pairedTs[j] {
+					continue
+				}
+				pairedTs[j] = true
+				continue pairTran
+			}
+		}
+		return false, fmt.Errorf("no matching transition")
 	}
 
 
@@ -138,6 +154,16 @@ func (arc Arc) String() string {
 	}
 }
 
+func (a *Arc) Equals(aa *Arc) bool {
+	if a.Weight != aa.Weight {
+		return false
+	}
+	if !a.Place.Equals(aa.Place) {
+		return false
+	}
+	return true
+}
+
 /* Arcs */
 
 type Arcs []Arc
@@ -152,6 +178,25 @@ func (arcs Arcs) String() string {
 
 func (arcs *Arcs) Push(w int, place *Place) {
 	*arcs = append(*arcs, Arc{w, place})
+}
+
+func (a *Arcs) Equals(aa *Arcs) bool {
+	pairedAs := map[int]bool{}
+
+	pairing:
+	for _, arc := range *a {
+		for j, another := range *aa {
+			if arc.Equals(&another) {
+				if pairedAs[j] {
+					continue
+				}
+				pairedAs[j] = true
+				continue pairing
+			}
+		}
+		return false
+	}
+	return true
 }
 
 /* Transtition */
@@ -170,6 +215,23 @@ func (t Transition) String() string {
 		prio = "p=" + strconv.Itoa(t.Priority)
 	}
 	return fmt.Sprintf("%s -> [%s%s]%s -> %s", t.Origins, t.TimeFunc, prio, t.Description, t.Targets)
+}
+
+func (t *Transition) Equals(tt *Transition) bool {
+	if !t.Origins.Equals(&tt.Origins) {
+		return false
+	}
+	if !t.Targets.Equals(&tt.Targets) {
+		return false
+	}
+	if t.Priority != tt.Priority {
+		return false
+	}
+	if t.Description != tt.Description {
+		return false
+	}
+
+	return true
 }
 
 /**

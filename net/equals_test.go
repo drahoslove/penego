@@ -40,17 +40,45 @@ func TestNetEquals(test *testing.T) {
 		Transitions{u},
 	)
 
+	netE := New(
+		Places{e, g},
+		Transitions{},
+	)
+
+	netF := New(
+		Places{g, e},
+		Transitions{},
+	)
+
+	netG := New(
+		Places{e, e},
+		Transitions{},
+	)
+
+	if eq, err := netA.Equals(&netA); !eq {
+		test.Errorf("Net should be identical but, %s", err)
+	}
 
 	if eq, err := netA.Equals(&netB); !eq {
 		test.Errorf("Nets shoud be equal but, %s", err)
 	}
 
 	if eq, err := netA.Equals(&netC); !eq {
-		test.Errorf("Nets should also be equal but, %s", err)
+		test.Errorf("Nets shoud be equal but, %s", err)
 	}
 
+	// weights
 	if eq, _ := netA.Equals(&netD); eq {
-		test.Errorf("Nets should no equal but they are")
+		test.Errorf("Nets should not be equal but they are")
+	}
+
+	// separated places
+	if eq, err := netE.Equals(&netF); !eq {
+		test.Errorf("Nets shoud be equal but, %s", err)
+	}
+	// separated places
+	if eq, _ := netE.Equals(&netG); eq {
+		test.Errorf("Nets shoud be not be equal, but they are")
 	}
 
 }
