@@ -23,15 +23,15 @@ func TestParse(test *testing.T) {
 		      <inscription>
 		        <text>2</text>
 		      </inscription>
-		    />
+		    </arc>
 		  </net>
 		</pnml>
 	`))
 	resNet := Parse(pnml)
 
  	//  TODO make equal
-	g := &net.Place{Tokens:1}
-	e := &net.Place{Description: "exit"}
+	g := &net.Place{Tokens:3}
+	e := &net.Place{}
 	t := &net.Transition{
 		Origins: net.Arcs{{1, g}},
 		Targets: net.Arcs{{1, g}, {2, e}},

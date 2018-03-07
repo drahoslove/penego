@@ -102,7 +102,7 @@ func Parse(input string) (net Net, err error) {
 			place := &Place{
 				Tokens: num,
 				Description: unPack(desc), // strip first and last char
-				id: id,
+				Id: id,
 			}
 			namedPlaces[id] = place
 			net.places.Push(place)
@@ -147,7 +147,7 @@ func Parse(input string) (net Net, err error) {
 					} else {
 						for _, arc := range arcs {
 							if arc.Place == place {
-								err = errors.New("place `"+place.id+"` used multiple times in one side of transition")
+								err = errors.New("place `"+place.Id+"` used multiple times in one side of transition")
 							}
 						}
 						arcs.Push(w, place)
@@ -162,7 +162,7 @@ func Parse(input string) (net Net, err error) {
 			// changes `[] -> n` to `S -> [] -> n,S`
 			// where S is hidden place creating self loop
 			if len(origins) == 0 {
-				selfLoopPlace := &Place{Tokens: 1, id: "."}
+				selfLoopPlace := &Place{Tokens: 1, Id: "."}
 				origins.Push(1, selfLoopPlace)
 				targets.Push(1, selfLoopPlace)
 			}
@@ -196,7 +196,7 @@ func Parse(input string) (net Net, err error) {
 			}
 
 
-			net.transitions.Push(Transition{
+			net.transitions.Push(&Transition{
 				Origins: origins,
 				Targets: targets,
 				Priority: priority,

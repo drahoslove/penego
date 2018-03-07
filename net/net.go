@@ -103,12 +103,12 @@ func (net *Net) restoreState() {
 type Place struct {
 	Tokens int
 	Description string
-	id string
+	Id string
 	initTokens int
 }
 
 func (p Place) String () string {
-	return fmt.Sprintf("%s(%d)%s", p.id, p.Tokens, p.Description)
+	return fmt.Sprintf("%s(%d)%s", p.Id, p.Tokens, p.Description)
 }
 
 func (p *Place) Equals (pp *Place) bool {
@@ -138,6 +138,14 @@ func (places Places) String() string {
 	return strings.Join(placestrs, ", ")
 }
 
+func (places Places) Find(id string) *Place {
+	for _, place := range places {
+		if place.Id == id {
+			return place
+		}
+	}
+	return nil
+}
 
 /* Arc */
 
@@ -148,9 +156,9 @@ type Arc struct {
 
 func (arc Arc) String() string {
 	if arc.Weight > 1 {
-		return fmt.Sprintf("%d*%s", arc.Weight, arc.Place.id)
+		return fmt.Sprintf("%d*%s", arc.Weight, arc.Place.Id)
 	} else {
-		return arc.Place.id
+		return arc.Place.Id
 	}
 }
 
@@ -277,8 +285,8 @@ func (t * Transition) doOut() {
 
 type Transitions []*Transition
 
-func (trans *Transitions) Push(tran Transition) {
-	*trans = append(*trans, &tran)
+func (trans *Transitions) Push(tran *Transition) {
+	*trans = append(*trans, tran)
 }
 
 func (trans *Transitions) Remove(i int) {
