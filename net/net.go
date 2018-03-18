@@ -488,6 +488,7 @@ func (sim *Simulation) Init() {
 	// schedule empty tran
 	sim.calendar.Insert(Event{sim.startTime, &Transition{}}, 0)
 	// sim.Step() // this causes runtime error
+}
 
 func (sim *Simulation) Step() bool {
 	if sim.calendar.isEmpty() {
