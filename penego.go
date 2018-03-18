@@ -214,9 +214,16 @@ func main() {
 		}
 
 		doExport := func() {
-			export.Png(composeNet)
-			export.Pdf(composeNet)
-			export.Svg(composeNet)
+			dialog := dialog.File().Title("Export image")
+			dialog.Filter("SVG - Scalable Vector Graphics", "svg")
+			dialog.Filter("PNG - Portable Network Graphics", "png")
+			dialog.Filter("PDF - Portable Document Format", "pdf")
+			filename, err := dialog.Save()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			export.ByName(filename, composeNet)
 			fmt.Println("images exported")
 		}
 
