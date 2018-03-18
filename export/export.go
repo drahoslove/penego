@@ -2,7 +2,7 @@ package export
 
 import (
 	"fmt"
-	_ "path"
+	"path/filepath"
 	"github.com/llgcode/draw2d"
 	"git.yo2.cz/drahoslav/penego/draw"
 )
@@ -42,4 +42,17 @@ func (drawer ImgDrawer) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 
 func getName(ext string) string {
 	return fmt.Sprintf("%s.%s", filename, ext) // TODO prompt user
+}
+
+func ByName(filename string, composeNet func(draw.Drawer)) {
+	ext := filepath.Ext(filename)
+	fmt.Println("filename and ext>", filename, ext)
+	switch ext {
+	case ".png":
+		Png(composeNet)
+	case ".svg":
+		Pdf(composeNet)
+	case ".pdf":
+		Pdf(composeNet)
+	}
 }
