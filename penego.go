@@ -25,7 +25,8 @@ const EXAMPLE = `
 type State int
 
 const (
-	Initial State = iota
+	New State = iota
+	Initial
 	Running
 	Paused
 	Stopped
@@ -165,7 +166,7 @@ func main() {
 			network = parse(pnString)
 			composeNet = compose.GetSimple(network)
 			sim.Stop()
-			state = Initial
+			state = New
 		})
 		defer reloader.close()
 
@@ -173,6 +174,10 @@ func main() {
 		reloader.action()
 
 		// action functions:
+
+		step := func() {
+			sim.Step()
+		}
 
 		playPause := func() {
 			switch state {
@@ -223,6 +228,7 @@ func main() {
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
+		screen.RegisterControl(1, "right", gui.AlwaysIcon(gui.NextIcon), "step", step, gui.True)
 		screen.RegisterControl(1, "space", func() gui.Icon {
 			if state != Running {
 				return gui.PlayIcon
@@ -237,13 +243,16 @@ func main() {
 				// show splash for 2 seconds
 				screen.SetRedrawFuncToSplash("Penego")
 				time.Sleep(time.Second * 1)
-				state = Initial
-			case Initial:
+				state = New
+			case New:
 				sim = net.NewSimulation(startTime, endTime, network)
-				sim.DoEveryStateChange(onStateChange)
 				if trueRandom {
 					net.TrueRandomSeed()
 				}
+				state = Initial
+			case Initial:
+				sim.Init()
+				sim.DoEveryStateChange(onStateChange)
 				screen.SetRedrawFunc(gui.RedrawFunc(composeNet))
 				if autoStart {
 					state = Running

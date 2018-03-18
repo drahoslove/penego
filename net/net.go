@@ -382,6 +382,7 @@ type Simulation struct {
 	stateChange func(time.Duration, time.Duration)
 	paused bool
 	stopped bool
+	sortedTransitions Transitions
 }
 
 func (sim *Simulation) GetNow() time.Duration {
@@ -432,6 +433,42 @@ func (sim *Simulation) cancelUnenabledTimed() {
 	}
 }
 
+
+func (sim *Simulation) fireEvent(scheduledTran *Transition, before, now time.Duration) {
+	scheduledTran.doIn()
+	sim.cancelUnenabledTimed()
+	scheduledTran.doOut()
+	sim.stateChange(before, now)
+
+	countOfPasses := 0
+	stabilize: // whenever transition is completed, start checking again from bigest priority
+	countOfPasses++
+	if countOfPasses > 1E3 {
+		panic("too many transitions done in same time, possible loop")
+	}
+	for _, tran := range sim.sortedTransitions { // TODO cycle transitions with same priority in random order
+		if tran.TimeFunc != nil {
+			break // no need to go further, rest are timed due to sort
+		}
+		if sim.stopped {
+			return
+		}
+		if tran.isEnabled() {
+			if sim.paused {
+				sim.calendar.Insert(Event{now, tran}, 0)
+				return
+			}
+			tran.doIn()
+			sim.cancelUnenabledTimed()
+			tran.doOut()
+			sim.stateChange(now, now)
+			goto stabilize
+		}
+	}
+
+	sim.scheduleEnabledTimed() // might create new event in current time
+}
+
 func (sim *Simulation) DoEveryStateChange(fun func(time.Duration, time.Duration)) {
 	sim.stateChange = func(now, then time.Duration) {
 		if fun != nil {
@@ -440,74 +477,50 @@ func (sim *Simulation) DoEveryStateChange(fun func(time.Duration, time.Duration)
 	}
 }
 
+func (sim *Simulation) Init() {
+	restartSeed()
+	sim.now = sim.startTime
+	sim.calendar = Calendar{}
+	sim.sortedTransitions = make(Transitions, len(sim.net.transitions))
+	copy(sim.sortedTransitions, sim.net.transitions)
+	sort.Sort(sim.sortedTransitions)
+
+	// schedule empty tran
+	sim.calendar.Insert(Event{sim.startTime, &Transition{}}, 0)
+	// sim.Step() // this causes runtime error
+}
+
+func (sim *Simulation) Step() bool {
+	if sim.calendar.isEmpty() {
+		return false
+	}
+	eventTime, tranToFireNow := sim.calendar.shift()
+	if eventTime > sim.endTime {
+		return false
+	}
+	before := sim.now
+	sim.now = eventTime
+	sim.fireEvent(tranToFireNow, before, sim.now)  // current time and time of event
+	return true
+}
+
 // Run starts running simulation or continue in running from previously paused state
 func (sim *Simulation) Run() {
 
-	if !sim.paused {
-		restartSeed()
-		sim.now = sim.startTime
-		sim.calendar = Calendar{}
-	} // else use previously used values
+	if !sim.paused { // start from beginning
+		sim.Init()
+	}
 
 	sim.paused = false
 	sim.stopped = false
 
-	sortedTransitions := make(Transitions, len(sim.net.transitions))
-	copy(sortedTransitions, sim.net.transitions)
-	sort.Sort(sortedTransitions)
-
-	fireEvent := func(scheduledTran *Transition, before, now time.Duration) {
-
-		scheduledTran.doIn()
-		sim.cancelUnenabledTimed()
-		scheduledTran.doOut()
-		sim.stateChange(before, now)
-
-		countOfPasses := 0
-		stabilize: // whenever transition is completed, start checking again from bigest priority
-		countOfPasses++
-		if countOfPasses > 1E3 {
-			panic("too many transitions done in same time, possible loop")
-		}
-		for _, tran := range sortedTransitions { // TODO cycle transitions with same priority in random order
-			if tran.TimeFunc != nil {
-				break // no need to go further, rest are timed due to sort
-			}
-			if sim.stopped {
-				return
-			}
-			if tran.isEnabled() {
-				if sim.paused {
-					sim.calendar.Insert(Event{now, tran}, 0)
-					return
-				}
-				tran.doIn()
-				sim.cancelUnenabledTimed()
-				tran.doOut()
-				sim.stateChange(now, now)
-				goto stabilize
-			}
-		}
-
-		sim.scheduleEnabledTimed() // might create new event in current time
-	}
-
-	fireEvent(&Transition{}, sim.startTime, sim.startTime) // todo schedule empty tarn instead?
-
-	for !sim.calendar.isEmpty() {
-		if sim.paused  {
-			return
-		}
-		if sim.stopped {
+	for {
+		if sim.paused || sim.stopped {
 			break
 		}
-		eventTime, tranToFireNow := sim.calendar.shift()
-		if eventTime > sim.endTime {
+		if !sim.Step() {
 			break
 		}
-		before := sim.now
-		sim.now = eventTime
-		fireEvent(tranToFireNow, before, sim.now)  // current time and time of event
 	}
 }
 
@@ -518,17 +531,17 @@ func (sim *Simulation) Pause() {
 	sim.stopped = false
 }
 
+// Stops simulation and restore its initial state
 func (sim *Simulation) Stop() {
-	if sim.paused {
-		sim.paused = false
-	}
-	sim.net.restoreState()
+	sim.paused = false
 	sim.stopped = true
+	sim.net.restoreState()
+	sim.Init()
 }
 
 /******* exported functions *******/
 
 func NewSimulation(startTime, endTime time.Duration, net Net) Simulation {
 	net.saveState()
-	return Simulation{startTime, endTime, 0, net, Calendar{}, nil, false, false}
+	return Simulation{startTime, endTime, 0, net, Calendar{}, nil, false, false, nil}
 }
