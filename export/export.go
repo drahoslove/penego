@@ -46,7 +46,6 @@ func getName(ext string) string {
 
 func ByName(filename string, composeNet func(draw.Drawer)) {
 	ext := filepath.Ext(filename)
-	fmt.Println("filename and ext>", filename, ext)
 	switch ext {
 	case ".png":
 		Png(composeNet)
