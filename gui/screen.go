@@ -17,6 +17,10 @@ func nameToKey(key string) glfw.Key {
 		return glfw.KeySpace
 	case key == "home":
 		return glfw.KeyHome
+	case key == "right":
+		return glfw.KeyRight
+	case key == "left":
+		return glfw.KeyLeft
 	default:
 		return glfw.KeyUnknown
 	}
