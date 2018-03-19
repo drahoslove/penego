@@ -200,9 +200,8 @@ func main() {
 		}
 
 		open := func() {
-			go func() {
-				// filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
-				filename := toolsLoadFile()
+			// filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
+			toolsLoadFile(func(filename string) {
 				if verbose {
 					fmt.Println(filename)
 				}
@@ -210,8 +209,8 @@ func main() {
 					return
 				}
 				reloader.watch(filename)
-				reloader.action()
-			}()
+				reloader.action()	
+			})
 		}
 
 		doExport := func() {
@@ -224,9 +223,10 @@ func main() {
 			// 	fmt.Println(err)
 			// 	return
 			// }
-			filename = toolsSaveFile()
-			export.ByName(filename, composeNet)
-			fmt.Println("images exported")
+			toolsSaveFile(func(filename string) {
+				export.ByName(filename, composeNet)
+				fmt.Println("images exported")
+			})
 		}
 
 		// up bar commands
