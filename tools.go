@@ -38,3 +38,25 @@ func init() {
 func tools() {
 	toolWindow.Show()
 }
+
+func toolsLoadFile() string {
+	filename := ""
+	c := make(chan bool)
+	ui.QueueMain(func(){
+		filename = ui.OpenFile(toolWindow)
+		c <- true
+	})
+	<- c
+	return filename
+}
+
+func toolsSaveFile() string {
+	filename := ""
+	c := make(chan bool)
+	ui.QueueMain(func(){
+		filename = ui.SaveFile(toolWindow)
+		c <- true
+	})
+	<- c
+	return filename
+}

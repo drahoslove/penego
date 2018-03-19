@@ -8,7 +8,7 @@ import (
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
 	"github.com/pkg/profile"
-	"github.com/sqweek/dialog"
+	// "github.com/sqweek/dialog"
 	"io/ioutil"
 	"log"
 	"os"
@@ -201,7 +201,8 @@ func main() {
 
 		open := func() {
 			go func() {
-				filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
+				// filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
+				filename := toolsLoadFile()
 				if verbose {
 					fmt.Println(filename)
 				}
@@ -214,15 +215,16 @@ func main() {
 		}
 
 		doExport := func() {
-			dialog := dialog.File().Title("Export image")
-			dialog.Filter("SVG - Scalable Vector Graphics", "svg")
-			dialog.Filter("PNG - Portable Network Graphics", "png")
-			dialog.Filter("PDF - Portable Document Format", "pdf")
-			filename, err := dialog.Save()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+			// dialog := dialog.File().Title("Export image")
+			// dialog.Filter("SVG - Scalable Vector Graphics", "svg")
+			// dialog.Filter("PNG - Portable Network Graphics", "png")
+			// dialog.Filter("PDF - Portable Document Format", "pdf")
+			// filename, err := dialog.Save()
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	return
+			// }
+			filename = toolsSaveFile()
 			export.ByName(filename, composeNet)
 			fmt.Println("images exported")
 		}
