@@ -28,7 +28,17 @@ Penego can work with Petri nets having following properties:
 ```
 go get -u git.yo2.cz/drahoslav/penego/
 ```
-(packages `libgl1-mesa-dev` and `xorg-dev` or similar are required for building on linux)
+
+### requirements
+  - go 1.10+
+
+#### windows
+  - mingw-64 5.x (andlabs/ui)
+
+#### linux
+  - apt install:
+    - `libgl1-mesa-dev xorg-dev`  (`go-gl/gl`, `go-gl/glfw`)
+    - `libgtk-3-dev` (`andlabs/ui`)
 
 ## Usage
 ```bash
@@ -148,4 +158,3 @@ Following petri net…
 ```
 
 #### TODO simulation
-

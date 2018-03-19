@@ -201,7 +201,7 @@ func main() {
 
 		open := func() {
 			// filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
-			toolsLoadFile(func(filename string) {
+			gui.LoadFile(func(filename string) {
 				if verbose {
 					fmt.Println(filename)
 				}
@@ -223,7 +223,7 @@ func main() {
 			// 	fmt.Println(err)
 			// 	return
 			// }
-			toolsSaveFile(func(filename string) {
+			gui.SaveFile(func(filename string) {
 				export.ByName(filename, composeNet)
 				fmt.Println("images exported")
 			})
@@ -234,7 +234,13 @@ func main() {
 		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
 		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True)
-		screen.RegisterControl(0, "T", gui.AlwaysIcon(gui.StopIcon), "tools", tools, gui.True) // TODO icon
+		screen.RegisterControl(0, "T", func() gui.Icon {
+			if gui.IsToolsOn() {
+				return gui.StopIcon  // TODO proper icons
+			} else {
+				return gui.PauseIcon
+			}
+		}, "tools", gui.ToggleTools, gui.True)
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)

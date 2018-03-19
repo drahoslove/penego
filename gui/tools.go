@@ -1,22 +1,16 @@
-package main
+package gui
 
 import (
 	"fmt"
 	"github.com/andlabs/ui"
 )
 
-var toolWindow *ui.Window
 
-func tools() {
+var toolWindow *ui.Window
+var box *ui.Box
+
+func init() {
 	go func() {
-		if toolWindow != nil {
-			c := make(chan bool)
-			ui.QueueMain(func() {
-				toolWindow.Destroy()
-				c <- true
-			})
-			<- c // wait for destroy
-		}
 		err := ui.Main(func() {
 			input := ui.NewEntry()
 			greeting := ui.NewLabel("")
@@ -32,20 +26,12 @@ func tools() {
 				greeting.SetText("Hello, " + input.Text() + "!")
 			})
 			
-			box := ui.NewVerticalBox()
+			box = ui.NewVerticalBox()
 			box.Append(ui.NewLabel("Enter your name:"), false)
 			box.Append(input, false)
 			box.Append(button, false)
 			box.Append(greeting, false)
 			box.Append(slider, false)
-
-			toolWindow = ui.NewWindow("Hello", 200, 100, false)
-			toolWindow.SetMargined(true)
-			toolWindow.SetChild(box)
-			toolWindow.OnClosing(func(*ui.Window) bool {
-				return true
-			})
-			toolWindow.Show()
 		})
 		if err != nil {
 			panic(err)
@@ -53,14 +39,39 @@ func tools() {
 	}()
 }
 
-func toolsLoadFile(cb func(string)) {
+func IsToolsOn() bool {
+	return toolWindow != nil
+}
+
+func ToggleTools() {
+	ui.QueueMain(func() {
+		if toolWindow != nil {
+			toolWindow.SetChild(nil)
+			toolWindow.Destroy()
+			toolWindow = nil
+		} else {
+			toolWindow = ui.NewWindow("Tools", 200, 100, false)
+			toolWindow.SetMargined(true)
+			toolWindow.SetChild(box)
+			toolWindow.OnClosing(func(*ui.Window) bool {
+				toolWindow.SetChild(nil)
+				toolWindow.Destroy()
+				toolWindow = nil
+				return false
+			})
+			toolWindow.Show()
+		}
+	})
+}
+
+func LoadFile(cb func(string)) {
 	ui.QueueMain(func() {
 		filename := ui.OpenFile(toolWindow)
 		cb(filename)
 	})
 }
 
-func toolsSaveFile(cb func(string)) {
+func SaveFile(cb func(string)) {
 	ui.QueueMain(func() {
 		filename := ui.SaveFile(toolWindow)
 		cb(filename)
