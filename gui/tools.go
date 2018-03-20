@@ -9,6 +9,11 @@ import (
 	"github.com/andlabs/ui"
 )
 
+type pair struct {
+	control ui.Control
+	stretch bool
+}
+
 var fooWindow *ui.Window // for binding file load/save modal windows
 var toolWindow *ui.Window
 var box ui.Control
@@ -25,11 +30,11 @@ func init() {
 	}()
 }
 
-func line(stuff ...ui.Control) ui.Control {
+func line(stuff ...pair) ui.Control {
 	box := ui.NewHorizontalBox()
 	box.SetPadded(true)
-	for _, c := range stuff {
-		box.Append(c, true)
+	for _, p := range stuff {
+		box.Append(p.control, p.stretch)
 	}
 	return box
 }
@@ -37,7 +42,7 @@ func line(stuff ...ui.Control) ui.Control {
 func createToolsBox() ui.Control {
 	exportTab := ui.NewTab()
 	exportTab.Append("SVG", createSvgPresets())
-	exportTab.Append("PNF", createSvgPresets())
+	exportTab.Append("PNG", createSvgPresets())
 	exportTab.Append("PDF", createSvgPresets())
 
 	return exportTab
@@ -45,9 +50,9 @@ func createToolsBox() ui.Control {
 
 func createSvgPresets () ui.Control {
 	box := ui.NewVerticalBox()
-	box.Append(createIntInput("width", 1, math.MaxInt32), false)
-	box.Append(createIntInput("height", 1, math.MaxInt32), false)
-	box.Append(createIntInput("zoom", -5, +5), false)
+	box.Append(createIntInput("width", 1, 1, math.MaxInt32), false)
+	box.Append(createIntInput("height", 1, 1, math.MaxInt32), false)
+	box.Append(createIntInput("zoom", 0, -5, +5), false)
 	box.Append(createExportAs(".png"), false)
 	return box
 }
@@ -63,17 +68,15 @@ func createExportAs(ext string) ui.Control {
 			input.SetText(filename)
 		})
 	})
-	return line(input, button)
+	return line(pair{input, true}, pair{button, false})
 }
 
-func createIntInput(name string, max, min int) ui.Control {
+func createIntInput(name string, value, max, min int) ui.Control {
 	input := ui.NewSpinbox(max, min)
+	input.SetValue(value)
 	label := ui.NewLabel(name)
-	
-	box := ui.NewHorizontalBox()
-	box.Append(label, true)
-	box.Append(input, false)
-	return box
+
+	return line(pair{label, true}, pair{input, false})
 }
 
 func IsToolsOn() bool {
