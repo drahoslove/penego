@@ -8,7 +8,7 @@ import (
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
 	"github.com/pkg/profile"
-	"github.com/sqweek/dialog"
+	// "github.com/sqweek/dialog"
 	"io/ioutil"
 	"log"
 	"os"
@@ -200,8 +200,8 @@ func main() {
 		}
 
 		open := func() {
-			go func() {
-				filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
+			// filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
+			gui.LoadFile(func(filename string) {
 				if verbose {
 					fmt.Println(filename)
 				}
@@ -209,22 +209,24 @@ func main() {
 					return
 				}
 				reloader.watch(filename)
-				reloader.action()
-			}()
+				reloader.action()	
+			})
 		}
 
 		doExport := func() {
-			dialog := dialog.File().Title("Export image")
-			dialog.Filter("SVG - Scalable Vector Graphics", "svg")
-			dialog.Filter("PNG - Portable Network Graphics", "png")
-			dialog.Filter("PDF - Portable Document Format", "pdf")
-			filename, err := dialog.Save()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			export.ByName(filename, composeNet)
-			fmt.Println("images exported")
+			// dialog := dialog.File().Title("Export image")
+			// dialog.Filter("SVG - Scalable Vector Graphics", "svg")
+			// dialog.Filter("PNG - Portable Network Graphics", "png")
+			// dialog.Filter("PDF - Portable Document Format", "pdf")
+			// filename, err := dialog.Save()
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	return
+			// }
+			gui.SaveFile(func(filename string) {
+				export.ByName(filename, composeNet)
+				fmt.Println("images exported")
+			})
 		}
 
 		// up bar commands
@@ -232,6 +234,13 @@ func main() {
 		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
 		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True)
+		screen.RegisterControl(0, "T", func() gui.Icon {
+			if gui.IsToolsOn() {
+				return gui.StopIcon  // TODO proper icons
+			} else {
+				return gui.PauseIcon
+			}
+		}, "tools", gui.ToggleTools, gui.True)
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
