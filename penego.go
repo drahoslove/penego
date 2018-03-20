@@ -7,8 +7,8 @@ import (
 	"git.yo2.cz/drahoslav/penego/export"
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
+	"git.yo2.cz/drahoslav/penego/storage"
 	"github.com/pkg/profile"
-	// "github.com/sqweek/dialog"
 	"io/ioutil"
 	"log"
 	"os"
@@ -73,6 +73,14 @@ func main() {
 		network net.Net
 		err     error
 	)
+
+	var (
+		store = storage.New()
+	)
+	store.Set("export.width", 300)
+	store.Set("export.height", 400)
+	store.Set("export.zoom", 0)
+	gui.Init(store)
 
 	// flags
 

@@ -7,6 +7,7 @@ import (
 	"math"
 	"path/filepath"
 	"github.com/andlabs/ui"
+	"git.yo2.cz/drahoslav/penego/storage"
 )
 
 type pair struct {
@@ -17,6 +18,11 @@ type pair struct {
 var fooWindow *ui.Window // for binding file load/save modal windows
 var toolWindow *ui.Window
 var box ui.Control
+var store storage.Storage
+
+func Init(st storage.Storage) {
+	store = st
+}
 
 func init() {
 	go func() {
@@ -50,9 +56,12 @@ func createToolsBox() ui.Control {
 
 func createSvgPresets () ui.Control {
 	box := ui.NewVerticalBox()
-	box.Append(createIntInput("width", 1, 1, math.MaxInt32), false)
-	box.Append(createIntInput("height", 1, 1, math.MaxInt32), false)
-	box.Append(createIntInput("zoom", 0, -5, +5), false)
+	w := store.Get("export.width").(int)
+	h := store.Get("export.height").(int)
+	z := store.Get("export.zoom").(int)
+	box.Append(createIntInput("width", w, 1, math.MaxInt32), false)
+	box.Append(createIntInput("height", h, 1, math.MaxInt32), false)
+	box.Append(createIntInput("zoom", z, -5, +5), false)
 	box.Append(createExportAs(".png"), false)
 	return box
 }

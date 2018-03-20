@@ -78,3 +78,7 @@ func (l *List) Get() interface{} {
 func (l *List) Set(val interface{}) {
 	*l = []interface{}(val.([]interface{}))
 }
+
+func (l List) At(i int) interface{} {
+	return ([]interface{})(l)[i]
+}
