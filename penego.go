@@ -77,6 +77,9 @@ func main() {
 	var (
 		store = storage.New()
 	)
+	store.OnChange(func(s storage.Storage, key string) {
+		fmt.Printf("store> %s changed\n", key)
+	})
 	store.Set("export.width", 300)
 	store.Set("export.height", 400)
 	store.Set("export.zoom", 0)

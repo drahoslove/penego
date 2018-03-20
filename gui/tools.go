@@ -21,7 +21,7 @@ var box ui.Control
 var store storage.Storage
 
 func Init(st storage.Storage) {
-	store = st
+	store = st.Of("export")
 }
 
 func init() {
@@ -56,12 +56,9 @@ func createToolsBox() ui.Control {
 
 func createSvgPresets () ui.Control {
 	box := ui.NewVerticalBox()
-	w := store.Get("export.width").(int)
-	h := store.Get("export.height").(int)
-	z := store.Get("export.zoom").(int)
-	box.Append(createIntInput("width", w, 1, math.MaxInt32), false)
-	box.Append(createIntInput("height", h, 1, math.MaxInt32), false)
-	box.Append(createIntInput("zoom", z, -5, +5), false)
+	box.Append(createIntInput("width", 1, math.MaxInt32), false)
+	box.Append(createIntInput("height", 1, math.MaxInt32), false)
+	box.Append(createIntInput("zoom", -5, +5), false)
 	box.Append(createExportAs(".png"), false)
 	return box
 }
@@ -80,10 +77,14 @@ func createExportAs(ext string) ui.Control {
 	return line(pair{input, true}, pair{button, false})
 }
 
-func createIntInput(name string, value, max, min int) ui.Control {
+func createIntInput(name string, max, min int) ui.Control {
 	input := ui.NewSpinbox(max, min)
-	input.SetValue(value)
+	input.SetValue(store.Int(name))
+	input.OnChanged(func(*ui.Spinbox) {
+		store.Set(name, input.Value())
+	})
 	label := ui.NewLabel(name)
+
 
 	return line(pair{label, true}, pair{input, false})
 }
