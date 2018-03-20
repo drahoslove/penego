@@ -1,16 +1,20 @@
 package export
 
 import (
-	"fmt"
 	"path/filepath"
 	"github.com/llgcode/draw2d"
 	"git.yo2.cz/drahoslav/penego/draw"
+	"git.yo2.cz/drahoslav/penego/storage"
 )
 
 var (
-	filename = "img"
+	store storage.Storage
 	width, height = 1024, 512 // TODO get from somewhere
 )
+
+func Init(st storage.Storage) {
+	store = st.Of("export")
+}
 
 type ImgDrawer struct {
 	ctx draw2d.GraphicContext
@@ -41,7 +45,9 @@ func (drawer ImgDrawer) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 }
 
 func getName(ext string) string {
-	return fmt.Sprintf("%s.%s", filename, ext) // TODO prompt user
+	filename := store.String("filename")
+	println("getName", filename, ext)
+	return filename
 }
 
 func ByName(filename string, composeNet func(draw.Drawer)) {
@@ -50,7 +56,7 @@ func ByName(filename string, composeNet func(draw.Drawer)) {
 	case ".png":
 		Png(composeNet)
 	case ".svg":
-		Pdf(composeNet)
+		Svg(composeNet)
 	case ".pdf":
 		Pdf(composeNet)
 	}

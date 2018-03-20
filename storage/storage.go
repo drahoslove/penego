@@ -13,9 +13,10 @@ func New () Storage {
 func (s Storage) Of(prefix string) Storage {
 	return Storage{s.vals, s.prefix + prefix + ".", s.onChange}
 }
-func (s Storage) Set(key string, val interface{}) {
+func (s Storage) Set(key string, val interface{}) Storage {
 	s.vals[s.prefix + key] = val
 	s.changed(key)
+	return s
 }
 
 
@@ -29,7 +30,11 @@ func (s Storage) Float(key string) float64 {
 	return s.vals[s.prefix+key].(float64)
 }
 func (s Storage) String(key string) string {
-	return s.vals[s.prefix+key].(string)
+	v, ok := s.vals[s.prefix+key]
+	if !ok {
+		return ""
+	}
+	return v.(string)
 }
 
 func (s *Storage) OnChange(cb func(Storage, string)) {

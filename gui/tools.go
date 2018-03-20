@@ -16,19 +16,20 @@ type pair struct {
 }
 
 var fooWindow *ui.Window // for binding file load/save modal windows
-var toolWindow *ui.Window
-var box ui.Control
-var store storage.Storage
+var exportWindow *ui.Window
+var exportBox ui.Control
+var exportSt storage.Storage
+var exportFunc func(string)
 
 func Init(st storage.Storage) {
-	store = st.Of("export")
+	exportSt = st.Of("export")
 }
 
 func init() {
 	go func() {
 		err := ui.Main(func() {
 			fooWindow = ui.NewWindow("", 0, 0, false)
-			box = createToolsBox()
+			exportBox = createExportBox()
 		})
 		if err != nil {
 			panic(err)
@@ -45,7 +46,7 @@ func line(stuff ...pair) ui.Control {
 	return box
 }
 
-func createToolsBox() ui.Control {
+func createExportBox() ui.Control {
 	exportTab := ui.NewTab()
 	exportTab.Append("SVG", createSvgPresets())
 	exportTab.Append("PNG", createSvgPresets())
@@ -55,61 +56,75 @@ func createToolsBox() ui.Control {
 }
 
 func createSvgPresets () ui.Control {
+	button := ui.NewButton("Export")
+	button.OnClicked(func(button *ui.Button) {
+		if exportFunc != nil {
+			exportFunc(exportSt.String("filename"))
+		}
+	})
+
 	box := ui.NewVerticalBox()
 	box.Append(createIntInput("width", 1, math.MaxInt32), false)
 	box.Append(createIntInput("height", 1, math.MaxInt32), false)
 	box.Append(createIntInput("zoom", -5, +5), false)
 	box.Append(createExportAs(".png"), false)
+	box.Append(button, true)
 	return box
 }
 
 func createExportAs(ext string) ui.Control {
 	input := ui.NewEntry()
-	button := ui.NewButton("export as...")
+	input.SetText(exportSt.String("filename"))
+	input.OnChanged(func(input *ui.Entry) {
+		exportSt.Set("filename", input.Text())
+	})
+	button := ui.NewButton("browser...")
 	button.OnClicked(func(*ui.Button) {
 		SaveFile(func(filename string) {
 			if filepath.Ext(filename) != ext {
 				filename += ext
 			}
 			input.SetText(filename)
+			exportSt.Set("filename", filename)
 		})
 	})
 	return line(pair{input, true}, pair{button, false})
 }
 
 func createIntInput(name string, max, min int) ui.Control {
-	input := ui.NewSpinbox(max, min)
-	input.SetValue(store.Int(name))
-	input.OnChanged(func(*ui.Spinbox) {
-		store.Set(name, input.Value())
-	})
 	label := ui.NewLabel(name)
 
-
+	input := ui.NewSpinbox(max, min)
+	input.SetValue(exportSt.Int(name))
+	input.OnChanged(func(*ui.Spinbox) {
+		exportSt.Set(name, input.Value())
+	})
+	
 	return line(pair{label, true}, pair{input, false})
 }
 
-func IsToolsOn() bool {
-	return toolWindow != nil
+func IsExportOn() bool {
+	return exportWindow != nil
 }
 
-func ToggleTools() {
+func ToggleExport(export func(string)) {
+	exportFunc = export
 	ui.QueueMain(func() {
-		if toolWindow != nil {
-			toolWindow.SetChild(nil)
-			toolWindow.Destroy()
-			toolWindow = nil
+		if exportWindow != nil {
+			exportWindow.SetChild(nil)
+			exportWindow.Destroy()
+			exportWindow = nil
 		} else {
-			toolWindow = ui.NewWindow("Export", 200, 100, false)
-			toolWindow.SetMargined(true)
-			toolWindow.SetChild(box)
-			toolWindow.OnClosing(func(*ui.Window) bool {
-				toolWindow.SetChild(nil)
-				toolWindow.Destroy()
-				toolWindow = nil
+			exportWindow = ui.NewWindow("Export", 200, 100, false)
+			exportWindow.SetMargined(true)
+			exportWindow.SetChild(exportBox)
+			exportWindow.OnClosing(func(*ui.Window) bool {
+				exportWindow.SetChild(nil)
+				exportWindow.Destroy()
+				exportWindow = nil
 				return false
 			})
-			toolWindow.Show()
+			exportWindow.Show()
 		}
 	})
 }

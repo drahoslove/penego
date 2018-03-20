@@ -3,6 +3,7 @@ package main // import "git.yo2.cz/drahoslav/penego"
 import (
 	"flag"
 	"fmt"
+	"path/filepath"
 	"git.yo2.cz/drahoslav/penego/compose"
 	"git.yo2.cz/drahoslav/penego/export"
 	"git.yo2.cz/drahoslav/penego/gui"
@@ -69,21 +70,22 @@ func main() {
 		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
 	}
 
+	var store = storage.New()
+	// TODO init elsewhere?
+	pwd, _ := os.Getwd()
+	store.Of("export").
+		Set("width", 300).
+		Set("height", 400).
+		Set("zoom", 0).
+		Set("filename", pwd + string(filepath.Separator) + "image")
+	gui.Init(store)
+	export.Init(store)
+
+
 	var (
 		network net.Net
 		err     error
 	)
-
-	var (
-		store = storage.New()
-	)
-	store.OnChange(func(s storage.Storage, key string) {
-		fmt.Printf("store> %s changed\n", key)
-	})
-	store.Set("export.width", 300)
-	store.Set("export.height", 400)
-	store.Set("export.zoom", 0)
-	gui.Init(store)
 
 	// flags
 
@@ -234,9 +236,9 @@ func main() {
 			// 	fmt.Println(err)
 			// 	return
 			// }
-			gui.SaveFile(func(filename string) {
+			gui.ToggleExport(func(filename string) {
 				export.ByName(filename, composeNet)
-				fmt.Println("images exported")
+				fmt.Println("images exported", filename)
 			})
 		}
 
@@ -245,13 +247,6 @@ func main() {
 		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
 		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True)
-		screen.RegisterControl(0, "T", func() gui.Icon {
-			if gui.IsToolsOn() {
-				return gui.StopIcon  // TODO proper icons
-			} else {
-				return gui.PauseIcon
-			}
-		}, "tools", gui.ToggleTools, gui.True)
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
