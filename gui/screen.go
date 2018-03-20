@@ -36,9 +36,9 @@ type Screen struct {
 	contentInvalid  bool
 	width           int
 	height          int
-	menusVisible     bool
+	menusVisible    bool
 	mainMenu        menu
-	minorMenu		menu
+	minorMenu       menu
 }
 
 /* non-exported methods */
@@ -165,7 +165,7 @@ func (s *Screen) OnMenu(menu *menu, menuIndex int, cb func()) {
 }
 
 func (s *Screen) RegisterControl(which int, key string, getIcon func() Icon, label string, handler func(), isEnabled func() bool) {
-	var menu * menu
+	var menu *menu
 	if which == 0 {
 		menu = &s.mainMenu
 	}

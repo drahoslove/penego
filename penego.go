@@ -3,7 +3,6 @@ package main // import "git.yo2.cz/drahoslav/penego"
 import (
 	"flag"
 	"fmt"
-	"path/filepath"
 	"git.yo2.cz/drahoslav/penego/compose"
 	"git.yo2.cz/drahoslav/penego/export"
 	"git.yo2.cz/drahoslav/penego/gui"
@@ -13,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -77,10 +77,9 @@ func main() {
 		Set("width", 300).
 		Set("height", 400).
 		Set("zoom", 0).
-		Set("filename", pwd + string(filepath.Separator) + "image")
+		Set("filename", pwd+string(filepath.Separator)+"image")
 	gui.Init(store)
 	export.Init(store)
-
 
 	var (
 		network net.Net
@@ -222,7 +221,7 @@ func main() {
 					return
 				}
 				reloader.watch(filename)
-				reloader.action()	
+				reloader.action()
 			})
 		}
 

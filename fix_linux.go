@@ -1,10 +1,9 @@
 package main
 
 import (
-	_"time"
 	_ "runtime"
+	_ "time"
 	// "github.com/mattn/go-gtk/gtk"
-
 )
 
 // hack to make dialog work under linux

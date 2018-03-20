@@ -1,15 +1,14 @@
 package net
 
-import(
+import (
+	truerand "crypto/rand"
 	"fmt"
-	"time"
 	"math"
 	"math/big"
 	"math/rand"
-	truerand "crypto/rand"
 	"strings"
+	"time"
 )
-
 
 /******* types *******/
 
@@ -25,9 +24,9 @@ func (fn *TimeFunc) String() string {
 	}
 }
 
-func (fn *TimeFunc) SetTextRepr(name string, args... time.Duration) {
+func (fn *TimeFunc) SetTextRepr(name string, args ...time.Duration) {
 
-	arguments := make([]string,0)
+	arguments := make([]string, 0)
 
 	for _, arg := range args {
 		arguments = append(arguments, trimZeroUnits(arg.String()))
@@ -51,9 +50,8 @@ func (fn *TimeFunc) SetTextRepr(name string, args... time.Duration) {
 
 /******* global vars *******/
 
-var timeFuncTextReprs map[*TimeFunc] string
+var timeFuncTextReprs map[*TimeFunc]string
 var startSeed int64 = 1
-
 
 /******* exported functions *******/
 
@@ -87,14 +85,12 @@ func GetExponentialTimeFunc(mean time.Duration) *TimeFunc {
 }
 
 func GetErlangTimeFunc(mean time.Duration, k uint) *TimeFunc {
-	fn := TimeFunc(func () time.Duration {
+	fn := TimeFunc(func() time.Duration {
 		return erlangTime(mean, k)
 	})
 	fn.SetTextRepr("erlang", time.Duration(k), mean)
 	return &fn
 }
-
-
 
 // Seed pseudo random generator with true random number.
 // This same seed is used at beginning of every simulation.Run()
@@ -105,10 +101,9 @@ func TrueRandomSeed() {
 	rand.Seed(startSeed)
 }
 
-
 /******* unexported functions *******/
 
-func init () {
+func init() {
 	timeFuncTextReprs = make(map[*TimeFunc]string)
 }
 

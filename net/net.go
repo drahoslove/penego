@@ -2,10 +2,10 @@ package net
 
 import (
 	"fmt"
-	"time"
 	"sort"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
 )
 
 const MaxInt = int(^uint(0) >> 1)
@@ -15,7 +15,7 @@ const MaxInt = int(^uint(0) >> 1)
 /* Net */
 
 type Net struct {
-	places Places
+	places      Places
 	transitions Transitions
 }
 
@@ -52,7 +52,7 @@ func (net *Net) Equals(another *Net) (bool, error) {
 
 	pairedPs := map[int]bool{}
 
-	pairPlace:
+pairPlace:
 	for _, p := range net.places {
 		for j, pp := range another.places {
 			if p.Equals(pp) {
@@ -68,7 +68,7 @@ func (net *Net) Equals(another *Net) (bool, error) {
 
 	pairedTs := map[int]bool{}
 
-	pairTran:
+pairTran:
 	for _, t := range net.transitions {
 		for j, tt := range another.transitions {
 			if t.Equals(tt) {
@@ -81,7 +81,6 @@ func (net *Net) Equals(another *Net) (bool, error) {
 		}
 		return false, fmt.Errorf("no matching transition")
 	}
-
 
 	return true, nil
 }
@@ -101,17 +100,17 @@ func (net *Net) restoreState() {
 /* Place */
 
 type Place struct {
-	Tokens int
+	Tokens      int
 	Description string
-	Id string
-	initTokens int
+	Id          string
+	initTokens  int
 }
 
-func (p Place) String () string {
+func (p Place) String() string {
 	return fmt.Sprintf("%s(%d)%s", p.Id, p.Tokens, p.Description)
 }
 
-func (p *Place) Equals (pp *Place) bool {
+func (p *Place) Equals(pp *Place) bool {
 	if p.Tokens != pp.Tokens {
 		return false
 	}
@@ -120,7 +119,6 @@ func (p *Place) Equals (pp *Place) bool {
 	}
 	return true
 }
-
 
 /* Places */
 
@@ -151,7 +149,7 @@ func (places Places) Find(id string) *Place {
 
 type Arc struct {
 	Weight int
-	Place *Place
+	Place  *Place
 }
 
 func (arc Arc) String() string {
@@ -191,7 +189,7 @@ func (arcs *Arcs) Push(w int, place *Place) {
 func (a *Arcs) Equals(aa *Arcs) bool {
 	pairedAs := map[int]bool{}
 
-	pairing:
+pairing:
 	for _, arc := range *a {
 		for j, another := range *aa {
 			if arc.Equals(&another) {
@@ -210,10 +208,10 @@ func (a *Arcs) Equals(aa *Arcs) bool {
 /* Transtition */
 
 type Transition struct {
-	Origins Arcs
-	Targets Arcs
-	Priority int
-	TimeFunc *TimeFunc
+	Origins     Arcs
+	Targets     Arcs
+	Priority    int
+	TimeFunc    *TimeFunc
 	Description string
 }
 
@@ -245,7 +243,7 @@ func (t *Transition) Equals(tt *Transition) bool {
 /**
  * How many times can by transition fired with current marking on origins arcs
  */
-func (t * Transition) getEnabilityMagnitude() int {
+func (t *Transition) getEnabilityMagnitude() int {
 	enability := MaxInt
 	for _, arc := range t.Origins {
 		arcEnability := arc.Place.Tokens / arc.Weight // posible fires for this arc
@@ -256,7 +254,7 @@ func (t * Transition) getEnabilityMagnitude() int {
 	return enability
 }
 
-func (t * Transition) isEnabled() bool {
+func (t *Transition) isEnabled() bool {
 	for _, arc := range t.Origins {
 		if arc.Place.Tokens < arc.Weight {
 			return false
@@ -265,7 +263,7 @@ func (t * Transition) isEnabled() bool {
 	return true
 }
 
-func (t * Transition) doIn() {
+func (t *Transition) doIn() {
 	for _, arc := range t.Origins {
 		arc.Place.Tokens -= arc.Weight
 		if arc.Place.Tokens < 0 {
@@ -274,12 +272,11 @@ func (t * Transition) doIn() {
 	}
 }
 
-func (t * Transition) doOut() {
+func (t *Transition) doOut() {
 	for _, arc := range t.Targets {
 		arc.Place.Tokens += arc.Weight
 	}
 }
-
 
 /* Transitions */
 
@@ -314,14 +311,12 @@ func (trans Transitions) Less(i, j int) bool {
 	return trans[i].Priority > trans[j].Priority
 }
 
-
 /* Event */
 
 type Event struct {
-	time time.Duration
+	time       time.Duration
 	transition *Transition
 }
-
 
 /* Calendar */
 
@@ -370,18 +365,17 @@ func (c *Calendar) insertByTime(newTime time.Duration, tran *Transition) {
 	c.Insert(Event{newTime, tran}, i+1)
 }
 
-
 /* Simulation */
 
 type Simulation struct {
-	startTime time.Duration
-	endTime time.Duration
-	now time.Duration
-	net Net
-	calendar Calendar
-	stateChange func(time.Duration, time.Duration)
-	paused bool
-	stopped bool
+	startTime         time.Duration
+	endTime           time.Duration
+	now               time.Duration
+	net               Net
+	calendar          Calendar
+	stateChange       func(time.Duration, time.Duration)
+	paused            bool
+	stopped           bool
 	sortedTransitions Transitions
 }
 
@@ -411,7 +405,7 @@ func (sim *Simulation) scheduleEnabledTimed() {
 		if tran.TimeFunc != nil {
 			max := sim.diffEnabilityVsScheduled(tran) // how many times schedule
 			for i := 0; i < max; i++ {
-				sim.calendar.insertByTime(sim.now + (*tran.TimeFunc)(), tran)
+				sim.calendar.insertByTime(sim.now+(*tran.TimeFunc)(), tran)
 			}
 		}
 	}
@@ -424,7 +418,7 @@ func (sim *Simulation) cancelUnenabledTimed() {
 	}
 
 	// remove excess
-	for i := len(sim.calendar)-1; i >= 0; i-- { // TODO go through in random order each time
+	for i := len(sim.calendar) - 1; i >= 0; i-- { // TODO go through in random order each time
 		tran := sim.calendar[i].transition
 		if sub, ok := subtractions[tran]; ok && sub < 0 {
 			sim.calendar.Remove(i)
@@ -433,7 +427,6 @@ func (sim *Simulation) cancelUnenabledTimed() {
 	}
 }
 
-
 func (sim *Simulation) fireEvent(scheduledTran *Transition, before, now time.Duration) {
 	scheduledTran.doIn()
 	sim.cancelUnenabledTimed()
@@ -441,7 +434,7 @@ func (sim *Simulation) fireEvent(scheduledTran *Transition, before, now time.Dur
 	sim.stateChange(before, now)
 
 	countOfPasses := 0
-	stabilize: // whenever transition is completed, start checking again from bigest priority
+stabilize: // whenever transition is completed, start checking again from bigest priority
 	countOfPasses++
 	if countOfPasses > 1E3 {
 		panic("too many transitions done in same time, possible loop")
@@ -500,7 +493,7 @@ func (sim *Simulation) Step() bool {
 	}
 	before := sim.now
 	sim.now = eventTime
-	sim.fireEvent(tranToFireNow, before, sim.now)  // current time and time of event
+	sim.fireEvent(tranToFireNow, before, sim.now) // current time and time of event
 	return true
 }
 

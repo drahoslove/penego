@@ -59,7 +59,7 @@ func (m *menu) disabled() []bool {
 
 func (m *menu) setBounds(widths []float64, height float64, top float64) {
 	from := mgl.Vec2{0, top}
-	to := mgl.Vec2{0, top+height}
+	to := mgl.Vec2{0, top + height}
 	for i := range m.items {
 		to[0] += widths[i]
 		m.items[i].bound = bound{from, to}

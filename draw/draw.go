@@ -30,12 +30,14 @@ type Pos struct {
 }
 
 type Gravity bool
+
 const (
-	Up Gravity = true
+	Up   Gravity = true
 	Down Gravity = false
 )
 
 type Direction bool
+
 const (
 	In  Direction = true
 	Out Direction = false
@@ -99,7 +101,7 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 	top := 0.0
 	bot := height
 	if pos == Down {
-		top = float64(sHeight)-height
+		top = float64(sHeight) - height
 		bot = float64(sHeight)
 	}
 

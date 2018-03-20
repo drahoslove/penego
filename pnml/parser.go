@@ -1,10 +1,10 @@
 package pnml
 
 import (
-	"fmt"
 	"encoding/xml"
-	"io"
+	"fmt"
 	"git.yo2.cz/drahoslav/penego/net"
+	"io"
 )
 
 // structures defining pnml format
@@ -14,15 +14,15 @@ type Pnml struct {
 }
 
 type Net struct {
-	Places []Place `xml:"place"`
+	Places      []Place      `xml:"place"`
 	Transitions []Transition `xml:"transition"`
-	Arcs []Arc `xml:"arc"`
+	Arcs        []Arc        `xml:"arc"`
 }
 
 type Place struct {
-	Id string `xml:"id,attr"`
-	Name string `xml:"name>value,omitempty"`
-	Marking int `xml:"initialMarking>text"`
+	Id      string `xml:"id,attr"`
+	Name    string `xml:"name>value,omitempty"`
+	Marking int    `xml:"initialMarking>text"`
 }
 
 type Transition struct {
@@ -30,10 +30,10 @@ type Transition struct {
 }
 
 type Arc struct {
-	Id string `xml:"id,attr"`
+	Id     string `xml:"id,attr"`
 	Source string `xml:"source,attr"`
 	Target string `xml:"target,attr"`
-	Weight int `xml:"inscription>text"`
+	Weight int    `xml:"inscription>text"`
 }
 
 func (pnml *Pnml) build() *net.Net {
@@ -43,8 +43,8 @@ func (pnml *Pnml) build() *net.Net {
 
 	for _, p := range pnml.Net.Places {
 		places.Push(&net.Place{
-			Tokens: p.Marking,
-			Id: p.Id,
+			Tokens:      p.Marking,
+			Id:          p.Id,
 			Description: p.Name,
 		})
 	}
@@ -73,4 +73,3 @@ func Parse(pnmlReader io.Reader) *net.Net {
 	fmt.Printf("%+v", pnml)
 	return pnml.build()
 }
-

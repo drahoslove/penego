@@ -1,12 +1,12 @@
 package storage
 
-type Storage  struct {
-	vals map[string]interface{}
-	prefix string
+type Storage struct {
+	vals     map[string]interface{}
+	prefix   string
 	onChange func(Storage, string)
 }
 
-func New () Storage {
+func New() Storage {
 	return Storage{map[string]interface{}{}, "", nil}
 }
 
@@ -14,11 +14,10 @@ func (s Storage) Of(prefix string) Storage {
 	return Storage{s.vals, s.prefix + prefix + ".", s.onChange}
 }
 func (s Storage) Set(key string, val interface{}) Storage {
-	s.vals[s.prefix + key] = val
+	s.vals[s.prefix+key] = val
 	s.changed(key)
 	return s
 }
-
 
 func (s Storage) Bool(key string) bool {
 	return s.vals[s.prefix+key].(bool)

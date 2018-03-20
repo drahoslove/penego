@@ -1,9 +1,8 @@
 package compose
 
 import (
-	"git.yo2.cz/drahoslav/penego/net"
 	"git.yo2.cz/drahoslav/penego/draw"
-
+	"git.yo2.cz/drahoslav/penego/net"
 )
 
 type Composer func(draw.Drawer)

@@ -1,14 +1,14 @@
 package export
 
 import (
-	"path/filepath"
-	"github.com/llgcode/draw2d"
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/storage"
+	"github.com/llgcode/draw2d"
+	"path/filepath"
 )
 
 var (
-	store storage.Storage
+	store         storage.Storage
 	width, height = 1024, 512 // TODO get from somewhere
 )
 

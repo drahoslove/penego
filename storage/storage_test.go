@@ -1,9 +1,9 @@
 package storage_test
 
 import (
-	"testing"
 	"fmt"
 	"git.yo2.cz/drahoslav/penego/storage"
+	"testing"
 )
 
 func TestStorage(test *testing.T) {

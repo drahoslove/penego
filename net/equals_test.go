@@ -6,7 +6,7 @@ import (
 
 func TestNetEquals(test *testing.T) {
 
-	g := &Place{Tokens:1}
+	g := &Place{Tokens: 1}
 	e := &Place{Description: "exit"}
 	t := &Transition{
 		Origins: Arcs{{1, g}},

@@ -4,10 +4,10 @@ package gui
 
 import (
 	_ "fmt"
+	"git.yo2.cz/drahoslav/penego/storage"
+	"github.com/andlabs/ui"
 	"math"
 	"path/filepath"
-	"github.com/andlabs/ui"
-	"git.yo2.cz/drahoslav/penego/storage"
 )
 
 type pair struct {
@@ -55,7 +55,7 @@ func createExportBox() ui.Control {
 	return exportTab
 }
 
-func createSvgPresets () ui.Control {
+func createSvgPresets() ui.Control {
 	button := ui.NewButton("Export")
 	button.OnClicked(func(button *ui.Button) {
 		if exportFunc != nil {
@@ -99,7 +99,7 @@ func createIntInput(name string, max, min int) ui.Control {
 	input.OnChanged(func(*ui.Spinbox) {
 		exportSt.Set(name, input.Value())
 	})
-	
+
 	return line(pair{label, true}, pair{input, false})
 }
 

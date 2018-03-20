@@ -2,12 +2,12 @@ package export
 
 import (
 	"fmt"
-	"image"
-	"github.com/llgcode/draw2d/draw2dimg"
 	"git.yo2.cz/drahoslav/penego/draw"
+	"github.com/llgcode/draw2d/draw2dimg"
+	"image"
 )
 
-func Png (composeNet func(draw.Drawer)) {
+func Png(composeNet func(draw.Drawer)) {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	drawer := ImgDrawer{draw2dimg.NewGraphicContext(img)}
 

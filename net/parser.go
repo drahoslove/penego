@@ -1,67 +1,65 @@
 package net
 
 import (
-	"regexp"
-	"strings"
-	"strconv"
-	"time"
 	"errors"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 )
-
 
 var (
-	placeRE *regexp.Regexp
+	placeRE      *regexp.Regexp
 	transitionRE *regexp.Regexp
-	emptyLineRE *regexp.Regexp
-	timeRE *regexp.Regexp
+	emptyLineRE  *regexp.Regexp
+	timeRE       *regexp.Regexp
 )
 
-func init () {
+func init() {
 
 	const (
-		SP = `[ \t]*`
-		ID = `[a-zA-Z][a-zA-Z0-9_]*`
-		NUM = `(0|([1-9][0-9]*))`
-		STR = `"[^"]*"`
-		CMNT = `((//)|(--)).*`
-		ARC = SP+`(`+NUM+SP+`\*`+SP+`)?`+ID+SP
-		ARCS = ARC+`(,`+ARC+`)*`
-		PRIO = `p=(?P<prio>`+NUM+`)`
-		TIME = `(?P<t>`+NUM+`)(?P<u>[smhd]|(ms)|(us))?`
-		FIX = `(`+TIME+`)`
-		UNIF0 = `(?P<from>`+TIME+`)(-|(..))(?P<to>`+TIME+`)`
-		UNIF1 = `unif\((?P<from>`+TIME+`),(?P<to>`+TIME+`)\)`
-		UNIF = `(` + UNIF0 + `|` + UNIF1 + `)`
-		EXP = `exp\((?P<mean>`+TIME+`)\)`
-		ERL = `erlang\((?P<k>`+NUM+`),(?P<mean>`+TIME+`)\)`
-		ATTR = `(`+PRIO+`)|(?P<fix>`+FIX+`)|(?P<unif>`+UNIF+`)|(?P<exp>`+EXP+`)|(?P<erl>`+ERL+`)`
+		SP    = `[ \t]*`
+		ID    = `[a-zA-Z][a-zA-Z0-9_]*`
+		NUM   = `(0|([1-9][0-9]*))`
+		STR   = `"[^"]*"`
+		CMNT  = `((//)|(--)).*`
+		ARC   = SP + `(` + NUM + SP + `\*` + SP + `)?` + ID + SP
+		ARCS  = ARC + `(,` + ARC + `)*`
+		PRIO  = `p=(?P<prio>` + NUM + `)`
+		TIME  = `(?P<t>` + NUM + `)(?P<u>[smhd]|(ms)|(us))?`
+		FIX   = `(` + TIME + `)`
+		UNIF0 = `(?P<from>` + TIME + `)(-|(..))(?P<to>` + TIME + `)`
+		UNIF1 = `unif\((?P<from>` + TIME + `),(?P<to>` + TIME + `)\)`
+		UNIF  = `(` + UNIF0 + `|` + UNIF1 + `)`
+		EXP   = `exp\((?P<mean>` + TIME + `)\)`
+		ERL   = `erlang\((?P<k>` + NUM + `),(?P<mean>` + TIME + `)\)`
+		ATTR  = `(` + PRIO + `)|(?P<fix>` + FIX + `)|(?P<unif>` + UNIF + `)|(?P<exp>` + EXP + `)|(?P<erl>` + ERL + `)`
 	)
-
 
 	/** prepare regexps strings **/
 
 	// ID ( NUM? ) STR?
 	placeREstr := strings.Join([]string{
 		`^`,
-		`(?P<id>`+ID+`)`,
+		`(?P<id>` + ID + `)`,
 		`\(`,
-		`(?P<num>`+NUM+`)?`,
+		`(?P<num>` + NUM + `)?`,
 		`\)`,
-		`(?P<desc>`+STR+`)?`,
-		`(`+CMNT+`)?`,
+		`(?P<desc>` + STR + `)?`,
+		`(` + CMNT + `)?`,
 		`$`,
 	}, SP)
 
 	// IDS -> [ ATTR? ] STR? -> IDS
 	transitionREstr := strings.Join([]string{
 		`^`,
-		`((?P<in>`+ARCS+`)->)?`,
-		`\[`,	// [
-		`(?P<attr>`+ATTR+`)?`,
-		`\]`,	// ]
-		`(?P<desc>`+STR+`)?`,
-		`(->(?P<out>`+ARCS+`))?`,
-		`(`+CMNT+`)?`,
+		`((?P<in>` + ARCS + `)->)?`,
+		`\[`, // [
+		`(?P<attr>` + ATTR + `)?`,
+		`\]`, // ]
+		`(?P<desc>` + STR + `)?`,
+		`(->(?P<out>` + ARCS + `))?`,
+		`(` + CMNT + `)?`,
 		`$`,
 	}, SP)
 
@@ -69,11 +67,10 @@ func init () {
 
 	placeRE = regexp.MustCompile(placeREstr)
 	transitionRE = regexp.MustCompile(transitionREstr)
-	emptyLineRE = regexp.MustCompile(`^`+SP+`(`+CMNT+`)?$`)
+	emptyLineRE = regexp.MustCompile(`^` + SP + `(` + CMNT + `)?$`)
 	timeRE = regexp.MustCompile(TIME)
 
 }
-
 
 func Parse(input string) (net Net, err error) {
 
@@ -83,7 +80,6 @@ func Parse(input string) (net Net, err error) {
 	lines := strings.Split(input, "\n")
 
 	namedPlaces := make(map[string]*Place)
-
 
 	/* ----------- parse places ----------- */
 
@@ -96,13 +92,13 @@ func Parse(input string) (net Net, err error) {
 			desc := getSubmatchString(placeRE, line, "desc")
 
 			if _, exists := namedPlaces[id]; exists {
-				err = errors.New("place with id `"+id+"` is already defined")
+				err = errors.New("place with id `" + id + "` is already defined")
 				return
 			}
 			place := &Place{
-				Tokens: num,
+				Tokens:      num,
 				Description: unPack(desc), // strip first and last char
-				Id: id,
+				Id:          id,
 			}
 			namedPlaces[id] = place
 			net.places.Push(place)
@@ -115,7 +111,6 @@ func Parse(input string) (net Net, err error) {
 		}
 	}
 
-
 	/* ----------- parse transitions ----------- */
 
 	for i, line := range lines {
@@ -126,7 +121,6 @@ func Parse(input string) (net Net, err error) {
 			listout := getSubmatchString(transitionRE, line, "out")
 			attr := getSubmatchString(transitionRE, line, "attr")
 			desc := getSubmatchString(transitionRE, line, "desc")
-
 
 			getArcsByList := func(list string) Arcs {
 				arcs := Arcs{}
@@ -142,12 +136,12 @@ func Parse(input string) (net Net, err error) {
 						w, _ = strconv.Atoi(strings.TrimSpace(pair[0]))
 					}
 					if place, exists := namedPlaces[id]; !exists {
-						err = errors.New("undefined place id `"+id+"` used in transition")
+						err = errors.New("undefined place id `" + id + "` used in transition")
 						return arcs
 					} else {
 						for _, arc := range arcs {
 							if arc.Place == place {
-								err = errors.New("place `"+place.Id+"` used multiple times in one side of transition")
+								err = errors.New("place `" + place.Id + "` used multiple times in one side of transition")
 							}
 						}
 						arcs.Push(w, place)
@@ -177,30 +171,29 @@ func Parse(input string) (net Net, err error) {
 				exp := getSubmatchString(transitionRE, line, "exp")
 				erl := getSubmatchString(transitionRE, line, "erl")
 				switch {
-					case prio != "":
-						priority, _ = strconv.Atoi(prio)
-					case fix != "":
-						timeFunc = GetConstantTimeFunc(parseTime(fix))
-					case unif != "":
-						from := getSubmatchString(transitionRE, line, "from")
-						to := getSubmatchString(transitionRE, line, "to")
-						timeFunc = GetUniformTimeFunc(parseTime(from), parseTime(to))
-					case exp != "":
-						mean := getSubmatchString(transitionRE, line, "mean")
-						timeFunc = GetExponentialTimeFunc(parseTime(mean))
-					case erl != "":
-						mean := getSubmatchString(transitionRE, line, "mean")
-						k, _ := strconv.Atoi(getSubmatchString(transitionRE, line, "k"))
-						timeFunc = GetErlangTimeFunc(parseTime(mean), uint(k))
+				case prio != "":
+					priority, _ = strconv.Atoi(prio)
+				case fix != "":
+					timeFunc = GetConstantTimeFunc(parseTime(fix))
+				case unif != "":
+					from := getSubmatchString(transitionRE, line, "from")
+					to := getSubmatchString(transitionRE, line, "to")
+					timeFunc = GetUniformTimeFunc(parseTime(from), parseTime(to))
+				case exp != "":
+					mean := getSubmatchString(transitionRE, line, "mean")
+					timeFunc = GetExponentialTimeFunc(parseTime(mean))
+				case erl != "":
+					mean := getSubmatchString(transitionRE, line, "mean")
+					k, _ := strconv.Atoi(getSubmatchString(transitionRE, line, "k"))
+					timeFunc = GetErlangTimeFunc(parseTime(mean), uint(k))
 				}
 			}
 
-
 			net.transitions.Push(&Transition{
-				Origins: origins,
-				Targets: targets,
-				Priority: priority,
-				TimeFunc: timeFunc,
+				Origins:     origins,
+				Targets:     targets,
+				Priority:    priority,
+				TimeFunc:    timeFunc,
 				Description: unPack(desc),
 			})
 
@@ -250,7 +243,7 @@ func parseTime(tstr string) time.Duration {
 
 func unPack(str string) string {
 	if len(str) > 2 {
-		return string(str[1:len(str)-1])
+		return string(str[1 : len(str)-1])
 	}
 	return str
 }

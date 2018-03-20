@@ -2,11 +2,11 @@ package export
 
 import (
 	"fmt"
-	"github.com/llgcode/draw2d/draw2dsvg"
 	"git.yo2.cz/drahoslav/penego/draw"
+	"github.com/llgcode/draw2d/draw2dsvg"
 )
 
-func Svg (composeNet func(draw.Drawer)) {
+func Svg(composeNet func(draw.Drawer)) {
 	img := draw2dsvg.NewSvg()
 	drawer := ImgDrawer{draw2dsvg.NewGraphicContext(img)}
 

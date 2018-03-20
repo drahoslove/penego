@@ -1,9 +1,9 @@
 package pnml
 
 import (
-	"testing"
 	"bytes"
 	"git.yo2.cz/drahoslav/penego/net"
+	"testing"
 )
 
 func TestParse(test *testing.T) {
@@ -29,8 +29,8 @@ func TestParse(test *testing.T) {
 	`))
 	resNet := Parse(pnml)
 
- 	//  TODO make equal
-	g := &net.Place{Tokens:3}
+	//  TODO make equal
+	g := &net.Place{Tokens: 3}
 	e := &net.Place{}
 	t := &net.Transition{
 		Origins: net.Arcs{{1, g}},
