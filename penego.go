@@ -248,8 +248,8 @@ func main() {
 		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True)
 
 		// down bar commands (simulation related)
-		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.PrevIcon), "reset", reset, gui.True)
-		screen.RegisterControl(1, "right", gui.AlwaysIcon(gui.NextIcon), "step", step, gui.True)
+		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.BeginIcon), "reset", reset, gui.True)
+		screen.RegisterControl(1, "right", gui.AlwaysIcon(gui.NextStepIcon), "step", step, gui.True)
 		screen.RegisterControl(1, "space", func() gui.Icon {
 			if state != Running {
 				return gui.PlayIcon
