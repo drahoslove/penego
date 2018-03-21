@@ -1,10 +1,11 @@
 package export
 
 import (
+	"path/filepath"
+
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/storage"
 	"github.com/llgcode/draw2d"
-	"path/filepath"
 )
 
 var (

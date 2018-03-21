@@ -3,17 +3,18 @@ package main // import "git.yo2.cz/drahoslav/penego"
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+	"time"
+
 	"git.yo2.cz/drahoslav/penego/compose"
 	"git.yo2.cz/drahoslav/penego/export"
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
 	"git.yo2.cz/drahoslav/penego/storage"
 	"github.com/pkg/profile"
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 const EXAMPLE = `

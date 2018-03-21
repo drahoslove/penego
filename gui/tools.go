@@ -3,11 +3,12 @@
 package gui
 
 import (
-	_ "fmt"
-	"git.yo2.cz/drahoslav/penego/storage"
-	"github.com/andlabs/ui"
 	"math"
 	"path/filepath"
+	"time"
+
+	"git.yo2.cz/drahoslav/penego/storage"
+	"github.com/andlabs/ui"
 )
 
 type pair struct {
@@ -56,10 +57,46 @@ func createExportBox() ui.Control {
 }
 
 func createSvgPresets() ui.Control {
+	progressBar := ui.NewProgressBar()
+	progressBar.SetValue(0)
+	progressBar.Disable()
+
 	button := ui.NewButton("Export")
 	button.OnClicked(func(button *ui.Button) {
 		if exportFunc != nil {
-			exportFunc(exportSt.String("filename"))
+			done := make(chan bool)
+			setProgress := func(n int) {
+				ui.QueueMain(func() {
+					progressBar.SetValue(n)
+				})
+			}
+			go func() {
+				exportFunc(exportSt.String("filename"))
+				done <- true
+				time.Sleep(time.Second / 10)
+				setProgress(0)
+				progressBar.Disable()
+			}()
+			func() {
+				n := 0
+				step := 1
+				progressBar.Enable()
+				setProgress(0)
+			filling:
+				for {
+					select {
+					case <-done:
+						setProgress(100)
+						println("done")
+						break filling
+					default:
+						n += step
+						if n < 100 {
+							setProgress(n)
+						}
+					}
+				}
+			}()
 		}
 	})
 
@@ -68,6 +105,7 @@ func createSvgPresets() ui.Control {
 	box.Append(createIntInput("height", 1, math.MaxInt32), false)
 	box.Append(createIntInput("zoom", -5, +5), false)
 	box.Append(createExportAs(".png"), false)
+	box.Append(progressBar, true)
 	box.Append(button, true)
 	return box
 }
@@ -78,7 +116,7 @@ func createExportAs(ext string) ui.Control {
 	input.OnChanged(func(input *ui.Entry) {
 		exportSt.Set("filename", input.Text())
 	})
-	button := ui.NewButton("browser...")
+	button := ui.NewButton("Browse…")
 	button.OnClicked(func(*ui.Button) {
 		SaveFile(func(filename string) {
 			if filepath.Ext(filename) != ext {
@@ -132,13 +170,17 @@ func ToggleExport(export func(string)) {
 func LoadFile(cb func(string)) {
 	ui.QueueMain(func() {
 		filename := ui.OpenFile(fooWindow)
-		cb(filename)
+		if filename != "" {
+			cb(filename)
+		}
 	})
 }
 
 func SaveFile(cb func(string)) {
 	ui.QueueMain(func() {
 		filename := ui.SaveFile(fooWindow)
-		cb(filename)
+		if filename != "" {
+			cb(filename)
+		}
 	})
 }

@@ -2,9 +2,10 @@ package export
 
 import (
 	"fmt"
+	"image"
+
 	"git.yo2.cz/drahoslav/penego/draw"
 	"github.com/llgcode/draw2d/draw2dimg"
-	"image"
 )
 
 func Png(composeNet func(draw.Drawer)) {
