@@ -49,14 +49,14 @@ func line(stuff ...pair) ui.Control {
 
 func createExportBox() ui.Control {
 	exportTab := ui.NewTab()
-	exportTab.Append("SVG", createSvgPresets())
-	exportTab.Append("PNG", createSvgPresets())
-	exportTab.Append("PDF", createSvgPresets())
+	exportTab.Append("SVG", createFormatPresets("svg"))
+	exportTab.Append("PNG", createFormatPresets("png"))
+	exportTab.Append("PDF", createFormatPresets("pdf"))
 
 	return exportTab
 }
 
-func createSvgPresets() ui.Control {
+func createFormatPresets(ext string) ui.Control {
 	progressBar := ui.NewProgressBar()
 	progressBar.SetValue(0)
 	progressBar.Disable()
@@ -73,7 +73,7 @@ func createSvgPresets() ui.Control {
 			go func() {
 				exportFunc(exportSt.String("filename"))
 				done <- true
-				time.Sleep(time.Second / 10)
+				time.Sleep(time.Second)
 				setProgress(0)
 				progressBar.Disable()
 			}()
@@ -104,7 +104,7 @@ func createSvgPresets() ui.Control {
 	box.Append(createIntInput("width", 1, math.MaxInt32), false)
 	box.Append(createIntInput("height", 1, math.MaxInt32), false)
 	box.Append(createIntInput("zoom", -5, +5), false)
-	box.Append(createExportAs(".png"), false)
+	box.Append(createExportAs(ext), false)
 	box.Append(progressBar, true)
 	box.Append(button, true)
 	return box
@@ -112,15 +112,15 @@ func createSvgPresets() ui.Control {
 
 func createExportAs(ext string) ui.Control {
 	input := ui.NewEntry()
-	input.SetText(exportSt.String("filename"))
+	input.SetText(exportSt.Of(ext).String("filename"))
 	input.OnChanged(func(input *ui.Entry) {
 		exportSt.Set("filename", input.Text())
 	})
 	button := ui.NewButton("Browse…")
 	button.OnClicked(func(*ui.Button) {
 		SaveFile(func(filename string) {
-			if filepath.Ext(filename) != ext {
-				filename += ext
+			if filepath.Ext(filename) != "."+ext {
+				filename += "." + ext
 			}
 			input.SetText(filename)
 			exportSt.Set("filename", filename)

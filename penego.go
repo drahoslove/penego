@@ -13,6 +13,7 @@ import (
 	"git.yo2.cz/drahoslav/penego/export"
 	"git.yo2.cz/drahoslav/penego/gui"
 	"git.yo2.cz/drahoslav/penego/net"
+	"git.yo2.cz/drahoslav/penego/pnml"
 	"git.yo2.cz/drahoslav/penego/storage"
 	"github.com/pkg/profile"
 )
@@ -78,7 +79,9 @@ func main() {
 		Set("width", 300).
 		Set("height", 400).
 		Set("zoom", 0).
-		Set("filename", pwd+string(filepath.Separator)+"image")
+		Set("png.filename", pwd+string(filepath.Separator)+"image.png").
+		Set("pdf.filename", pwd+string(filepath.Separator)+"image.pdf").
+		Set("svg.filename", pwd+string(filepath.Separator)+"image.svg")
 	gui.Init(store)
 	export.Init(store)
 
@@ -213,7 +216,6 @@ func main() {
 		}
 
 		open := func() {
-			// filename, err := dialog.File().Filter("Penego notation", "pn").SetStartDir(".").Load()
 			gui.LoadFile(func(filename string) {
 				if verbose {
 					fmt.Println(filename)
@@ -226,16 +228,27 @@ func main() {
 			})
 		}
 
+		save := func() {
+			fmt.Println("save not impelemented")
+		}
+
+		doImport := func() {
+			gui.LoadFile(func(filename string) {
+				file, err := os.Open(filename)
+				if err != nil {
+					fmt.Println("cant import file", err)
+					return
+				}
+				network = *pnml.Parse(file) // TODO should return same as net.Parse
+				composeNet = compose.GetSimple(network)
+				sim.Stop()
+				state = New
+				fmt.Println("net imported", filename)
+				fmt.Println(network)
+			})
+		}
+
 		doExport := func() {
-			// dialog := dialog.File().Title("Export image")
-			// dialog.Filter("SVG - Scalable Vector Graphics", "svg")
-			// dialog.Filter("PNG - Portable Network Graphics", "png")
-			// dialog.Filter("PDF - Portable Document Format", "pdf")
-			// filename, err := dialog.Save()
-			// if err != nil {
-			// 	fmt.Println(err)
-			// 	return
-			// }
 			gui.ToggleExport(func(filename string) {
 				export.ByName(filename, composeNet)
 				fmt.Println("images exported", filename)
@@ -244,9 +257,11 @@ func main() {
 
 		// up bar commands
 		screen.RegisterControl(0, "Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
-		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True)
+		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True) // penego format
+		screen.RegisterControl(0, "S", gui.AlwaysIcon(gui.SaveIcon), "save", save, gui.True) // penego format
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
-		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True)
+		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ImportIcon), "import net", doImport, gui.True)   // from pnml
+		screen.RegisterControl(0, "E", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True) // to svg/pdf/png
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.BeginIcon), "reset", reset, gui.True)
