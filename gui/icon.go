@@ -5,11 +5,16 @@ type Icon rune
 const ( //  font awesome corresponding characters
 	NoIcon = '\x00'
 
-	QuitIcon   = '\uea0f' // '\uea0d'
-	FileIcon   = '\uf4c4'
-	SaveIcon   = '\uf4be'
+	QuitIcon = '\uea0f' // '\uea0d'
+	FileIcon = '\uf4c4'
+	OpenIcon = '\ue930'
+	SaveIcon = '\uf4be'
+
 	ExportIcon = '\uf4e4'
 	ImportIcon = '\uf4e5'
+
+	SettingsIcon = '\ue992'
+	// SettingsVIcon = '\ue993'
 
 	ReloadIcon = '\u27f2'
 

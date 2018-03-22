@@ -1,17 +1,33 @@
 package storage
 
+var store Storage
+
 type Storage struct {
 	vals     map[string]interface{}
 	prefix   string
 	onChange func(Storage, string)
+	subs     map[string]*Storage
+}
+
+func init() {
+	store = New()
+}
+
+func Of(prefix string) *Storage {
+	return store.Of(prefix)
 }
 
 func New() Storage {
-	return Storage{map[string]interface{}{}, "", nil}
+	return Storage{map[string]interface{}{}, "", nil, make(map[string]*Storage)}
 }
 
-func (s Storage) Of(prefix string) Storage {
-	return Storage{s.vals, s.prefix + prefix + ".", s.onChange}
+func (s *Storage) Of(prefix string) *Storage {
+	if st, ok := s.subs[prefix]; ok {
+		return st
+	}
+	st := Storage{s.vals, s.prefix + prefix + ".", s.onChange, make(map[string]*Storage)}
+	s.subs[prefix] = &st
+	return &st
 }
 func (s Storage) Set(key string, val interface{}) Storage {
 	s.vals[s.prefix+key] = val

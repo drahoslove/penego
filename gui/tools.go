@@ -17,20 +17,27 @@ type pair struct {
 }
 
 var fooWindow *ui.Window // for binding file load/save modal windows
-var exportWindow *ui.Window
-var exportBox ui.Control
-var exportSt storage.Storage
-var exportFunc func(string)
-
-func Init(st storage.Storage) {
-	exportSt = st.Of("export")
-}
+var (
+	exportWindow *ui.Window
+	exportBox    ui.Control
+	exportSt     *storage.Storage
+	exportFunc   func(string)
+)
+var (
+	settingsWindow *ui.Window
+	settingsBox    ui.Control
+	settingsSt     *storage.Storage
+)
 
 func init() {
+	exportSt = storage.Of("export")
+	settingsSt = storage.Of("settings")
+
 	go func() {
 		err := ui.Main(func() {
 			fooWindow = ui.NewWindow("", 0, 0, false)
 			exportBox = createExportBox()
+			settingsBox = createSettingsBox()
 		})
 		if err != nil {
 			panic(err)
@@ -47,13 +54,15 @@ func line(stuff ...pair) ui.Control {
 	return box
 }
 
-func createExportBox() ui.Control {
-	exportTab := ui.NewTab()
-	exportTab.Append("SVG", createFormatPresets("svg"))
-	exportTab.Append("PNG", createFormatPresets("png"))
-	exportTab.Append("PDF", createFormatPresets("pdf"))
+// TODO move export gui related funcitons to single file
 
-	return exportTab
+func createExportBox() ui.Control {
+	tab := ui.NewTab()
+	tab.Append("SVG", createFormatPresets("svg"))
+	tab.Append("PNG", createFormatPresets("png"))
+	tab.Append("PDF", createFormatPresets("pdf"))
+
+	return tab
 }
 
 func createFormatPresets(ext string) ui.Control {
@@ -129,13 +138,25 @@ func createExportAs(ext string) ui.Control {
 	return line(pair{input, true}, pair{button, false})
 }
 
-func createIntInput(name string, max, min int) ui.Control {
+func createIntInput(name string, min, max int) ui.Control {
 	label := ui.NewLabel(name)
 
-	input := ui.NewSpinbox(max, min)
+	input := ui.NewSpinbox(min, max)
 	input.SetValue(exportSt.Int(name))
 	input.OnChanged(func(*ui.Spinbox) {
 		exportSt.Set(name, input.Value())
+	})
+
+	return line(pair{label, true}, pair{input, false})
+}
+
+func createFloatInput(name string, min, max int) ui.Control {
+	label := ui.NewLabel(name)
+
+	input := ui.NewSpinbox(min, max)
+	input.SetValue(int(settingsSt.Float(name)))
+	input.OnChanged(func(*ui.Spinbox) {
+		settingsSt.Set(name, float64(input.Value()))
 	})
 
 	return line(pair{label, true}, pair{input, false})
@@ -148,23 +169,48 @@ func IsExportOn() bool {
 func ToggleExport(export func(string)) {
 	exportFunc = export
 	ui.QueueMain(func() {
-		if exportWindow != nil {
-			exportWindow.SetChild(nil)
-			exportWindow.Destroy()
-			exportWindow = nil
-		} else {
-			exportWindow = ui.NewWindow("Export", 200, 100, false)
-			exportWindow.SetMargined(true)
-			exportWindow.SetChild(exportBox)
-			exportWindow.OnClosing(func(*ui.Window) bool {
-				exportWindow.SetChild(nil)
-				exportWindow.Destroy()
-				exportWindow = nil
-				return false
-			})
-			exportWindow.Show()
-		}
+		toggleWindow(&exportWindow, "Export", exportBox)
+		// exportWindow.SetMargined(true)
 	})
+}
+
+// TODO move settings gui related funcitons to single file
+
+func createSettingsBox() ui.Control {
+	tab := ui.NewTab()
+
+	tab.Append("general", createFloatInput("linewidth", 1, 4))
+	tab.Append("place", nil)
+	tab.Append("transition", nil)
+	tab.Append("arc", nil)
+
+	return tab
+}
+
+func ToggleSettings() {
+	ui.QueueMain(func() {
+		toggleWindow(&settingsWindow, "Settings", settingsBox)
+	})
+}
+
+func toggleWindow(windowPointer **ui.Window, name string, box ui.Control) {
+	if *windowPointer != nil {
+		win := *windowPointer
+		win.SetChild(nil)
+		win.Destroy()
+		*windowPointer = nil
+	} else {
+		win := ui.NewWindow(name, 200, 100, false)
+		win.SetChild(box)
+		win.OnClosing(func(win *ui.Window) bool {
+			win.SetChild(nil)
+			win.Destroy()
+			*windowPointer = nil
+			return false
+		})
+		win.Show()
+		*windowPointer = win
+	}
 }
 
 func LoadFile(cb func(string)) {

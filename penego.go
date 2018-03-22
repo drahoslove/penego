@@ -72,18 +72,17 @@ func main() {
 		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
 	}
 
-	var store = storage.New()
 	// TODO init elsewhere?
 	pwd, _ := os.Getwd()
-	store.Of("export").
+	storage.Of("export").
 		Set("width", 300).
 		Set("height", 400).
 		Set("zoom", 0).
 		Set("png.filename", pwd+string(filepath.Separator)+"image.png").
 		Set("pdf.filename", pwd+string(filepath.Separator)+"image.pdf").
 		Set("svg.filename", pwd+string(filepath.Separator)+"image.svg")
-	gui.Init(store)
-	export.Init(store)
+	storage.Of("settings").
+		Set("linewidth", 2.0)
 
 	var (
 		network net.Net
@@ -151,6 +150,10 @@ func main() {
 	////////////////////////////////
 
 	gui.Run(func(screen *gui.Screen) { // runs this anon func in goroutine
+
+		storage.Of("settings").OnChange(func(st storage.Storage, key string) {
+			screen.ForceRedraw(false)
+		})
 
 		var state State = Splash
 
@@ -255,13 +258,18 @@ func main() {
 			})
 		}
 
+		settings := func() {
+			gui.ToggleSettings()
+		}
+
 		// up bar commands
 		screen.RegisterControl(0, "Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
-		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.FileIcon), "open", open, gui.True) // penego format
+		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.OpenIcon), "open", open, gui.True) // penego format
 		screen.RegisterControl(0, "S", gui.AlwaysIcon(gui.SaveIcon), "save", save, gui.True) // penego format
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
 		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ImportIcon), "import net", doImport, gui.True)   // from pnml
 		screen.RegisterControl(0, "E", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True) // to svg/pdf/png
+		screen.RegisterControl(0, "P", gui.AlwaysIcon(gui.SettingsIcon), "settings", settings, gui.True)   // to svg/pdf/png
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.BeginIcon), "reset", reset, gui.True)

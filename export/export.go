@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	store         storage.Storage
+	store         *storage.Storage
 	width, height = 1024, 512 // TODO get from somewhere
 )
 
-func Init(st storage.Storage) {
+func Init(st *storage.Storage) {
 	store = st.Of("export")
 }
 

@@ -9,6 +9,7 @@ package draw
 //   Place, Transition, Arc
 
 import (
+	"git.yo2.cz/drahoslav/penego/storage"
 	mgl "github.com/go-gl/mathgl/mgl64"
 	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dkit"
@@ -16,6 +17,14 @@ import (
 	"math"
 	"strconv"
 )
+
+var (
+	settingsSt *storage.Storage
+)
+
+func init() {
+	settingsSt = storage.Of("settings")
+}
 
 type Drawer interface {
 	DrawPlace(pos Pos, n int, description string)
@@ -67,7 +76,7 @@ func Init(ctx draw2d.GraphicContext, width, height int) {
 	ctx.SetFontSize(14)
 	ctx.SetFillColor(WHITISH)
 	ctx.SetStrokeColor(BLACKISH)
-	ctx.SetLineWidth(3)
+	ctx.SetLineWidth(settingsSt.Float("linewidth"))
 
 	/* translate origin to center */
 	ctx.Translate(float64(width)/2, float64(height)/2)
@@ -77,6 +86,7 @@ func Clean(ctx draw2d.GraphicContext, width, height int) {
 	/* background */
 	draw2dkit.Rectangle(ctx, -float64(width)/2, -float64(height)/2, float64(width)/2, float64(height)/2)
 	ctx.Fill()
+	ctx.SetLineWidth(settingsSt.Float("linewidth"))
 }
 
 // GUI entities
@@ -93,8 +103,8 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 	defer tempContext(ctx)()
 
 	const (
-		padding = 14.0
-		height  = 36.0
+		padding = 16.0
+		height  = 42.0
 	)
 
 	var widths = make([]float64, len(itemsNames))
@@ -113,7 +123,7 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 
 	ctx.Fill()
 
-	ctx.SetFontSize(14)
+	ctx.SetFontSize(18) // 24px
 	ctx.SetFontData(draw2d.FontData{Name: "ico"})
 	sum := 0.0
 	for i, name := range itemsNames {
@@ -125,7 +135,7 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 		if disabled[i] {
 			ctx.SetFillColor(DARK_GRAY)
 		}
-		linePos := top + height*2/3
+		linePos := top + height*5/7
 		w := ctx.FillStringAt(name, sum+padding, linePos)
 		width := math.Ceil(w) + 2*padding
 		widths[i] = width

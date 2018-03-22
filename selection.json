@@ -26,13 +26,13 @@
       "properties": {
         "ligatures": "file-empty, file3",
         "name": "file",
-        "order": 2,
+        "order": 30,
         "id": 0,
         "prevSize": 16,
         "code": 62660
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 0
     },
     {
@@ -61,8 +61,8 @@
         "prevSize": 16,
         "code": 62693
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 1
     },
     {
@@ -90,8 +90,8 @@
         "prevSize": 16,
         "code": 62692
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 2
     },
     {
@@ -118,8 +118,8 @@
         "prevSize": 16,
         "code": 62654
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 3
     },
     {
@@ -144,14 +144,14 @@
       "attrs": [],
       "properties": {
         "ligatures": "equalizer, sliders",
-        "name": "equalizer",
+        "name": "settings-h",
         "order": 13,
         "id": 4,
         "prevSize": 16,
         "code": 59794
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 4
     },
     {
@@ -176,14 +176,14 @@
       "attrs": [],
       "properties": {
         "ligatures": "equalizer2, sliders2",
-        "name": "equalizer2",
+        "name": "equalizer",
         "order": 14,
         "id": 5,
         "prevSize": 16,
         "code": 59795
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 5
     },
     {
@@ -213,8 +213,8 @@
         "prevSize": 16,
         "code": 59917
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 6
     },
     {
@@ -244,8 +244,8 @@
         "prevSize": 16,
         "code": 59919
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 7
     },
     {
@@ -272,8 +272,8 @@
         "prevSize": 16,
         "code": 59925
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 8
     },
     {
@@ -300,8 +300,8 @@
         "prevSize": 16,
         "code": 59926
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 9
     },
     {
@@ -328,8 +328,8 @@
         "prevSize": 16,
         "code": 59927
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 10
     },
     {
@@ -358,8 +358,8 @@
         "prevSize": 16,
         "code": 59928
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 11
     },
     {
@@ -388,8 +388,8 @@
         "prevSize": 16,
         "code": 59929
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 12
     },
     {
@@ -416,8 +416,8 @@
         "prevSize": 16,
         "code": 9654
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 13
     },
     {
@@ -444,8 +444,8 @@
         "prevSize": 16,
         "code": 9646
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 14
     },
     {
@@ -473,8 +473,8 @@
         "prevSize": 16,
         "code": 9632
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 15
     },
     {
@@ -501,8 +501,8 @@
         "prevSize": 16,
         "code": 9194
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 16
     },
     {
@@ -529,8 +529,8 @@
         "prevSize": 16,
         "code": 9193
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 17
     },
     {
@@ -559,13 +559,13 @@
       "properties": {
         "ligatures": "loop2, repeat2",
         "name": "reload",
-        "order": 4,
+        "order": 33,
         "id": 18,
         "prevSize": 16,
         "code": 10226
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 18
     },
     {
@@ -595,8 +595,8 @@
         "prevSize": 16,
         "code": 9745
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 19
     },
     {
@@ -625,8 +625,8 @@
         "prevSize": 16,
         "code": 9744
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 20
     },
     {
@@ -653,8 +653,8 @@
         "prevSize": 16,
         "code": 9673
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 21
     },
     {
@@ -682,8 +682,8 @@
         "prevSize": 16,
         "code": 9675
       },
-      "setIdx": 1,
-      "setId": 4,
+      "setIdx": 0,
+      "setId": 6,
       "iconIdx": 22
     },
     {
@@ -691,54 +691,86 @@
         "paths": [
           "M512 64c-141.384 0-269.376 57.32-362.032 149.978l-149.968-149.978v384h384l-143.532-143.522c69.496-69.492 165.492-112.478 271.532-112.478 212.068 0 384 171.924 384 384 0 114.696-50.292 217.636-130.018 288l84.666 96c106.302-93.816 173.352-231.076 173.352-384 0-282.77-229.23-512-512-512z"
         ],
+        "attrs": [],
+        "isMulticolor": false,
+        "isMulticolor2": false,
         "tags": [
           "undo",
           "ccw",
           "arrow"
         ],
         "defaultCode": 59749,
-        "grid": 16,
-        "attrs": []
+        "grid": 16
       },
       "attrs": [],
       "properties": {
         "ligatures": "undo, ccw",
         "name": "prev",
         "order": 3,
-        "id": 102,
+        "id": 23,
         "prevSize": 16,
         "code": 59749
       },
-      "setIdx": 3,
-      "setId": 1,
-      "iconIdx": 101
+      "setIdx": 0,
+      "setId": 6,
+      "iconIdx": 23
     },
     {
       "icon": {
         "paths": [
           "M0 576c0 152.924 67.048 290.184 173.35 384l84.666-96c-79.726-70.364-130.016-173.304-130.016-288 0-212.076 171.93-384 384-384 106.042 0 202.038 42.986 271.53 112.478l-143.53 143.522h384v-384l-149.97 149.978c-92.654-92.658-220.644-149.978-362.030-149.978-282.77 0-512 229.23-512 512z"
         ],
+        "attrs": [],
+        "isMulticolor": false,
+        "isMulticolor2": false,
         "tags": [
           "redo",
           "cw",
           "arrow"
         ],
         "defaultCode": 59750,
-        "grid": 16,
-        "attrs": []
+        "grid": 16
       },
       "attrs": [],
       "properties": {
         "ligatures": "redo, cw",
         "name": "next",
         "order": 2,
-        "id": 103,
+        "id": 24,
         "prevSize": 16,
         "code": 59750
       },
-      "setIdx": 3,
+      "setIdx": 0,
+      "setId": 6,
+      "iconIdx": 24
+    },
+    {
+      "icon": {
+        "paths": [
+          "M832 960l192-512h-832l-192 512zM128 384l-128 576v-832h288l128 128h416v128z"
+        ],
+        "tags": [
+          "folder-open",
+          "directory",
+          "category",
+          "browse"
+        ],
+        "defaultCode": 59696,
+        "grid": 16,
+        "attrs": []
+      },
+      "attrs": [],
+      "properties": {
+        "ligatures": "folder-open, directory2",
+        "name": "open",
+        "order": 32,
+        "id": 49,
+        "prevSize": 16,
+        "code": 59696
+      },
+      "setIdx": 4,
       "setId": 1,
-      "iconIdx": 102
+      "iconIdx": 48
     }
   ],
   "height": 1024,
