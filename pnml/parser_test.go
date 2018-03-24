@@ -2,8 +2,9 @@ package pnml
 
 import (
 	"bytes"
-	"git.yo2.cz/drahoslav/penego/net"
 	"testing"
+
+	"git.yo2.cz/drahoslav/penego/net"
 )
 
 func TestParse(test *testing.T) {
@@ -30,19 +31,20 @@ func TestParse(test *testing.T) {
 	resNet := Parse(pnml)
 
 	//  TODO make equal
-	g := &net.Place{Tokens: 3}
-	e := &net.Place{}
+	p1 := &net.Place{Id: "p1", Tokens: 3}
+	p2 := &net.Place{Id: "p2"}
 	t := &net.Transition{
-		Origins: net.Arcs{{1, g}},
-		Targets: net.Arcs{{1, g}, {2, e}},
+		Id:      "t1",
+		Origins: net.Arcs{{1, p1}},
+		Targets: net.Arcs{{1, p1}, {2, p2}},
 	}
 	refNet := net.New(
-		net.Places{g, e},
+		net.Places{p1, p2},
 		net.Transitions{t},
 	)
 
 	// TODO compare function
 	if eq, err := resNet.Equals(&refNet); !eq {
-		test.Errorf("Parser failed, because %s", err)
+		test.Errorf("Parser failed, because %s \n%s\nshould be\n%s\n", err, refNet, resNet)
 	}
 }

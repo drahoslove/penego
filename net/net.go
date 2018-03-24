@@ -51,14 +51,13 @@ func (net *Net) Equals(another *Net) (bool, error) {
 	}
 
 	pairedPs := map[int]bool{}
-
 pairPlace:
 	for _, p := range net.places {
 		for j, pp := range another.places {
+			if pairedPs[j] { // j already paired with prev i
+				continue
+			}
 			if p.Equals(pp) {
-				if pairedPs[j] { // j already paired with prev i
-					continue
-				}
 				pairedPs[j] = true
 				continue pairPlace
 			}
@@ -67,14 +66,13 @@ pairPlace:
 	}
 
 	pairedTs := map[int]bool{}
-
 pairTran:
 	for _, t := range net.transitions {
 		for j, tt := range another.transitions {
+			if pairedTs[j] {
+				continue
+			}
 			if t.Equals(tt) {
-				if pairedTs[j] {
-					continue
-				}
 				pairedTs[j] = true
 				continue pairTran
 			}
@@ -114,9 +112,9 @@ func (p *Place) Equals(pp *Place) bool {
 	if p.Tokens != pp.Tokens {
 		return false
 	}
-	if p.Description != pp.Description {
-		return false
-	}
+	// if p.Description != pp.Description {
+	// 	return false
+	// }
 	return true
 }
 
@@ -192,10 +190,10 @@ func (a *Arcs) Equals(aa *Arcs) bool {
 pairing:
 	for _, arc := range *a {
 		for j, another := range *aa {
+			if pairedAs[j] {
+				continue
+			}
 			if arc.Equals(&another) {
-				if pairedAs[j] {
-					continue
-				}
 				pairedAs[j] = true
 				continue pairing
 			}
@@ -208,6 +206,7 @@ pairing:
 /* Transtition */
 
 type Transition struct {
+	Id          string
 	Origins     Arcs
 	Targets     Arcs
 	Priority    int
@@ -220,7 +219,7 @@ func (t Transition) String() string {
 	if t.Priority != 0 {
 		prio = "p=" + strconv.Itoa(t.Priority)
 	}
-	return fmt.Sprintf("%s -> [%s%s]%s -> %s", t.Origins, t.TimeFunc, prio, t.Description, t.Targets)
+	return fmt.Sprintf("%s -> %s[%s%s]%s -> %s", t.Origins, t.Id, t.TimeFunc, prio, t.Description, t.Targets)
 }
 
 func (t *Transition) Equals(tt *Transition) bool {

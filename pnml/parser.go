@@ -2,11 +2,11 @@ package pnml
 
 import (
 	"encoding/xml"
-	"fmt"
-	"git.yo2.cz/drahoslav/penego/net"
 	"io"
 	"strconv"
 	"strings"
+
+	"git.yo2.cz/drahoslav/penego/net"
 )
 
 // structures defining pnml format
@@ -67,7 +67,10 @@ func (pnml *Pnml) build() *net.Net {
 		targets := net.Arcs{}
 
 		for _, a := range pnml.Net.Arcs {
-			weight := a.Weight
+			weight := 1
+			if a.Weight > 0 {
+				weight = a.Weight
+			}
 			if a.WeightPIPE != "" {
 				parts := strings.SplitAfter(a.WeightPIPE, "Default,")
 				if len(parts) == 2 {
@@ -82,6 +85,7 @@ func (pnml *Pnml) build() *net.Net {
 			}
 		}
 		transitions.Push(&net.Transition{
+			Id:          t.Id,
 			Origins:     origins,
 			Targets:     targets,
 			Priority:    t.Priority,
@@ -97,6 +101,5 @@ func Parse(pnmlReader io.Reader) *net.Net {
 	pnml := &Pnml{}
 	decoder := xml.NewDecoder(pnmlReader)
 	decoder.Decode(pnml)
-	fmt.Printf("%+v", pnml.Net.Arcs)
 	return pnml.build()
 }
