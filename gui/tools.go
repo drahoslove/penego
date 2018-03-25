@@ -80,7 +80,7 @@ func createFormatPresets(ext string) ui.Control {
 				})
 			}
 			go func() {
-				exportFunc(exportSt.String("filename"))
+				exportFunc(exportSt.Of(ext).String("filename"))
 				done <- true
 				time.Sleep(time.Second)
 				setProgress(0)
@@ -96,7 +96,6 @@ func createFormatPresets(ext string) ui.Control {
 					select {
 					case <-done:
 						setProgress(100)
-						println("done")
 						break filling
 					default:
 						n += step
@@ -123,7 +122,7 @@ func createExportAs(ext string) ui.Control {
 	input := ui.NewEntry()
 	input.SetText(exportSt.Of(ext).String("filename"))
 	input.OnChanged(func(input *ui.Entry) {
-		exportSt.Set("filename", input.Text())
+		exportSt.Of(ext).Set("filename", input.Text())
 	})
 	button := ui.NewButton("Browse…")
 	button.OnClicked(func(*ui.Button) {
@@ -132,7 +131,7 @@ func createExportAs(ext string) ui.Control {
 				filename += "." + ext
 			}
 			input.SetText(filename)
-			exportSt.Set("filename", filename)
+			exportSt.Of(ext).Set("filename", filename)
 		})
 	})
 	return line(pair{input, true}, pair{button, false})

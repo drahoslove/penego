@@ -254,7 +254,7 @@ func main() {
 		doExport := func() {
 			gui.ToggleExport(func(filename string) {
 				export.ByName(filename, composeNet)
-				fmt.Println("images exported", filename)
+				fmt.Printf("image %s exported\n", filename)
 			})
 		}
 

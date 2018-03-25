@@ -13,8 +13,8 @@ var (
 	width, height = 1024, 512 // TODO get from somewhere
 )
 
-func Init(st *storage.Storage) {
-	store = st.Of("export")
+func init() {
+	store = storage.Of("export")
 }
 
 type ImgDrawer struct {
@@ -46,7 +46,7 @@ func (drawer ImgDrawer) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 }
 
 func getName(ext string) string {
-	filename := store.String("filename")
+	filename := store.Of(ext).String("filename")
 	println("getName", filename, ext)
 	return filename
 }
