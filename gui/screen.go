@@ -43,9 +43,9 @@ type Screen struct {
 
 /* non-exported methods */
 
-func (s *Screen) newCtx(w, h int) {
-	s.ctx = draw2dgl.NewGraphicContext(w, h)
-	draw.Init(s.ctx, w, h)
+func (s *Screen) newCtx() {
+	s.ctx = draw2dgl.NewGraphicContext(s.width, s.height)
+	draw.Init(s.ctx, s.width, s.height)
 }
 
 func (s *Screen) drawContent() {
@@ -175,4 +175,24 @@ func (s *Screen) RegisterControl(which int, key string, getIcon func() Icon, lab
 	s.OnKey(key, handler)
 	i := menu.addItem(getIcon, func() bool { return !isEnabled() }, label)
 	s.OnMenu(menu, i, handler)
+}
+
+func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
+	var prevcb glfw.CursorPosCallback
+	prevcb = s.Window.SetCursorPosCallback(func(w *glfw.Window, x float64, y float64) {
+
+		if prevcb == nil {
+			w.SetCursor(arrowCursor) // set default arrow before first callback
+		} else {
+			prevcb(w, x, y) // first run callbacks defined earlier
+		}
+		if centered {
+			x -= float64(s.width) / 2
+			y -= float64(s.height) / 2
+		}
+		if cb(x, y) {
+			w.SetCursor(handCursor)
+		}
+	})
+
 }

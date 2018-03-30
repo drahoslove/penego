@@ -81,21 +81,20 @@ func Run(handler func(*Screen)) {
 	screen.minorMenu = newMenu()
 
 	// change cursor hovering over buttons
-	screen.SetCursorPosCallback(func(w *glfw.Window, xpos float64, ypos float64) {
+	screen.OnMouseMove(false, func(xpos float64, ypos float64) bool {
 		for _, menu := range []*menu{&screen.mainMenu, &screen.minorMenu} {
 			for i, menuItem := range menu.items {
 				if menuItem.bound.hits(xpos, ypos) {
 					if menuItem.isDisabled() {
 						break
 					}
-					w.SetCursor(handCursor)
 					screen.setActiveMenuIndex(menu, i)
-					return
+					return true
 				}
 			}
-			w.SetCursor(arrowCursor)
 			screen.setActiveMenuIndex(menu, -1)
 		}
+		return false
 	})
 	// lost hover efect of button on window leave
 	screen.SetCursorEnterCallback(func(w *glfw.Window, entered bool) {
@@ -153,7 +152,7 @@ func reshape(screen *Screen, w, h int) {
 	gl.Disable(gl.DEPTH_TEST)
 
 	screen.width, screen.height = w, h
-	screen.newCtx(w, h)
+	screen.newCtx()
 	screen.contentInvalid = true
 
 }

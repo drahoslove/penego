@@ -5,11 +5,35 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
+type Selectable interface {
+	Select()
+	Unselect()
+}
+
 type Composition struct {
 	places      map[*net.Place]draw.Pos
 	transitions map[*net.Transition]draw.Pos
 	arcsIn      map[*net.Arc][2]draw.Pos
 	arcsOut     map[*net.Arc][2]draw.Pos
+}
+
+func (comp Composition) HitTest(x, y float64) Selectable {
+	for place, pos := range comp.places {
+		place.Unselect()
+		if hitPlace(x, y, pos) {
+			place.Select()
+			return place
+		}
+	}
+	for tran, pos := range comp.transitions {
+		tran.Unselect()
+		if hitTransition(x, y, pos) {
+			tran.Select()
+			return tran
+		}
+	}
+
+	return nil
 }
 
 func (comp Composition) DrawWith(drawer draw.Drawer) {

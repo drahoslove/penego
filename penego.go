@@ -158,7 +158,7 @@ func main() {
 		var state State = Splash
 
 		// how to draw
-		var composeNet = compose.GetSimple(network)
+		var netComposition = compose.GetSimple(network)
 
 		var onStateChange = func(before, now time.Duration) {
 			switch timeFlow {
@@ -183,7 +183,7 @@ func main() {
 		reloader := makeFileWatcher(func(filename string) {
 			pnString = read(filename)
 			network = parse(pnString)
-			composeNet = compose.GetSimple(network)
+			netComposition = compose.GetSimple(network)
 			sim.Stop()
 			state = New
 		})
@@ -243,7 +243,7 @@ func main() {
 					return
 				}
 				network = *pnml.Parse(file) // TODO should return same as net.Parse
-				composeNet = compose.GetSimple(network)
+				netComposition = compose.GetSimple(network)
 				sim.Stop()
 				state = New
 				fmt.Println("net imported", filename)
@@ -253,7 +253,7 @@ func main() {
 
 		doExport := func() {
 			gui.ToggleExport(func(filename string) {
-				export.ByName(filename, composeNet.DrawWith)
+				export.ByName(filename, netComposition.DrawWith)
 				fmt.Printf("image %s exported\n", filename)
 			})
 		}
@@ -282,6 +282,16 @@ func main() {
 			}
 		}, "play/pause", playPause, gui.True)
 
+		screen.OnMouseMove(true, func(x, y float64) bool {
+			hit := netComposition.HitTest(x, y)
+			if hit != nil {
+				return true
+			}
+			return false
+		})
+
+		// main state machine
+
 		for state != Exit {
 			switch state {
 			case Splash:
@@ -298,7 +308,7 @@ func main() {
 			case Initial:
 				sim.Init()
 				sim.DoEveryStateChange(onStateChange)
-				screen.SetRedrawFunc(gui.RedrawFunc(composeNet.DrawWith))
+				screen.SetRedrawFunc(gui.RedrawFunc(netComposition.DrawWith))
 				if autoStart {
 					state = Running
 				} else {
