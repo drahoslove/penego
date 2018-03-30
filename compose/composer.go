@@ -12,10 +12,35 @@ type Composition struct {
 	arcsOut     map[*net.Arc][2]draw.Pos
 }
 
-type Composer func(draw.Drawer)
+func (comp Composition) DrawWith(drawer draw.Drawer) {
+	for place, pos := range comp.places {
+		drawer.DrawPlace(pos, place.Tokens, place.Description)
+	}
+
+	for tran, pos := range comp.transitions {
+		drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
+	}
+
+	for arc, pos := range comp.arcsIn {
+		drawer.DrawInArc(pos[0], pos[1], arc.Weight)
+	}
+
+	for arc, pos := range comp.arcsOut {
+		drawer.DrawOutArc(pos[0], pos[1], arc.Weight)
+	}
+}
+
+func NewComposition() Composition {
+	return Composition{
+		make(map[*net.Place]draw.Pos),
+		make(map[*net.Transition]draw.Pos),
+		make(map[*net.Arc][2]draw.Pos),
+		make(map[*net.Arc][2]draw.Pos),
+	}
+}
 
 // basic "dumb" way to draw a net
-func GetSimple(network net.Net) func(draw.Drawer) {
+func GetSimple(network net.Net) Composition {
 	places := network.Places()
 	transitions := network.Transitions()
 
@@ -43,12 +68,7 @@ func GetSimple(network net.Net) func(draw.Drawer) {
 		return pos
 	}
 
-	composition := Composition{
-		make(map[*net.Place]draw.Pos),
-		make(map[*net.Transition]draw.Pos),
-		make(map[*net.Arc][2]draw.Pos),
-		make(map[*net.Arc][2]draw.Pos),
-	}
+	composition := NewComposition()
 
 	// compute positions of places
 	for i, place := range places {
@@ -72,20 +92,5 @@ func GetSimple(network net.Net) func(draw.Drawer) {
 		}
 	}
 
-	return Composer(func(drawer draw.Drawer) {
-		for place, pos := range composition.places {
-			drawer.DrawPlace(pos, place.Tokens, place.Description)
-		}
-
-		for tran, pos := range composition.transitions {
-			drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
-		}
-
-		for arc, pos := range composition.arcsIn {
-			drawer.DrawInArc(pos[0], pos[1], arc.Weight)
-		}
-		for arc, pos := range composition.arcsOut {
-			drawer.DrawOutArc(pos[0], pos[1], arc.Weight)
-		}
-	})
+	return composition
 }

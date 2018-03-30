@@ -253,7 +253,7 @@ func main() {
 
 		doExport := func() {
 			gui.ToggleExport(func(filename string) {
-				export.ByName(filename, composeNet)
+				export.ByName(filename, composeNet.DrawWith)
 				fmt.Printf("image %s exported\n", filename)
 			})
 		}
@@ -298,7 +298,7 @@ func main() {
 			case Initial:
 				sim.Init()
 				sim.DoEveryStateChange(onStateChange)
-				screen.SetRedrawFunc(gui.RedrawFunc(composeNet))
+				screen.SetRedrawFunc(gui.RedrawFunc(composeNet.DrawWith))
 				if autoStart {
 					state = Running
 				} else {
