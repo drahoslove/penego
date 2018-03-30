@@ -170,7 +170,7 @@ func (a *Arc) Equals(aa *Arc) bool {
 
 /* Arcs */
 
-type Arcs []Arc
+type Arcs []*Arc
 
 func (arcs Arcs) String() string {
 	arcsstr := make([]string, 0, len(arcs))
@@ -181,7 +181,7 @@ func (arcs Arcs) String() string {
 }
 
 func (arcs *Arcs) Push(w int, place *Place) {
-	*arcs = append(*arcs, Arc{w, place})
+	*arcs = append(*arcs, &Arc{w, place})
 }
 
 func (a *Arcs) Equals(aa *Arcs) bool {
@@ -193,7 +193,7 @@ pairing:
 			if pairedAs[j] {
 				continue
 			}
-			if arc.Equals(&another) {
+			if arc.Equals(another) {
 				pairedAs[j] = true
 				continue pairing
 			}

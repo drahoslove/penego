@@ -5,6 +5,13 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
+type Composition struct {
+	places      map[*net.Place]draw.Pos
+	transitions map[*net.Transition]draw.Pos
+	arcsIn      map[*net.Arc][2]draw.Pos
+	arcsOut     map[*net.Arc][2]draw.Pos
+}
+
 type Composer func(draw.Drawer)
 
 // basic "dumb" way to draw a net
@@ -36,26 +43,49 @@ func GetSimple(network net.Net) func(draw.Drawer) {
 		return pos
 	}
 
-	return Composer(func(drawer draw.Drawer) {
-		for i, p := range places {
-			drawer.DrawPlace(posOfPlace(i), p.Tokens, p.Description)
-		}
+	composition := Composition{
+		make(map[*net.Place]draw.Pos),
+		make(map[*net.Transition]draw.Pos),
+		make(map[*net.Arc][2]draw.Pos),
+		make(map[*net.Arc][2]draw.Pos),
+	}
 
-		for ti, t := range transitions {
-			drawer.DrawTransition(posOfTransition(ti), t.TimeFunc.String(), t.Description)
-			// arcs:
-			for pi, p := range places {
-				for _, arc := range t.Origins {
-					if arc.Place == p {
-						drawer.DrawInArc(posOfPlace(pi), posOfTransition(ti), arc.Weight)
-					}
-				}
-				for _, arc := range t.Targets {
-					if arc.Place == p {
-						drawer.DrawOutArc(posOfTransition(ti), posOfPlace(pi), arc.Weight)
-					}
+	// compute positions of places
+	for i, place := range places {
+		composition.places[place] = posOfPlace(i)
+	}
+	// compute positions of transitions
+	for ti, tran := range transitions {
+		composition.transitions[tran] = posOfTransition(ti)
+		// arcs:
+		for pi, p := range places {
+			for _, arc := range tran.Origins {
+				if arc.Place == p {
+					composition.arcsIn[arc] = [2]draw.Pos{posOfPlace(pi), posOfTransition(ti)}
 				}
 			}
+			for _, arc := range tran.Targets {
+				if arc.Place == p {
+					composition.arcsOut[arc] = [2]draw.Pos{posOfTransition(ti), posOfPlace(pi)}
+				}
+			}
+		}
+	}
+
+	return Composer(func(drawer draw.Drawer) {
+		for place, pos := range composition.places {
+			drawer.DrawPlace(pos, place.Tokens, place.Description)
+		}
+
+		for tran, pos := range composition.transitions {
+			drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
+		}
+
+		for arc, pos := range composition.arcsIn {
+			drawer.DrawInArc(pos[0], pos[1], arc.Weight)
+		}
+		for arc, pos := range composition.arcsOut {
+			drawer.DrawOutArc(pos[0], pos[1], arc.Weight)
 		}
 	})
 }
