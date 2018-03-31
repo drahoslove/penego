@@ -11,12 +11,14 @@ type Composable interface {
 type Composition struct {
 	places      map[*net.Place]draw.Pos
 	transitions map[*net.Transition]draw.Pos
+	ghosts      map[Composable]draw.Pos
 }
 
 func NewComposition() Composition {
 	return Composition{
 		make(map[*net.Place]draw.Pos),
 		make(map[*net.Transition]draw.Pos),
+		make(map[Composable]draw.Pos),
 	}
 }
 
@@ -36,16 +38,17 @@ func (comp Composition) HitTest(x, y float64) Composable {
 
 func (comp Composition) Move(node Composable, x, y float64) {
 	pos := draw.Pos{x, y}
-	switch v := node.(type) {
+	switch node := node.(type) {
 	case *net.Transition:
-		comp.transitions[v] = pos
+		comp.transitions[node] = pos
 	case *net.Place:
-		comp.places[v] = pos
+		comp.places[node] = pos
 	}
+	delete(comp.ghosts, node)
 }
 
 func (comp Composition) GhostMove(node Composable, x, y float64) {
-	println("GhostMove Not implemented")
+	comp.ghosts[node] = draw.Pos{x, y}
 }
 
 func (comp Composition) DrawWith(drawer draw.Drawer) {
@@ -62,6 +65,15 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 		for _, arc := range tran.Targets {
 			to := comp.places[arc.Place]
 			drawer.DrawOutArc(pos, to, arc.Weight)
+		}
+	}
+
+	for node, pos := range comp.ghosts {
+		switch node := node.(type) {
+		case *net.Transition:
+			drawer.DrawTransition(pos, node.TimeFunc.String(), node.Description)
+		case *net.Place:
+			drawer.DrawPlace(pos, node.Tokens, node.Description)
 		}
 	}
 }
