@@ -70,10 +70,32 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 
 	for node, pos := range comp.ghosts {
 		switch node := node.(type) {
-		case *net.Transition:
-			drawer.DrawTransition(pos, node.TimeFunc.String(), node.Description)
 		case *net.Place:
+			place := node
 			drawer.DrawPlace(pos, node.Tokens, node.Description)
+			for tran, tranPos := range comp.transitions {
+				for _, arc := range tran.Origins {
+					if arc.Place == place {
+						drawer.DrawInArc(pos, tranPos, arc.Weight)
+					}
+				}
+				for _, arc := range tran.Targets {
+					if arc.Place == place {
+						drawer.DrawOutArc(tranPos, pos, arc.Weight)
+					}
+				}
+			}
+		case *net.Transition:
+			tran := node
+			drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
+			for _, arc := range tran.Origins {
+				from := comp.places[arc.Place]
+				drawer.DrawInArc(from, pos, arc.Weight)
+			}
+			for _, arc := range tran.Targets {
+				to := comp.places[arc.Place]
+				drawer.DrawOutArc(pos, to, arc.Weight)
+			}
 		}
 	}
 }
