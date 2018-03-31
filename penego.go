@@ -283,11 +283,17 @@ func main() {
 		}, "play/pause", playPause, gui.True)
 
 		screen.OnMouseMove(true, func(x, y float64) bool {
-			hit := netComposition.HitTest(x, y)
-			if hit != nil {
-				return true
+			return netComposition.HitTest(x, y) != nil
+		})
+
+		screen.OnDrag(true, func(x, y, sx, sy float64, done bool) {
+			node := netComposition.HitTest(sx, sy)
+			if done {
+				netComposition.Move(node, x, y)
+			} else {
+				netComposition.GhostMove(node, x, y)
 			}
-			return false
+			screen.ForceRedraw(false)
 		})
 
 		// main state machine

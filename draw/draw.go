@@ -38,6 +38,10 @@ type Pos struct {
 	Y float64
 }
 
+func (pos Pos) Equal(p Pos) bool {
+	return pos.X == p.X && pos.Y == p.Y
+}
+
 type Gravity bool
 
 const (

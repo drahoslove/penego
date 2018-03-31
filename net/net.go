@@ -102,15 +102,6 @@ type Place struct {
 	Description string
 	Id          string
 	initTokens  int
-	selected    bool
-}
-
-func (p *Place) Select() {
-	p.selected = true
-}
-
-func (p *Place) Unselect() {
-	p.selected = false
 }
 
 func (p Place) String() string {
@@ -221,15 +212,6 @@ type Transition struct {
 	Priority    int
 	TimeFunc    *TimeFunc
 	Description string
-	selected    bool
-}
-
-func (t *Transition) Select() {
-	t.selected = true
-}
-
-func (t *Transition) Unselect() {
-	t.selected = false
 }
 
 func (t Transition) String() string {

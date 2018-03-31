@@ -196,3 +196,46 @@ func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
 	})
 
 }
+
+func (s *Screen) OnDrag(centered bool, cb func(x, y, startX, startY float64, done bool)) {
+	var prevClickCb glfw.MouseButtonCallback
+	var prevCurPosCb glfw.CursorPosCallback
+
+	startX, startY := 0.0, 0.0
+	draging := false
+
+	normalize := func(x, y float64) (float64, float64) {
+		if centered {
+			x -= float64(s.width) / 2
+			y -= float64(s.height) / 2
+		}
+		return x, y
+	}
+
+	prevClickCb = s.Window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
+		if prevClickCb != nil {
+			prevClickCb(w, button, action, mod)
+		}
+		if button == glfw.MouseButtonLeft {
+			if action == glfw.Press {
+				draging = true
+				startX, startY = w.GetCursorPos()
+				startX, startY = normalize(startX, startY)
+			} else {
+				x, y := w.GetCursorPos()
+				x, y = normalize(x, y)
+				cb(x, y, startX, startY, true)
+				draging = false
+			}
+		}
+	})
+	prevCurPosCb = s.Window.SetCursorPosCallback(func(w *glfw.Window, x float64, y float64) {
+		if prevCurPosCb != nil {
+			prevCurPosCb(w, x, y)
+		}
+		if draging {
+			x, y = normalize(x, y)
+			cb(x, y, startX, startY, false)
+		}
+	})
+}

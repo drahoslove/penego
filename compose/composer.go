@@ -5,9 +5,7 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
-type Selectable interface {
-	Select()
-	Unselect()
+type Composable interface {
 }
 
 type Composition struct {
@@ -17,23 +15,56 @@ type Composition struct {
 	arcsOut     map[*net.Arc][2]draw.Pos
 }
 
-func (comp Composition) HitTest(x, y float64) Selectable {
+func (comp Composition) HitTest(x, y float64) Composable {
 	for place, pos := range comp.places {
-		place.Unselect()
 		if hitPlace(x, y, pos) {
-			place.Select()
 			return place
 		}
 	}
-	for tran, pos := range comp.transitions {
-		tran.Unselect()
+	for transition, pos := range comp.transitions {
 		if hitTransition(x, y, pos) {
-			tran.Select()
-			return tran
+			return transition
 		}
 	}
-
 	return nil
+}
+
+func (comp Composition) Move(node Composable, x, y float64) {
+	if node == nil {
+		return
+	}
+	pos := draw.Pos{x, y}
+	switch v := node.(type) {
+	case *net.Transition:
+		for arc, p := range comp.arcsIn { // () -> []
+			if p[1].Equal(comp.transitions[v]) {
+				comp.arcsIn[arc] = [2]draw.Pos{p[0], pos}
+			}
+		}
+		for arc, p := range comp.arcsOut { // [] -> ()
+			if p[0].Equal(comp.transitions[v]) {
+				comp.arcsOut[arc] = [2]draw.Pos{pos, p[1]}
+			}
+		}
+		comp.transitions[v] = pos
+	case *net.Place:
+		for arc, p := range comp.arcsIn {
+			if p[0].Equal(comp.places[v]) { // () -> []
+				comp.arcsIn[arc] = [2]draw.Pos{pos, p[1]}
+			}
+		}
+		for arc, p := range comp.arcsOut {
+			if p[1].Equal(comp.places[v]) { // [] -> ()
+				comp.arcsOut[arc] = [2]draw.Pos{p[0], pos}
+			}
+		}
+		comp.places[v] = pos
+	}
+
+}
+
+func (comp Composition) GhostMove(node Composable, x, y float64) {
+	println("GhostMove Not implemented")
 }
 
 func (comp Composition) DrawWith(drawer draw.Drawer) {
