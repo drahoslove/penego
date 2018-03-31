@@ -11,8 +11,13 @@ type Composable interface {
 type Composition struct {
 	places      map[*net.Place]draw.Pos
 	transitions map[*net.Transition]draw.Pos
-	arcsIn      map[*net.Arc][2]draw.Pos
-	arcsOut     map[*net.Arc][2]draw.Pos
+}
+
+func NewComposition() Composition {
+	return Composition{
+		make(map[*net.Place]draw.Pos),
+		make(map[*net.Transition]draw.Pos),
+	}
 }
 
 func (comp Composition) HitTest(x, y float64) Composable {
@@ -30,37 +35,13 @@ func (comp Composition) HitTest(x, y float64) Composable {
 }
 
 func (comp Composition) Move(node Composable, x, y float64) {
-	if node == nil {
-		return
-	}
 	pos := draw.Pos{x, y}
 	switch v := node.(type) {
 	case *net.Transition:
-		for arc, p := range comp.arcsIn { // () -> []
-			if p[1].Equal(comp.transitions[v]) {
-				comp.arcsIn[arc] = [2]draw.Pos{p[0], pos}
-			}
-		}
-		for arc, p := range comp.arcsOut { // [] -> ()
-			if p[0].Equal(comp.transitions[v]) {
-				comp.arcsOut[arc] = [2]draw.Pos{pos, p[1]}
-			}
-		}
 		comp.transitions[v] = pos
 	case *net.Place:
-		for arc, p := range comp.arcsIn {
-			if p[0].Equal(comp.places[v]) { // () -> []
-				comp.arcsIn[arc] = [2]draw.Pos{pos, p[1]}
-			}
-		}
-		for arc, p := range comp.arcsOut {
-			if p[1].Equal(comp.places[v]) { // [] -> ()
-				comp.arcsOut[arc] = [2]draw.Pos{p[0], pos}
-			}
-		}
 		comp.places[v] = pos
 	}
-
 }
 
 func (comp Composition) GhostMove(node Composable, x, y float64) {
@@ -74,23 +55,14 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 
 	for tran, pos := range comp.transitions {
 		drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
-	}
-
-	for arc, pos := range comp.arcsIn {
-		drawer.DrawInArc(pos[0], pos[1], arc.Weight)
-	}
-
-	for arc, pos := range comp.arcsOut {
-		drawer.DrawOutArc(pos[0], pos[1], arc.Weight)
-	}
-}
-
-func NewComposition() Composition {
-	return Composition{
-		make(map[*net.Place]draw.Pos),
-		make(map[*net.Transition]draw.Pos),
-		make(map[*net.Arc][2]draw.Pos),
-		make(map[*net.Arc][2]draw.Pos),
+		for _, arc := range tran.Origins {
+			from := comp.places[arc.Place]
+			drawer.DrawInArc(from, pos, arc.Weight)
+		}
+		for _, arc := range tran.Targets {
+			to := comp.places[arc.Place]
+			drawer.DrawOutArc(pos, to, arc.Weight)
+		}
 	}
 }
 
@@ -132,19 +104,6 @@ func GetSimple(network net.Net) Composition {
 	// compute positions of transitions
 	for ti, tran := range transitions {
 		composition.transitions[tran] = posOfTransition(ti)
-		// arcs:
-		for pi, p := range places {
-			for _, arc := range tran.Origins {
-				if arc.Place == p {
-					composition.arcsIn[arc] = [2]draw.Pos{posOfPlace(pi), posOfTransition(ti)}
-				}
-			}
-			for _, arc := range tran.Targets {
-				if arc.Place == p {
-					composition.arcsOut[arc] = [2]draw.Pos{posOfTransition(ti), posOfPlace(pi)}
-				}
-			}
-		}
 	}
 
 	return composition
