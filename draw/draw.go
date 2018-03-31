@@ -265,9 +265,12 @@ func Arc(ctx draw2d.GraphicContext, style Style, from, to Pos, dir Direction, we
 	defer tempContext(ctx)()
 
 	if dir == In { // ( ) -> [ ]
-		angle := math.Pi * +0.25 // outgoing angle from place
+		angle := math.Pi * +0.25 // from left-up by default
 		if from.Y > to.Y {
-			angle += math.Pi
+			angle += math.Pi // from right-down if place above tran
+		}
+		if from.Y == to.Y && from.X < to.X { // if in line
+			angle = math.Pi * 0.5
 		}
 		xo := math.Sin(angle) * r // start position on place edge related to its center
 		yo := math.Cos(angle) * r
@@ -284,9 +287,12 @@ func Arc(ctx draw2d.GraphicContext, style Style, from, to Pos, dir Direction, we
 		drawArrowHead(ctx, style, to.X, to.Y, -math.Pi/2)
 	}
 	if dir == Out { // [ ] -> ( )
-		angle := math.Pi * -0.25
+		angle := math.Pi * -0.25 // to left-down by default
 		if from.Y < to.Y {
-			angle += math.Pi
+			angle += math.Pi // to fith-up if place above tran
+		}
+		if from.Y == to.Y && from.X < to.X { // if in line
+			angle = math.Pi * -0.5
 		}
 		xo := math.Sin(angle) * r
 		yo := math.Cos(angle) * r
