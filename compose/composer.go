@@ -37,7 +37,7 @@ func (comp Composition) HitTest(x, y float64) Composable {
 }
 
 func (comp Composition) Move(node Composable, x, y float64) {
-	pos := draw.Pos{x, y}
+	pos := snap(x, y, 15)
 	switch node := node.(type) {
 	case *net.Transition:
 		comp.transitions[node] = pos
@@ -48,7 +48,7 @@ func (comp Composition) Move(node Composable, x, y float64) {
 }
 
 func (comp Composition) GhostMove(node Composable, x, y float64) {
-	comp.ghosts[node] = draw.Pos{x, y}
+	comp.ghosts[node] = snap(x, y, 15)
 }
 
 func (comp Composition) DrawWith(drawer draw.Drawer) {
