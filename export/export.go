@@ -18,30 +18,35 @@ func init() {
 }
 
 type ImgDrawer struct {
-	ctx draw2d.GraphicContext
+	ctx   draw2d.GraphicContext
+	style draw.Style
+}
+
+func (drawer *ImgDrawer) SetStyle(style draw.Style) {
+	drawer.style = style
 }
 
 func (drawer ImgDrawer) DrawPlace(pos draw.Pos, n int, description string) {
 	if drawer.ctx != nil {
-		draw.Place(drawer.ctx, pos, n, description)
+		draw.Place(drawer.ctx, drawer.style, pos, n, description)
 	}
 }
 
 func (drawer ImgDrawer) DrawTransition(pos draw.Pos, attrs, description string) {
 	if drawer.ctx != nil {
-		draw.Transition(drawer.ctx, pos, attrs, description)
+		draw.Transition(drawer.ctx, drawer.style, pos, attrs, description)
 	}
 }
 
 func (drawer ImgDrawer) DrawInArc(from draw.Pos, to draw.Pos, weight int) {
 	if drawer.ctx != nil {
-		draw.Arc(drawer.ctx, from, to, draw.In, weight)
+		draw.Arc(drawer.ctx, drawer.style, from, to, draw.In, weight)
 	}
 }
 
 func (drawer ImgDrawer) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 	if drawer.ctx != nil {
-		draw.Arc(drawer.ctx, from, to, draw.Out, weight)
+		draw.Arc(drawer.ctx, drawer.style, from, to, draw.Out, weight)
 	}
 }
 

@@ -6,11 +6,13 @@ import (
 )
 
 func hitPlace(x, y float64, pos draw.Pos) bool {
-	return math.Abs(pos.X-x) < 27 && math.Abs(pos.Y-y) < 27
+	r := draw.PLACE_RADIUS
+	return math.Abs(pos.X-x) < r && math.Abs(pos.Y-y) < r
 }
 
 func hitTransition(x, y float64, pos draw.Pos) bool {
-	return math.Abs(pos.X-x) < 12 && math.Abs(pos.Y-y) < 38
+	rv, rh := draw.TRANSITION_WIDTH/2, draw.TRANSITION_HEIGHT/2
+	return math.Abs(pos.X-x) < rv && math.Abs(pos.Y-y) < rh
 }
 
 func snap(x, y, n float64) draw.Pos {

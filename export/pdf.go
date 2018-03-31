@@ -2,6 +2,7 @@ package export
 
 import (
 	"fmt"
+
 	"git.yo2.cz/drahoslav/penego/draw"
 	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dpdf"
@@ -9,7 +10,7 @@ import (
 
 func Pdf(composeNet func(draw.Drawer)) {
 	img := draw2dpdf.NewPdf("L", "mm", "A4")
-	drawer := ImgDrawer{draw2dpdf.NewGraphicContext(img)}
+	drawer := &ImgDrawer{draw2dpdf.NewGraphicContext(img), 0}
 
 	draw2d.SetFontNamer(func(fd draw2d.FontData) string {
 		return fd.Name

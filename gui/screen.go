@@ -39,6 +39,7 @@ type Screen struct {
 	menusVisible    bool
 	mainMenu        menu
 	minorMenu       menu
+	style           draw.Style
 }
 
 /* non-exported methods */
@@ -114,27 +115,31 @@ func (s *Screen) SetTitle(title string) {
 	}, false)
 }
 
+func (s *Screen) SetStyle(style draw.Style) {
+	s.style = style
+}
+
 func (s *Screen) DrawPlace(pos draw.Pos, n int, description string) {
 	if s.ctx != nil {
-		draw.Place(s.ctx, pos, n, description)
+		draw.Place(s.ctx, s.style, pos, n, description)
 	}
 }
 
 func (s *Screen) DrawTransition(pos draw.Pos, attrs, description string) {
 	if s.ctx != nil {
-		draw.Transition(s.ctx, pos, attrs, description)
+		draw.Transition(s.ctx, s.style, pos, attrs, description)
 	}
 }
 
 func (s *Screen) DrawInArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
-		draw.Arc(s.ctx, from, to, draw.In, weight)
+		draw.Arc(s.ctx, s.style, from, to, draw.In, weight)
 	}
 }
 
 func (s *Screen) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 	if s.ctx != nil {
-		draw.Arc(s.ctx, from, to, draw.Out, weight)
+		draw.Arc(s.ctx, s.style, from, to, draw.Out, weight)
 	}
 }
 

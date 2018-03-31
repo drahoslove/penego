@@ -52,6 +52,7 @@ func (comp Composition) GhostMove(node Composable, x, y float64) {
 }
 
 func (comp Composition) DrawWith(drawer draw.Drawer) {
+	drawer.SetStyle(draw.DefaultStyle)
 	for place, pos := range comp.places {
 		drawer.DrawPlace(pos, place.Tokens, place.Description)
 	}
@@ -67,7 +68,7 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 			drawer.DrawOutArc(pos, to, arc.Weight)
 		}
 	}
-
+	drawer.SetStyle(draw.FadedStyle)
 	for node, pos := range comp.ghosts {
 		switch node := node.(type) {
 		case *net.Place:

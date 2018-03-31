@@ -31,6 +31,31 @@ type Drawer interface {
 	DrawTransition(pos Pos, attrs, description string)
 	DrawInArc(from, to Pos, weight int)
 	DrawOutArc(from, to Pos, weight int)
+	SetStyle(style Style)
+}
+
+type Style int
+
+const (
+	DefaultStyle = Style(iota)
+	HighlightedStyle
+	FadedStyle
+)
+
+func (s Style) Color() color.RGBA {
+	return map[Style]color.RGBA{
+		DefaultStyle:     BLACKISH,
+		HighlightedStyle: BLACK,
+		FadedStyle:       opaque(DARK_GRAY, 0.5),
+	}[s]
+}
+
+func (s Style) Background() color.RGBA {
+	return map[Style]color.RGBA{
+		DefaultStyle:     WHITISH,
+		HighlightedStyle: WHITISH,
+		FadedStyle:       opaque(WHITISH, 0.0),
+	}[s]
 }
 
 type Pos struct {
@@ -150,22 +175,22 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 
 // NET entities
 
-func Place(ctx draw2d.GraphicContext, pos Pos, n int, description string) {
+func Place(ctx draw2d.GraphicContext, style Style, pos Pos, n int, description string) {
 	r := PLACE_RADIUS
 	x, y := pos.X, pos.Y
 	defer tempContext(ctx)()
 
 	draw2dkit.Circle(ctx, x, y, r)
 
-	ctx.SetFillColor(WHITISH)
-	ctx.SetStrokeColor(BLACKISH)
+	ctx.SetFillColor(style.Background())
+	ctx.SetStrokeColor(style.Color())
 	ctx.FillStroke()
 
 	// tokens
 	switch {
 	case n == 1: // draw dot
 		draw2dkit.Circle(ctx, x, y, 6)
-		ctx.SetFillColor(BLACKISH)
+		ctx.SetFillColor(style.Color())
 		ctx.Fill()
 	case 1 < n && n < 6: // draw dots
 		rr := float64(r) / (3 - float64(n)*0.25)
@@ -176,13 +201,13 @@ func Place(ctx draw2d.GraphicContext, pos Pos, n int, description string) {
 
 			draw2dkit.Circle(ctx, xx, yy, 5)
 		}
-		ctx.SetFillColor(BLACKISH)
+		ctx.SetFillColor(style.Color())
 		ctx.Fill()
 
 	case n >= 6: // draw numbers
 		ctx.Save()
 		ctx.SetFontData(draw2d.FontData{Name: "gomono"})
-		ctx.SetFillColor(BLACKISH)
+		ctx.SetFillColor(style.Color())
 		switch {
 		case n < 100:
 			ctx.SetFontSize(24)
@@ -203,36 +228,36 @@ func Place(ctx draw2d.GraphicContext, pos Pos, n int, description string) {
 
 	// description
 	if description != "" {
-		ctx.SetFillColor(BLACKISH)
+		ctx.SetFillColor(style.Color())
 		drawCenteredString(ctx, description, x, y-r-8)
 	}
 
 }
 
-func Transition(ctx draw2d.GraphicContext, pos Pos, attrs, description string) {
+func Transition(ctx draw2d.GraphicContext, style Style, pos Pos, attrs, description string) {
 	w, h := TRANSITION_WIDTH, TRANSITION_HEIGHT
 	x, y := pos.X, pos.Y
 	defer tempContext(ctx)()
 
 	draw2dkit.Rectangle(ctx, x-w/2, y-h/2, x+w/2, y+h/2)
-	ctx.SetFillColor(WHITISH)
-	ctx.SetStrokeColor(BLACKISH)
+	ctx.SetFillColor(style.Background())
+	ctx.SetStrokeColor(style.Color())
 	ctx.FillStroke()
 
 	// timed or priority
 	if attrs != "" {
-		ctx.SetFillColor(BLACKISH)
+		ctx.SetFillColor(style.Color())
 		drawCenteredString(ctx, attrs, x, y+h/2+20) // under
 	}
 
 	// description
 	if description != "" {
-		ctx.SetFillColor(BLACKISH)
+		ctx.SetFillColor(style.Color())
 		drawCenteredString(ctx, description, x, y-h/2-10) //ahove
 	}
 }
 
-func Arc(ctx draw2d.GraphicContext, from, to Pos, dir Direction, weight int) {
+func Arc(ctx draw2d.GraphicContext, style Style, from, to Pos, dir Direction, weight int) {
 	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH
 	var cPs []mgl.Vec2 // control point of arcs curve
@@ -256,7 +281,7 @@ func Arc(ctx draw2d.GraphicContext, from, to Pos, dir Direction, weight int) {
 			{to.X - 60, to.Y},
 			{to.X, to.Y},
 		}
-		drawArrowHead(ctx, to.X, to.Y, -math.Pi/2)
+		drawArrowHead(ctx, style, to.X, to.Y, -math.Pi/2)
 	}
 	if dir == Out { // [ ] -> ( )
 		angle := math.Pi * -0.25
@@ -274,7 +299,7 @@ func Arc(ctx draw2d.GraphicContext, from, to Pos, dir Direction, weight int) {
 			{to.X + 4*xo, to.Y + 4*yo},
 			{to.X, to.Y},
 		}
-		drawArrowHead(ctx, to.X, to.Y, angle)
+		drawArrowHead(ctx, style, to.X, to.Y, angle)
 	}
 
 	ctx.MoveTo(cPs[0].X(), cPs[0].Y())
@@ -283,22 +308,23 @@ func Arc(ctx draw2d.GraphicContext, from, to Pos, dir Direction, weight int) {
 		cPs[2].X(), cPs[2].Y(),
 		cPs[3].X(), cPs[3].Y(),
 	)
+	ctx.SetStrokeColor(style.Color())
 	ctx.Stroke()
 
 	if weight > 1 {
 		arcCntr := mgl.CubicBezierCurve2D(0.5, cPs[0], cPs[1], cPs[2], cPs[3])
 		draw2dkit.Circle(ctx, arcCntr.X(), arcCntr.Y()-6, 12)
-		ctx.SetFillColor(WHITISH)
+		ctx.SetFillColor(style.Background())
 		ctx.Fill()
 
-		ctx.SetFillColor(BLACKISH)
+		ctx.SetFillColor(style.Color())
 		drawCenteredString(ctx, strconv.Itoa(weight), arcCntr.X()-1, arcCntr.Y())
 	}
 }
 
 // help functions
 
-func drawArrowHead(ctx draw2d.GraphicContext, x, y float64, angle float64) {
+func drawArrowHead(ctx draw2d.GraphicContext, style Style, x, y float64, angle float64) {
 	r := 18.0
 	w := math.Pi / 8
 	xl := x + math.Sin(angle+w)*r
@@ -312,7 +338,7 @@ func drawArrowHead(ctx draw2d.GraphicContext, x, y float64, angle float64) {
 	ctx.LineTo(xl, yl)
 	ctx.LineTo(xr, yr)
 	ctx.LineTo(x, y)
-	ctx.SetFillColor(BLACKISH)
+	ctx.SetFillColor(style.Color())
 	ctx.Fill()
 }
 
@@ -327,9 +353,7 @@ func drawCenteredString(ctx draw2d.GraphicContext, str string, x, y float64) {
 
 func tempContext(ctx draw2d.GraphicContext) func() {
 	ctx.Save()
-	return func() {
-		ctx.Restore()
-	}
+	return ctx.Restore
 }
 
 func opaque(clr color.RGBA, opacity float32) color.RGBA {
