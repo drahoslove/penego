@@ -52,23 +52,43 @@ func (comp Composition) GhostMove(node Composable, x, y float64) {
 }
 
 func (comp Composition) DrawWith(drawer draw.Drawer) {
-	drawer.SetStyle(draw.DefaultStyle)
+	setStyle := func(node Composable) func(Composable) {
+		if _, isGhosted := comp.ghosts[node]; isGhosted {
+			drawer.SetStyle(draw.FadedStyle)
+			return func(Composable) {
+				drawer.SetStyle(draw.FadedStyle)
+			}
+		} else {
+			drawer.SetStyle(draw.DefaultStyle)
+			return func(node Composable) {
+				if _, isGhosted := comp.ghosts[node]; isGhosted {
+					drawer.SetStyle(draw.FadedStyle)
+				} else {
+					drawer.SetStyle(draw.DefaultStyle)
+				}
+			}
+		}
+	}
 	for place, pos := range comp.places {
+		setStyle(place)
 		drawer.DrawPlace(pos, place.Tokens, place.Description)
 	}
 
 	for tran, pos := range comp.transitions {
+		orSetStyle := setStyle(tran)
 		drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
 		for _, arc := range tran.Origins {
 			from := comp.places[arc.Place]
+			orSetStyle(arc.Place)
 			drawer.DrawInArc(from, pos, arc.Weight)
 		}
 		for _, arc := range tran.Targets {
 			to := comp.places[arc.Place]
+			orSetStyle(arc.Place)
 			drawer.DrawOutArc(pos, to, arc.Weight)
 		}
 	}
-	drawer.SetStyle(draw.FadedStyle)
+	drawer.SetStyle(draw.HighlightedStyle)
 	for node, pos := range comp.ghosts {
 		switch node := node.(type) {
 		case *net.Place:
