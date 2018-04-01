@@ -4,6 +4,8 @@ package gui
 // exports Screen
 
 import (
+	"time"
+
 	"git.yo2.cz/drahoslav/penego/draw"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
@@ -39,6 +41,7 @@ type Screen struct {
 	menusVisible    bool
 	mainMenu        menu
 	minorMenu       menu
+	hoverTimer      *time.Timer
 	style           draw.Style
 }
 
@@ -73,12 +76,21 @@ func (s *Screen) drawContent() {
 func (s *Screen) setActiveMenuIndex(menu *menu, i int) {
 	if menu.activeIndex != i {
 		menu.activeIndex = i
+		menu.showTooltip = false
 		s.contentInvalid = true
 	}
-	if i == -1 {
+	if menu.activeIndex == -1 {
 		menu.showTooltip = false
-	} else {
-		menu.showTooltip = true
+		s.contentInvalid = true
+	}
+	if i != -1 {
+		if s.hoverTimer != nil {
+			s.hoverTimer.Stop()
+		}
+		s.hoverTimer = time.AfterFunc(time.Second*3/4, func() {
+			menu.showTooltip = true
+			s.contentInvalid = true
+		})
 	}
 }
 

@@ -185,7 +185,6 @@ func drawTooltip(ctx draw2d.GraphicContext, text string, pos Gravity, left, top,
 	}
 	if pos == Down {
 		top -= height/2 + offset
-		offset = -offset
 	}
 	height /= 2
 
@@ -206,6 +205,7 @@ func drawTooltip(ctx draw2d.GraphicContext, text string, pos Gravity, left, top,
 	// rectangle
 	if pos == Down {
 		top += height
+		offset = -offset
 	}
 	ctx.MoveTo(center, top-offset)
 	ctx.LineTo(center+offset, top)
