@@ -69,14 +69,10 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 			}
 		}
 	}
-	for place, pos := range comp.places {
-		setStyle(place)
-		drawer.DrawPlace(pos, place.Tokens, place.Description)
-	}
 
+	// draw arcs
 	for tran, pos := range comp.transitions {
 		orSetStyle := setStyle(tran)
-		drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
 		for _, arc := range tran.Origins {
 			if arc.Place.Hidden() {
 				continue
@@ -94,6 +90,20 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 			drawer.DrawOutArc(pos, to, arc.Weight)
 		}
 	}
+
+	// draw all places
+	for place, pos := range comp.places {
+		setStyle(place)
+		drawer.DrawPlace(pos, place.Tokens, place.Description)
+	}
+
+	// draw all transtitions
+	for tran, pos := range comp.transitions {
+		setStyle(tran)
+		drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
+	}
+
+	// draw moving items last
 	drawer.SetStyle(draw.HighlightedStyle)
 	for node, pos := range comp.ghosts {
 		switch node := node.(type) {
@@ -131,6 +141,7 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 			}
 		}
 	}
+
 }
 
 // basic "dumb" way to draw a net
