@@ -54,11 +54,16 @@ func (s *Screen) drawContent() {
 		draw.Clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
 		if s.menusVisible {
+			menuI := s.mainMenu.activeIndex
+			tooltip := s.mainMenu.tooltip()
 			widths, height, top := draw.Menu(s.ctx, s.width, s.height,
-				s.mainMenu.itemIcons(), s.mainMenu.activeIndex, s.mainMenu.disabled(), draw.Up)
+				s.mainMenu.itemIcons(), menuI, tooltip, s.mainMenu.disabled(), draw.Up)
 			s.mainMenu.setBounds(widths, height, top)
+
+			menuI = s.minorMenu.activeIndex
+			tooltip = s.minorMenu.tooltip()
 			widths, height, top = draw.Menu(s.ctx, s.width, s.height,
-				s.minorMenu.itemIcons(), s.minorMenu.activeIndex, s.minorMenu.disabled(), draw.Down)
+				s.minorMenu.itemIcons(), menuI, tooltip, s.minorMenu.disabled(), draw.Down)
 			s.minorMenu.setBounds(widths, height, top)
 		}
 	}
@@ -69,6 +74,11 @@ func (s *Screen) setActiveMenuIndex(menu *menu, i int) {
 	if menu.activeIndex != i {
 		menu.activeIndex = i
 		s.contentInvalid = true
+	}
+	if i == -1 {
+		menu.showTooltip = false
+	} else {
+		menu.showTooltip = true
 	}
 }
 
@@ -171,13 +181,7 @@ func (s *Screen) OnMenu(menu *menu, menuIndex int, cb func()) {
 }
 
 func (s *Screen) RegisterControl(which int, key string, getIcon func() Icon, label string, handler func(), isEnabled func() bool) {
-	var menu *menu
-	if which == 0 {
-		menu = &s.mainMenu
-	}
-	if which == 1 {
-		menu = &s.minorMenu
-	}
+	menu := []*menu{&s.mainMenu, &s.minorMenu}[which]
 	s.OnKey(key, handler)
 	i := menu.addItem(getIcon, func() bool { return !isEnabled() }, label)
 	s.OnMenu(menu, i, handler)

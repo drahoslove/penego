@@ -128,7 +128,7 @@ func Splash(ctx draw2d.GraphicContext, title string) {
 	drawCenteredString(ctx, title, 0, 0)
 }
 
-func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int, disabled []bool, pos Gravity) ([]float64, float64, float64) {
+func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int, tooltip string, disabled []bool, pos Gravity) ([]float64, float64, float64) {
 	defer tempContext(ctx)()
 
 	const (
@@ -168,9 +168,51 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 		w := ctx.FillStringAt(name, sum+padding, linePos)
 		width := math.Ceil(w) + 2*padding
 		widths[i] = width
+		if tooltip != "" && i == activeIndex {
+			drawTooltip(ctx, tooltip, pos, sum, top, width, height)
+		}
 		sum += width
 	}
 	return widths, height, top
+}
+
+func drawTooltip(ctx draw2d.GraphicContext, text string, pos Gravity, left, top, width, height float64) {
+	defer tempContext(ctx)()
+	offset := 7.0
+
+	if pos == Up {
+		top += height + offset
+	}
+	if pos == Down {
+		top -= height/2 + offset
+		offset = -offset
+	}
+	height /= 2
+
+	ctx.SetFontData(draw2d.FontData{Name: "goregular"})
+	ctx.SetFontSize(12)
+
+	_, _, w, _ := ctx.GetStringBounds(text)
+	center := left + width/2
+	left = center - w/2 - 5
+	width = w + 10
+
+	ctx.SetFillColor(GRAY)
+	draw2dkit.Rectangle(ctx, left, top, left+width, top+height)
+	ctx.Fill()
+	ctx.SetFillColor(WHITISH)
+	ctx.FillStringAt(text, left+5, top+height-6)
+
+	// rectangle
+	if pos == Down {
+		top += height
+	}
+	ctx.MoveTo(center, top-offset)
+	ctx.LineTo(center+offset, top)
+	ctx.LineTo(center-offset, top)
+	ctx.Close()
+	ctx.SetFillColor(GRAY)
+	ctx.Fill()
 }
 
 // NET entities

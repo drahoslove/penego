@@ -99,6 +99,7 @@ func Run(handler func(*Screen)) {
 	screen.SetCursorEnterCallback(func(w *glfw.Window, entered bool) {
 		if entered == false { // leaved
 			screen.setActiveMenuIndex(&screen.mainMenu, -1)
+			screen.setActiveMenuIndex(&screen.minorMenu, -1)
 		}
 	})
 

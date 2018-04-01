@@ -7,16 +7,16 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl64"
 )
 
-type menu struct {
-	items       []menuItem
-	activeIndex int
-}
-
 type menuItem struct {
 	label      string
 	getIcon    func() Icon
 	isDisabled func() bool
 	bound      bound
+}
+type menu struct {
+	items       []menuItem
+	activeIndex int
+	showTooltip bool
 }
 
 type bound struct {
@@ -47,6 +47,14 @@ func (m *menu) itemIcons() []string {
 		icons[i] = string(item.getIcon())
 	}
 	return icons
+}
+
+func (m *menu) tooltip() string {
+	if m.activeIndex > -1 && m.showTooltip {
+		return m.items[m.activeIndex].label
+	} else {
+		return ""
+	}
 }
 
 func (m *menu) disabled() []bool {
