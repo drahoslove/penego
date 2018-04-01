@@ -74,7 +74,6 @@ func Run(handler func(*Screen)) {
 	screen.setSizeCallback(reshape)
 	screen.SetRefreshCallback(func(window *glfw.Window) {
 		screen.drawContent()
-		screen.SwapBuffers()
 	})
 
 	screen.mainMenu = newMenu()
@@ -124,7 +123,6 @@ func Run(handler func(*Screen)) {
 
 		if screen.contentInvalid {
 			screen.drawContent()
-			screen.SwapBuffers()
 			screen.contentInvalid = false
 		}
 		glfw.PollEvents()

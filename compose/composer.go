@@ -78,11 +78,17 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 		orSetStyle := setStyle(tran)
 		drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
 		for _, arc := range tran.Origins {
+			if arc.Place.Hidden() {
+				continue
+			}
 			from := comp.places[arc.Place]
 			orSetStyle(arc.Place)
 			drawer.DrawInArc(from, pos, arc.Weight)
 		}
 		for _, arc := range tran.Targets {
+			if arc.Place.Hidden() {
+				continue
+			}
 			to := comp.places[arc.Place]
 			orSetStyle(arc.Place)
 			drawer.DrawOutArc(pos, to, arc.Weight)
@@ -110,10 +116,16 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 			tran := node
 			drawer.DrawTransition(pos, tran.TimeFunc.String(), tran.Description)
 			for _, arc := range tran.Origins {
+				if arc.Place.Hidden() {
+					continue
+				}
 				from := comp.places[arc.Place]
 				drawer.DrawInArc(from, pos, arc.Weight)
 			}
 			for _, arc := range tran.Targets {
+				if arc.Place.Hidden() {
+					continue
+				}
 				to := comp.places[arc.Place]
 				drawer.DrawOutArc(pos, to, arc.Weight)
 			}

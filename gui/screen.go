@@ -62,6 +62,7 @@ func (s *Screen) drawContent() {
 			s.minorMenu.setBounds(widths, height, top)
 		}
 	}
+	s.SwapBuffers()
 }
 
 func (s *Screen) setActiveMenuIndex(menu *menu, i int) {

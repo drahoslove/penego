@@ -116,6 +116,10 @@ func (p *Place) Equals(pp *Place) bool {
 	return true
 }
 
+func (p *Place) Hidden() bool {
+	return p.Id == "."
+}
+
 /* Places */
 
 type Places []*Place
