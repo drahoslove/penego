@@ -14,7 +14,7 @@ type Composition struct {
 	ghosts      map[Composable]draw.Pos
 }
 
-func NewComposition() Composition {
+func New() Composition {
 	return Composition{
 		make(map[*net.Place]draw.Pos),
 		make(map[*net.Transition]draw.Pos),
@@ -173,7 +173,7 @@ func GetSimple(network net.Net) Composition {
 		return pos
 	}
 
-	composition := NewComposition()
+	composition := New()
 
 	// compute positions of places
 	for i, place := range places {

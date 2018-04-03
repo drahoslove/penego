@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"git.yo2.cz/drahoslav/penego/net"
+	"git.yo2.cz/drahoslav/penego/compose"
 )
 
 // structures defining pnml format
@@ -26,12 +27,19 @@ type Place struct {
 	Name        string `xml:"name>value,omitempty"`
 	Marking     int    `xml:"initialMarking>text"`
 	MarkingPIPE string `xml:"initialMarking>value"`
+	Position	Position `xml:"graphics>position"`
+}
+
+type Position struct {
+	X float64 `xml:"x,attr"`
+	Y float64 `xml:"y,attr"`
 }
 
 type Transition struct {
 	Id       string `xml:"id,attr"`
 	Name     string `xml:"name>value"`
 	Priority int    `xml:"priority>value"` // PIPE
+	Position	Position `xml:"graphics>position"`
 }
 
 type Arc struct {
@@ -42,10 +50,11 @@ type Arc struct {
 	WeightPIPE string `xml:"inscription>value"`
 }
 
-func (pnml *Pnml) build() *net.Net {
+func (pnml *Pnml) buildNetCompo() (net.Net, compose.Composition) {
+	composition := compose.New()
+
 	places := net.Places{}
 	transitions := net.Transitions{}
-	_ = transitions
 
 	for _, p := range pnml.Net.Places {
 		place := &net.Place{
@@ -60,6 +69,8 @@ func (pnml *Pnml) build() *net.Net {
 				place.Tokens = tokens
 			}
 		}
+
+		composition.Move(place, p.Position.X, p.Position.Y)
 		places.Push(place)
 	}
 	for _, t := range pnml.Net.Transitions {
@@ -84,22 +95,25 @@ func (pnml *Pnml) build() *net.Net {
 				origins.Push(weight, places.Find(a.Source))
 			}
 		}
-		transitions.Push(&net.Transition{
+		transition := &net.Transition{
 			Id:          t.Id,
 			Origins:     origins,
 			Targets:     targets,
 			Priority:    t.Priority,
 			Description: t.Name,
 			TimeFunc:    nil, // TODO
-		})
+		}
+
+		composition.Move(transition, t.Position.X, t.Position.Y)
+		transitions.Push(transition)
 	}
-	net := net.New(places, transitions)
-	return &net
+	return net.New(places, transitions), composition
 }
 
-func Parse(pnmlReader io.Reader) *net.Net {
+func Parse(pnmlReader io.Reader) (net.Net, compose.Composition) {
 	pnml := &Pnml{}
 	decoder := xml.NewDecoder(pnmlReader)
 	decoder.Decode(pnml)
-	return pnml.build()
+	net, composition := pnml.buildNetCompo()
+	return net, composition
 }

@@ -246,8 +246,7 @@ func main() {
 					fmt.Println("cant import file", err)
 					return
 				}
-				network = *pnml.Parse(file) // TODO should return same as net.Parse
-				netComposition = compose.GetSimple(network)
+				network, netComposition = pnml.Parse(file) // TODO should return same as net.Parse
 				sim.Stop()
 				state = New
 				fmt.Println("net imported", filename)
