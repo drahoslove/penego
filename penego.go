@@ -129,7 +129,7 @@ func main() {
 	parse := func(pnString string) (network net.Net) {
 		network, err = net.Parse(pnString)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s", err)
+			fmt.Fprintf(os.Stderr, "%s\n", err)
 			return
 		}
 		if verbose {
@@ -172,7 +172,7 @@ func main() {
 				fmt.Println(now, network.Places())
 			}
 			screen.SetTitle(now.String())
-			screen.ForceRedraw(false) // block
+			screen.ForceRedraw(false) // must not block
 		}
 
 		var sim net.Simulation
@@ -195,7 +195,11 @@ func main() {
 		// action functions:
 
 		step := func() {
-			sim.Step()
+			switch state {
+			case Paused:
+				sim.Pause()
+				sim.Step()
+			}
 		}
 
 		playPause := func() {
@@ -247,7 +251,9 @@ func main() {
 				sim.Stop()
 				state = New
 				fmt.Println("net imported", filename)
-				fmt.Println(network)
+				if verbose {
+					fmt.Println(network)
+				}
 			})
 		}
 

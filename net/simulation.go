@@ -194,6 +194,7 @@ func (sim *Simulation) Step() bool {
 	if eventTime > sim.endTime {
 		return false
 	}
+	sim.stopped = false
 	before := sim.now
 	sim.now = eventTime
 	sim.fireEvent(tranToFireNow, before, sim.now) // current time and time of event
@@ -229,8 +230,7 @@ func (sim *Simulation) Pause() {
 
 // Stops simulation and restore its initial state
 func (sim *Simulation) Stop() {
+	sim.net.restoreState()
 	sim.paused = false
 	sim.stopped = true
-	sim.net.restoreState()
-	sim.Init()
 }
