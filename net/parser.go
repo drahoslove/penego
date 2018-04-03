@@ -54,6 +54,7 @@ func init() {
 	transitionREstr := strings.Join([]string{
 		`^`,
 		`((?P<in>` + ARCS + `)->)?`,
+		`(?P<id>` + ID + `)?`,
 		`\[`, // [
 		`(?P<attr>` + ATTR + `)?`,
 		`\]`, // ]
@@ -117,6 +118,7 @@ func Parse(input string) (net Net, err error) {
 		line = strings.TrimSpace(line)
 		if isTransitionDefinition(line) {
 
+			id := getSubmatchString(transitionRE, line, "id")
 			listin := getSubmatchString(transitionRE, line, "in")
 			listout := getSubmatchString(transitionRE, line, "out")
 			attr := getSubmatchString(transitionRE, line, "attr")
@@ -190,6 +192,7 @@ func Parse(input string) (net Net, err error) {
 			}
 
 			net.transitions.Push(&Transition{
+				Id:          id,
 				Origins:     origins,
 				Targets:     targets,
 				Priority:    priority,

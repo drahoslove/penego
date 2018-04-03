@@ -103,7 +103,7 @@ type Place struct {
 }
 
 func (p Place) String() string {
-	return fmt.Sprintf("%s(%d)%s", p.Id, p.Tokens, p.Description)
+	return fmt.Sprintf("%s(%d)\"%s\"", p.Id, p.Tokens, p.Description)
 }
 
 func (p *Place) Equals(pp *Place) bool {
@@ -221,7 +221,7 @@ func (t Transition) String() string {
 	if t.Priority != 0 {
 		prio = "p=" + strconv.Itoa(t.Priority)
 	}
-	return fmt.Sprintf("%s -> %s[%s%s]%s -> %s", t.Origins, t.Id, t.TimeFunc, prio, t.Description, t.Targets)
+	return fmt.Sprintf("%s -> %s[%s%s]\"%s\" -> %s", t.Origins, t.Id, t.TimeFunc, prio, t.Description, t.Targets)
 }
 
 func (t *Transition) Equals(tt *Transition) bool {
