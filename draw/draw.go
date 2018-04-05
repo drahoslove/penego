@@ -20,10 +20,12 @@ import (
 
 var (
 	settingsSt *storage.Storage
+	exportSt *storage.Storage
 )
 
 func init() {
 	settingsSt = storage.Of("settings")
+	exportSt = storage.Of("export")
 }
 
 type Drawer interface {
@@ -116,6 +118,15 @@ func Clean(ctx draw2d.GraphicContext, width, height int) {
 	draw2dkit.Rectangle(ctx, -float64(width)/2, -float64(height)/2, float64(width)/2, float64(height)/2)
 	ctx.Fill()
 	ctx.SetLineWidth(settingsSt.Float("linewidth"))
+}
+
+func ExportBorder(ctx draw2d.GraphicContext) {
+	defer tempContext(ctx)()
+	width, height := float64(exportSt.Int("width")), float64(exportSt.Int("height"))
+	draw2dkit.Rectangle(ctx, -width/2, -height/2, width/2, height/2)
+	ctx.SetLineWidth(1)
+	ctx.SetStrokeColor(DARK_GRAY)
+	ctx.Stroke()
 }
 
 // GUI entities

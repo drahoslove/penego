@@ -12,6 +12,8 @@ func Pdf(composeNet func(draw.Drawer)) {
 	img := draw2dpdf.NewPdf("L", "mm", "A4")
 	drawer := &ImgDrawer{draw2dpdf.NewGraphicContext(img), 0}
 
+	width, height := store.Int("width"), store.Int("height")
+
 	draw2d.SetFontNamer(func(fd draw2d.FontData) string {
 		return fd.Name
 	})

@@ -9,8 +9,11 @@ import (
 )
 
 func Png(composeNet func(draw.Drawer)) {
+	width, height := store.Int("width"), store.Int("height")
+	
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	drawer := &ImgDrawer{draw2dimg.NewGraphicContext(img), 0}
+
 
 	draw.Init(drawer.ctx, width, height)
 	draw.Clean(drawer.ctx, width, height) // background

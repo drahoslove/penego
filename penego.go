@@ -75,8 +75,8 @@ func main() {
 	// TODO init elsewhere?
 	pwd, _ := os.Getwd()
 	storage.Of("export").
-		Set("width", 300).
-		Set("height", 400).
+		Set("width", 1024).
+		Set("height", 512).
 		Set("zoom", 0).
 		Set("png.filename", pwd+string(filepath.Separator)+"image.png").
 		Set("pdf.filename", pwd+string(filepath.Separator)+"image.pdf").
@@ -152,6 +152,9 @@ func main() {
 	gui.Run(func(screen *gui.Screen) { // runs this anon func in goroutine
 
 		storage.Of("settings").OnChange(func(st storage.Storage, key string) {
+			screen.ForceRedraw(false)
+		})
+		storage.Of("export").OnChange(func(st storage.Storage, key string) {
 			screen.ForceRedraw(false)
 		})
 

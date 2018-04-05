@@ -10,7 +10,6 @@ import (
 
 var (
 	store         *storage.Storage
-	width, height = 1024, 512 // TODO get from somewhere
 )
 
 func init() {

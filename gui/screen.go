@@ -57,6 +57,7 @@ func (s *Screen) drawContent() {
 		draw.Clean(s.ctx, s.width, s.height)
 		s.drawContentFunc(s)
 		if s.menusVisible {
+			draw.ExportBorder(s.ctx)
 			menuI := s.mainMenu.activeIndex
 			tooltip := s.mainMenu.tooltip()
 			widths, height, top := draw.Menu(s.ctx, s.width, s.height,
