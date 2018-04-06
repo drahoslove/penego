@@ -33,8 +33,7 @@ func Parse(str string) (network net.Net, composition compose.Composition) {
 
 	compoStr := parts[compDelim]
 	if compoStr != "" {
-		// TODO composition = compose.Parse(compoStr)
-		composition = compose.GetSimple(network)
+		composition = compose.Parse(compoStr, network)
 	} else {
 		composition = compose.GetSimple(network)
 	}

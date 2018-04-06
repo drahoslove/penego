@@ -3,6 +3,8 @@ package compose
 import (
 	"math"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
@@ -260,7 +262,27 @@ func GetSimple(network net.Net) Composition {
 }
 
 
-func Parse(str string) Composition {
-	fmt.Printf("composition Parse not implemented")
-	return New()
+func Parse(str string, network net.Net) Composition {
+	composition := New()
+	lines := strings.Split(str, "\n")
+	for _, line := range lines {
+		parts := strings.Split(line, " ")
+		id := parts[0]
+		if len(parts) > 1 {
+			poss := strings.Split(parts[1], ";")
+			x, _ := strconv.ParseFloat(poss[0], 64)
+			y, _ := strconv.ParseFloat(poss[1], 64)
+			for _, tran := range network.Transitions() {
+				if tran.Id == id {
+					composition.transitions[tran] = draw.Pos{x, y}
+				}
+			}
+			for _, place := range network.Places() {
+				if place.Id == id {
+					composition.places[place] = draw.Pos{x, y}
+				}
+			}
+		}
+	}
+	return composition
 }
