@@ -18,3 +18,9 @@ func hitTransition(x, y float64, pos draw.Pos) bool {
 func snap(x, y, n float64) draw.Pos {
 	return draw.Pos{x - math.Mod(x, n), y - math.Mod(y, n)}
 }
+
+func center(ax, ay, bx, by float64) (x, y float64) {
+	x = ax + (bx - ax) / 2.0
+	y = ay + (by - ay) / 2.0
+	return
+}

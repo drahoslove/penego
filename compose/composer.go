@@ -51,8 +51,17 @@ func (comp Composition) Move(node Composable, x, y float64) {
 
 func (comp Composition) FindCenter() (float64, float64) {
 	left, right := math.Inf(+1), math.Inf(-1)
-	bottom, top := math.Inf(+1), math.Inf(-1)
+	top, bottom := math.Inf(+1), math.Inf(-1)
+	/*
+                 -
+	            top
+	           ____
+	- left -> |    | <- right +
+	          |____|
+	          bottom
+	            +
 
+	*/
 	enhanceEdges := func(pos draw.Pos) {
 		x, y := pos.X, pos.Y
 		if x < left {
@@ -77,12 +86,11 @@ func (comp Composition) FindCenter() (float64, float64) {
 		enhanceEdges(pos)
 	}
 
-	centerX := (left + right) / 2
-	centerY := (top + bottom) / 2
-
-	return centerX, centerY
+	return center(left, top, right, bottom)
 }
 
+// move whole composition so its center is at x, y
+// note that is uses Movew which snaps to multiples of 15, so it might not end up exactly on those positions
 func (comp Composition) CenterTo(x, y float64) {
 	centerX, centerY := comp.FindCenter()
 

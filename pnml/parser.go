@@ -115,6 +115,6 @@ func Parse(pnmlReader io.Reader) (net.Net, compose.Composition) {
 	decoder := xml.NewDecoder(pnmlReader)
 	decoder.Decode(pnml)
 	net, composition := pnml.buildNetCompo()
-	// composition.CenterTo(0, 0)
+	composition.CenterTo(0, 0)
 	return net, composition
 }
