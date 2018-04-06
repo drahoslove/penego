@@ -1,6 +1,8 @@
 package compose
 
 import (
+	"math"
+
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
 )
@@ -45,6 +47,55 @@ func (comp Composition) Move(node Composable, x, y float64) {
 		comp.places[node] = pos
 	}
 	delete(comp.ghosts, node)
+}
+
+func (comp Composition) FindCenter() (float64, float64) {
+	left, right := math.Inf(+1), math.Inf(-1)
+	bottom, top := math.Inf(+1), math.Inf(-1)
+
+	enhanceEdges := func(pos draw.Pos) {
+		x, y := pos.X, pos.Y
+		if x < left {
+			left = x
+		}
+		if x > right {
+			right = x
+		}
+		if y < top {
+			top = y
+		}
+		if y > bottom {
+			bottom = y
+		}
+	}
+
+	for _, pos := range comp.places {
+		enhanceEdges(pos)
+	}
+
+	for _, pos := range comp.transitions {
+		enhanceEdges(pos)
+	}
+
+	centerX := (left + right) / 2
+	centerY := (top + bottom) / 2
+
+	return centerX, centerY
+}
+
+func (comp Composition) CenterTo(x, y float64) {
+	centerX, centerY := comp.FindCenter()
+
+	deltaX := x - centerX
+	deltaY := y - centerY
+
+	for node, pos := range comp.places {
+		comp.Move(node, pos.X+deltaX, pos.Y+deltaY)
+	}
+
+	for node, pos := range comp.transitions {
+		comp.Move(node, pos.X+deltaX, pos.Y+deltaY)
+	}
 }
 
 func (comp Composition) GhostMove(node Composable, x, y float64) {

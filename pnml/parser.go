@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"git.yo2.cz/drahoslav/penego/net"
 	"git.yo2.cz/drahoslav/penego/compose"
+	"git.yo2.cz/drahoslav/penego/net"
 )
 
 // structures defining pnml format
@@ -23,11 +23,11 @@ type Net struct {
 }
 
 type Place struct {
-	Id          string `xml:"id,attr"`
-	Name        string `xml:"name>value,omitempty"`
-	Marking     int    `xml:"initialMarking>text"`
-	MarkingPIPE string `xml:"initialMarking>value"`
-	Position	Position `xml:"graphics>position"`
+	Id          string   `xml:"id,attr"`
+	Name        string   `xml:"name>value,omitempty"`
+	Marking     int      `xml:"initialMarking>text"`
+	MarkingPIPE string   `xml:"initialMarking>value"`
+	Position    Position `xml:"graphics>position"`
 }
 
 type Position struct {
@@ -36,10 +36,10 @@ type Position struct {
 }
 
 type Transition struct {
-	Id       string `xml:"id,attr"`
-	Name     string `xml:"name>value"`
-	Priority int    `xml:"priority>value"` // PIPE
-	Position	Position `xml:"graphics>position"`
+	Id       string   `xml:"id,attr"`
+	Name     string   `xml:"name>value"`
+	Priority int      `xml:"priority>value"` // PIPE
+	Position Position `xml:"graphics>position"`
 }
 
 type Arc struct {
@@ -115,5 +115,6 @@ func Parse(pnmlReader io.Reader) (net.Net, compose.Composition) {
 	decoder := xml.NewDecoder(pnmlReader)
 	decoder.Decode(pnml)
 	net, composition := pnml.buildNetCompo()
+	// composition.CenterTo(0, 0)
 	return net, composition
 }
