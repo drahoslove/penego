@@ -86,6 +86,7 @@ func main() {
 
 	var (
 		network net.Net
+		composition compose.Composition
 		err     error
 	)
 
@@ -126,17 +127,6 @@ func main() {
 		}
 		return string(fileContent)
 	}
-	parse := func(pnString string) (network net.Net) {
-		network, err = net.Parse(pnString)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			return
-		}
-		if verbose {
-			fmt.Println(network)
-		}
-		return
-	}
 
 	filename := flag.Arg(0)
 
@@ -145,7 +135,7 @@ func main() {
 	} else {
 		fmt.Println("No pn file specified, using example")
 	}
-	network = parse(pnString)
+	network, composition = Parse(pnString)
 
 	////////////////////////////////
 
@@ -159,9 +149,6 @@ func main() {
 		})
 
 		var state State = Splash
-
-		// how to draw
-		var netComposition = compose.GetSimple(network)
 
 		var onStateChange = func(before, now time.Duration) {
 			switch timeFlow {
@@ -184,10 +171,12 @@ func main() {
 		_ = foo
 
 		reloader := makeFileWatcher(func(filename string) {
-			pnString = read(filename)
-			network = parse(pnString)
-			netComposition = compose.GetSimple(network)
 			sim.Stop()
+			pnString = read(filename)
+			network, composition = Parse(pnString)
+			if verbose {
+				fmt.Println(network)
+			}
 			state = New
 		})
 		defer reloader.close()
@@ -249,7 +238,7 @@ func main() {
 					fmt.Println("cant import file", err)
 					return
 				}
-				network, netComposition = pnml.Parse(file) // TODO should return same as net.Parse
+				network, composition = pnml.Parse(file) // TODO should return same as net.Parse
 				sim.Stop()
 				state = New
 				fmt.Println("net imported", filename)
@@ -261,7 +250,7 @@ func main() {
 
 		doExport := func() {
 			gui.ToggleExport(func(filename string) {
-				export.ByName(filename, netComposition.DrawWith)
+				export.ByName(filename, composition.DrawWith)
 				fmt.Printf("image %s exported\n", filename)
 			})
 		}
@@ -291,15 +280,15 @@ func main() {
 		}, "play/pause", playPause, gui.True)
 
 		screen.OnMouseMove(true, func(x, y float64) bool {
-			return netComposition.HitTest(x, y) != nil
+			return composition.HitTest(x, y) != nil
 		})
 
 		screen.OnDrag(true, func(x, y, sx, sy float64, done bool) {
-			node := netComposition.HitTest(sx, sy)
+			node := composition.HitTest(sx, sy)
 			if done {
-				netComposition.Move(node, x, y)
+				composition.Move(node, x, y)
 			} else {
-				netComposition.GhostMove(node, x, y)
+				composition.GhostMove(node, x, y)
 			}
 			screen.ForceRedraw(false)
 		})
@@ -322,7 +311,7 @@ func main() {
 			case Initial:
 				sim.Init()
 				sim.DoEveryStateChange(onStateChange)
-				screen.SetRedrawFunc(gui.RedrawFunc(netComposition.DrawWith))
+				screen.SetRedrawFunc(gui.RedrawFunc(composition.DrawWith))
 				if autoStart {
 					state = Running
 				} else {
