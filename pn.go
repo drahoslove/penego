@@ -8,10 +8,19 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
+const (
+	netDelim  = "# NET"
+	compDelim = "# COMPOSITION"
+)
+
+func Stringify(network net.Net, composition compose.Composition) string {
+	return fmt.Sprintf("%s\n\n%s\n%s\n\n%s", netDelim, network, compDelim, composition)
+}
+
 func Parse(str string) (network net.Net, composition compose.Composition) {
 
-	parts := splitBy(str, []string{"# NET", "# COMPOSITION"})
-	netStr := parts["# NET"]
+	parts := splitBy(str, []string{netDelim, compDelim})
+	netStr := parts[netDelim]
 	if netStr == "" {
 		netStr = parts[""]
 	}
@@ -22,7 +31,7 @@ func Parse(str string) (network net.Net, composition compose.Composition) {
 		return
 	}
 
-	compoStr := parts["# COMPOSITION"]
+	compoStr := parts[compDelim]
 	if compoStr != "" {
 		// TODO composition = compose.Parse(compoStr)
 		composition = compose.GetSimple(network)

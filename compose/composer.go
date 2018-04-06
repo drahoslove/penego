@@ -2,6 +2,7 @@ package compose
 
 import (
 	"math"
+	"fmt"
 
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
@@ -22,6 +23,18 @@ func New() Composition {
 		make(map[*net.Transition]draw.Pos),
 		make(map[Composable]draw.Pos),
 	}
+}
+
+func (comp Composition) String() string {
+	str := ""
+	for place, pos := range comp.places {
+		str += fmt.Sprintf("%s %v;%v\n", place.Id, pos.X, pos.Y)
+	}
+	str += fmt.Sprintf("----\n")
+	for transition, pos := range comp.transitions {
+		str += fmt.Sprintf("%s %v;%v\n", transition.Id, pos.X, pos.Y)
+	}
+	return str
 }
 
 func (comp Composition) HitTest(x, y float64) Composable {
@@ -244,4 +257,10 @@ func GetSimple(network net.Net) Composition {
 	}
 
 	return composition
+}
+
+
+func Parse(str string) Composition {
+	fmt.Printf("composition Parse not implemented")
+	return New()
 }

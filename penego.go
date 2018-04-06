@@ -22,7 +22,7 @@ const EXAMPLE = `
 	g (1)
 	e ( ) "exit"
 	----
-	g -> [exp(1s)] -> g, 2*e
+	g -> p[exp(1s)] -> g, 2*e
 `
 
 type State int
@@ -220,6 +220,7 @@ func main() {
 					fmt.Println(filename)
 				}
 				if err != nil {
+					fmt.Println("cant open file", err)
 					return
 				}
 				reloader.watch(filename)
@@ -228,7 +229,18 @@ func main() {
 		}
 
 		save := func() {
-			fmt.Println("save not impelemented")
+			gui.SaveFile(func(filename string) {
+				file, err := os.Create(filename)
+				if err != nil {
+					fmt.Println("cant save file", err)
+					return
+				}
+				str := Stringify(network, composition)
+				file.WriteString(str)
+				if verbose {
+					fmt.Println(str)
+				}
+			})
 		}
 
 		doImport := func() {
