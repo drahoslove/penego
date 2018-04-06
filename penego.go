@@ -85,9 +85,9 @@ func main() {
 		Set("linewidth", 2.0)
 
 	var (
-		network net.Net
+		network     net.Net
 		composition compose.Composition
-		err     error
+		err         error
 	)
 
 	// flags

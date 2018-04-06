@@ -1,8 +1,8 @@
 package compose
 
 import (
-	"math"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -68,14 +68,13 @@ func (comp Composition) FindCenter() (float64, float64) {
 	left, right := math.Inf(+1), math.Inf(-1)
 	top, bottom := math.Inf(+1), math.Inf(-1)
 	/*
-                 -
-	            top
-	           ____
-	- left -> |    | <- right +
-	          |____|
-	          bottom
-	            +
-
+	                -
+	               top
+	              ____
+	   - left -> |    | <- right +
+	             |____|
+	             bottom
+	               +
 	*/
 	enhanceEdges := func(pos draw.Pos) {
 		x, y := pos.X, pos.Y
@@ -260,7 +259,6 @@ func GetSimple(network net.Net) Composition {
 
 	return composition
 }
-
 
 func Parse(str string, network net.Net) Composition {
 	composition := New()

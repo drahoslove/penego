@@ -1,8 +1,9 @@
 package compose
 
 import (
-	"git.yo2.cz/drahoslav/penego/draw"
 	"math"
+
+	"git.yo2.cz/drahoslav/penego/draw"
 )
 
 func hitPlace(x, y float64, pos draw.Pos) bool {
@@ -20,7 +21,7 @@ func snap(x, y, n float64) draw.Pos {
 }
 
 func center(ax, ay, bx, by float64) (x, y float64) {
-	x = ax + (bx - ax) / 2.0
-	y = ay + (by - ay) / 2.0
+	x = ax + (bx-ax)/2.0
+	y = ay + (by-ay)/2.0
 	return
 }

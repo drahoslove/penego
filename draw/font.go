@@ -4,6 +4,7 @@ package draw
 
 import (
 	"fmt"
+
 	"github.com/golang/freetype/truetype"
 	"github.com/llgcode/draw2d"
 	"golang.org/x/image/font/gofont/gobold"

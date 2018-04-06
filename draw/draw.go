@@ -9,18 +9,19 @@ package draw
 //   Place, Transition, Arc
 
 import (
+	"image/color"
+	"math"
+	"strconv"
+
 	"git.yo2.cz/drahoslav/penego/storage"
 	mgl "github.com/go-gl/mathgl/mgl64"
 	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dkit"
-	"image/color"
-	"math"
-	"strconv"
 )
 
 var (
 	settingsSt *storage.Storage
-	exportSt *storage.Storage
+	exportSt   *storage.Storage
 )
 
 func init() {

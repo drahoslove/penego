@@ -3,8 +3,8 @@ package compose
 import (
 	"testing"
 
-	"git.yo2.cz/drahoslav/penego/net"
 	"git.yo2.cz/drahoslav/penego/draw"
+	"git.yo2.cz/drahoslav/penego/net"
 )
 
 func getComp() Composition {
@@ -28,7 +28,6 @@ func TestCompositionFindCenter(test *testing.T) {
 		test.Errorf("Value centerY should be %f not %f", 30., centerY)
 	}
 }
-
 
 func TestCompositionCenterTo(test *testing.T) {
 	comp := getComp()
@@ -64,4 +63,3 @@ func TestCompositionCenterTo(test *testing.T) {
 		}
 	}
 }
-

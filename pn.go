@@ -1,9 +1,10 @@
 package main
 
 import (
-	"strings"
-	"os"
 	"fmt"
+	"os"
+	"strings"
+
 	"git.yo2.cz/drahoslav/penego/compose"
 	"git.yo2.cz/drahoslav/penego/net"
 )
@@ -41,7 +42,7 @@ func Parse(str string) (network net.Net, composition compose.Composition) {
 	return
 }
 
-func splitBy(str string, delims []string) (map[string]string) {
+func splitBy(str string, delims []string) map[string]string {
 	sections := map[string]string{"": str}
 
 	for _, delim := range delims {

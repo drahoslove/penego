@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type Watcher struct {

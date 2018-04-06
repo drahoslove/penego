@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	store         *storage.Storage
+	store *storage.Storage
 )
 
 func init() {
