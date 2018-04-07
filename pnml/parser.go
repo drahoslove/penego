@@ -17,6 +17,13 @@ type Pnml struct {
 }
 
 type Net struct {
+	Pages       []Page       `xml:"page"`
+	Places      []Place      `xml:"place"`
+	Transitions []Transition `xml:"transition"`
+	Arcs        []Arc        `xml:"arc"`
+}
+
+type Page struct {
 	Places      []Place      `xml:"place"`
 	Transitions []Transition `xml:"transition"`
 	Arcs        []Arc        `xml:"arc"`
@@ -56,57 +63,70 @@ func (pnml *Pnml) buildNetCompo() (net.Net, compose.Composition) {
 	places := net.Places{}
 	transitions := net.Transitions{}
 
-	for _, p := range pnml.Net.Places {
-		place := &net.Place{
-			Tokens:      p.Marking,
-			Id:          p.Id,
-			Description: p.Name,
-		}
-		if p.MarkingPIPE != "" {
-			parts := strings.SplitAfter(p.MarkingPIPE, "Default,")
-			if len(parts) == 2 {
-				tokens, _ := strconv.Atoi(parts[1])
-				place.Tokens = tokens
+	buildPlaces := func(pnmlPlaces []Place) {
+		for _, p := range pnmlPlaces {
+			place := &net.Place{
+				Tokens:      p.Marking,
+				Id:          p.Id,
+				Description: p.Name,
 			}
-		}
-
-		composition.Move(place, p.Position.X, p.Position.Y)
-		places.Push(place)
-	}
-	for _, t := range pnml.Net.Transitions {
-		origins := net.Arcs{}
-		targets := net.Arcs{}
-
-		for _, a := range pnml.Net.Arcs {
-			weight := 1
-			if a.Weight > 0 {
-				weight = a.Weight
-			}
-			if a.WeightPIPE != "" {
-				parts := strings.SplitAfter(a.WeightPIPE, "Default,")
+			if p.MarkingPIPE != "" {
+				parts := strings.SplitAfter(p.MarkingPIPE, "Default,")
 				if len(parts) == 2 {
-					weight, _ = strconv.Atoi(parts[1])
+					tokens, _ := strconv.Atoi(parts[1])
+					place.Tokens = tokens
 				}
 			}
-			if a.Source == t.Id {
-				targets.Push(weight, places.Find(a.Target))
-			}
-			if a.Target == t.Id {
-				origins.Push(weight, places.Find(a.Source))
-			}
-		}
-		transition := &net.Transition{
-			Id:          t.Id,
-			Origins:     origins,
-			Targets:     targets,
-			Priority:    t.Priority,
-			Description: t.Name,
-			TimeFunc:    nil, // TODO
-		}
 
-		composition.Move(transition, t.Position.X, t.Position.Y)
-		transitions.Push(transition)
+			composition.Move(place, p.Position.X, p.Position.Y)
+			places.Push(place)
+		}
 	}
+	buildTransitions := func(pnmlTtransitions []Transition, pnmlArcs []Arc) {
+		for _, t := range pnmlTtransitions {
+			origins := net.Arcs{}
+			targets := net.Arcs{}
+
+			for _, a := range pnmlArcs {
+				weight := 1
+				if a.Weight > 0 {
+					weight = a.Weight
+				}
+				if a.WeightPIPE != "" {
+					parts := strings.SplitAfter(a.WeightPIPE, "Default,")
+					if len(parts) == 2 {
+						weight, _ = strconv.Atoi(parts[1])
+					}
+				}
+				if a.Source == t.Id {
+					targets.Push(weight, places.Find(a.Target))
+				}
+				if a.Target == t.Id {
+					origins.Push(weight, places.Find(a.Source))
+				}
+			}
+			transition := &net.Transition{
+				Id:          t.Id,
+				Origins:     origins,
+				Targets:     targets,
+				Priority:    t.Priority,
+				Description: t.Name,
+				TimeFunc:    nil, // TODO
+			}
+
+			composition.Move(transition, t.Position.X, t.Position.Y)
+			transitions.Push(transition)
+		}
+	}
+
+	buildPlaces(pnml.Net.Places)
+	buildTransitions(pnml.Net.Transitions, pnml.Net.Arcs)
+
+	for _, page := range pnml.Net.Pages {
+		buildPlaces(page.Places)
+		buildTransitions(page.Transitions, page.Arcs)
+	}
+
 	return net.New(places, transitions), composition
 }
 
