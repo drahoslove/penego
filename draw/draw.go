@@ -22,11 +22,13 @@ import (
 var (
 	settingsSt *storage.Storage
 	exportSt   *storage.Storage
+	guiSt      *storage.Storage
 )
 
 func init() {
 	settingsSt = storage.Of("settings")
 	exportSt = storage.Of("export")
+	guiSt = storage.Of("gui")
 }
 
 type Drawer interface {
@@ -111,18 +113,29 @@ func Init(ctx draw2d.GraphicContext, width, height int) {
 	ctx.SetLineWidth(settingsSt.Float("linewidth"))
 
 	/* translate origin to center */
-	ctx.Translate(float64(width)/2, float64(height)/2)
+	ox, oy := guiSt.Float("offset.x"), guiSt.Float("offset.y")
+
+	ctx.Translate(-ox+float64(width)/2, -oy+float64(height)/2)
 }
 
 func Clean(ctx draw2d.GraphicContext, width, height int) {
+	defer tempContext(ctx)()
+	ox, oy := guiSt.Float("offset.x"), guiSt.Float("offset.y")
+	ctx.Translate(ox, oy)
+
+	w, h := float64(width), float64(height)
+
 	/* background */
-	draw2dkit.Rectangle(ctx, -float64(width)/2, -float64(height)/2, float64(width)/2, float64(height)/2)
+	draw2dkit.Rectangle(ctx, -w/2, -h/2, w/2, h/2)
 	ctx.Fill()
 	ctx.SetLineWidth(settingsSt.Float("linewidth"))
 }
 
 func ExportBorder(ctx draw2d.GraphicContext) {
 	defer tempContext(ctx)()
+	ox, oy := guiSt.Float("offset.x"), guiSt.Float("offset.y")
+	ctx.Translate(ox, oy)
+
 	width, height := float64(exportSt.Int("width")), float64(exportSt.Int("height"))
 	draw2dkit.Rectangle(ctx, -width/2, -height/2, width/2, height/2)
 	ctx.SetLineWidth(1)
@@ -143,6 +156,9 @@ func Splash(ctx draw2d.GraphicContext, title string) {
 func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, activeIndex int, tooltip string, disabled []bool, pos Gravity) ([]float64, float64, float64) {
 	defer tempContext(ctx)()
 
+	ox, oy := guiSt.Float("offset.x"), guiSt.Float("offset.y")
+	ctx.Translate(ox-float64(sWidth)/2, oy-float64(sHeight)/2)
+
 	const (
 		padding = 16.0
 		height  = 42.0
@@ -155,8 +171,6 @@ func Menu(ctx draw2d.GraphicContext, sWidth, sHeight int, itemsNames []string, a
 		top = float64(sHeight) - height
 		bot = float64(sHeight)
 	}
-
-	ctx.Translate(-float64(sWidth)/2, -float64(sHeight)/2)
 
 	ctx.SetFillColor(opaque(DARK_GRAY, 0.9))
 

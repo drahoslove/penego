@@ -6,10 +6,19 @@ package gui
 import (
 	"time"
 
+	"git.yo2.cz/drahoslav/penego/storage"
 	"git.yo2.cz/drahoslav/penego/draw"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
 )
+
+var (
+	guiSt      *storage.Storage
+)
+
+func init() {
+	guiSt = storage.Of("gui")
+}
 
 func nameToKey(key string) glfw.Key {
 	switch {
@@ -102,6 +111,10 @@ func (s *Screen) setSizeCallback(f func(*Screen, int, int)) {
 }
 
 /* exported methods */
+
+func (s *Screen) Pan(dx, dy float64) {
+	s.ctx.Translate(dx, dy)
+}
 
 func (s *Screen) ForceRedraw(block bool) {
 	doInLoop(func() {
@@ -200,6 +213,16 @@ func (s *Screen) RegisterControl(which int, key string, getIcon func() Icon, lab
 	s.OnMenu(menu, i, handler)
 }
 
+func (s *Screen) normalize(x, y float64,centered bool) (float64, float64) {
+		if centered {
+			x -= float64(s.width) / 2 
+			y -= float64(s.height) / 2 
+			x += guiSt.Float("offset.x")
+			y += guiSt.Float("offset.y")
+		}
+		return x, y
+	}
+
 func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
 	var prevcb glfw.CursorPosCallback
 	prevcb = s.Window.SetCursorPosCallback(func(w *glfw.Window, x float64, y float64) {
@@ -209,10 +232,7 @@ func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
 		} else {
 			prevcb(w, x, y) // first run callbacks defined earlier
 		}
-		if centered {
-			x -= float64(s.width) / 2
-			y -= float64(s.height) / 2
-		}
+		x, y = s.normalize(x, y, centered)
 		if cb(x, y) {
 			w.SetCursor(handCursor)
 		}
@@ -220,20 +240,13 @@ func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
 
 }
 
-func (s *Screen) OnDrag(centered bool, cb func(x, y, startX, startY float64, done bool)) {
+func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, startY float64, done bool)) {
 	var prevClickCb glfw.MouseButtonCallback
 	var prevCurPosCb glfw.CursorPosCallback
 
 	startX, startY := 0.0, 0.0
+	lastX, lastY := 0.0, 0.0
 	draging := false
-
-	normalize := func(x, y float64) (float64, float64) {
-		if centered {
-			x -= float64(s.width) / 2
-			y -= float64(s.height) / 2
-		}
-		return x, y
-	}
 
 	prevClickCb = s.Window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 		if prevClickCb != nil {
@@ -243,11 +256,13 @@ func (s *Screen) OnDrag(centered bool, cb func(x, y, startX, startY float64, don
 			if action == glfw.Press {
 				draging = true
 				startX, startY = w.GetCursorPos()
-				startX, startY = normalize(startX, startY)
-			} else {
+				startX, startY = s.normalize(startX, startY, centered)
+				lastX, lastY = startX, startY
+			}
+			if action == glfw.Release {
 				x, y := w.GetCursorPos()
-				x, y = normalize(x, y)
-				cb(x, y, startX, startY, true)
+				x, y = s.normalize(x, y, centered)
+				cb(x, y, x-lastX, y-lastY, startX, startY, true)
 				draging = false
 			}
 		}
@@ -257,8 +272,9 @@ func (s *Screen) OnDrag(centered bool, cb func(x, y, startX, startY float64, don
 			prevCurPosCb(w, x, y)
 		}
 		if draging {
-			x, y = normalize(x, y)
-			cb(x, y, startX, startY, false)
+			x, y = s.normalize(x, y, centered)
+			cb(x, y, x-lastX, y-lastY, startX, startY, false)
+			lastX, lastY = x, y
 		}
 	})
 }

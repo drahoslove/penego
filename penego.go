@@ -83,6 +83,9 @@ func main() {
 		Set("svg.filename", pwd+string(filepath.Separator)+"image.svg")
 	storage.Of("settings").
 		Set("linewidth", 2.0)
+	storage.Of("gui.offset").
+		Set("x", 0.0).
+		Set("y", 0.0)
 
 	var (
 		network     net.Net
@@ -295,12 +298,19 @@ func main() {
 			return composition.HitTest(x, y) != nil
 		})
 
-		screen.OnDrag(true, func(x, y, sx, sy float64, done bool) {
+		screen.OnDrag(true, func(x, y, dx, dy, sx, sy float64, done bool) {
 			node := composition.HitTest(sx, sy)
-			if done {
-				composition.Move(node, x, y)
-			} else {
-				composition.GhostMove(node, x, y)
+			if node != nil { // drag node
+				if done {
+					composition.Move(node, x, y)
+				} else {
+					composition.GhostMove(node, x, y)
+				}
+			} else { // pan view
+				offset := storage.Of("gui.offset")
+				offset.AddFloat("x", -dx)
+				offset.AddFloat("y", -dy)
+				screen.Pan(dx, dy)
 			}
 			screen.ForceRedraw(false)
 		})
