@@ -36,13 +36,25 @@ func (s Storage) Set(key string, val interface{}) Storage {
 }
 
 func (s Storage) Bool(key string) bool {
-	return s.vals[s.prefix+key].(bool)
+	val, ok := s.vals[s.prefix+key]
+	if !ok {
+		return false
+	}
+	return val.(bool)
 }
 func (s Storage) Int(key string) int {
-	return s.vals[s.prefix+key].(int)
+	val, ok := s.vals[s.prefix+key]
+	if !ok {
+		return 0
+	}
+	return val.(int)
 }
 func (s Storage) Float(key string) float64 {
-	return s.vals[s.prefix+key].(float64)
+	val, ok := s.vals[s.prefix+key]
+	if !ok {
+		return 0.0
+	}
+	return val.(float64)
 }
 func (s Storage) String(key string) string {
 	v, ok := s.vals[s.prefix+key]
