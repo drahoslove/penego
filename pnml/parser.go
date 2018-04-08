@@ -12,10 +12,6 @@ import (
 
 // structures defining pnml format
 
-// NOTE
-//   PIPE uses <value>
-//   CPN uses <text>
-
 type Pnml struct {
 	Net Net `xml:"net"`
 }
@@ -34,12 +30,10 @@ type Page struct {
 }
 
 type Place struct {
-	Id         string   `xml:"id,attr"`
-	NameTxt    string   `xml:"name>text,omitempty"`
-	NameVal    string   `xml:"name>value,omitempty"`
-	MarkingTxt int      `xml:"initialMarking>text"`
-	MarkingVal string   `xml:"initialMarking>value"`
-	Position   Position `xml:"graphics>position"`
+	Id       string   `xml:"id,attr"`
+	Name     Val      `xml:"name"`
+	Marking  Val      `xml:"initialMarking"`
+	Position Position `xml:"graphics>position"`
 }
 
 type Position struct {
@@ -49,20 +43,62 @@ type Position struct {
 
 type Transition struct {
 	Id       string   `xml:"id,attr"`
-	NameTxt  string   `xml:"name>text"`
-	NameVal  string   `xml:"name>value"`
+	Name     Val      `xml:"name"`
 	Priority int      `xml:"priority>value"`
 	Position Position `xml:"graphics>position"`
 }
 
 type Arc struct {
-	Id        string `xml:"id,attr"`
-	Source    string `xml:"source,attr"`
-	Target    string `xml:"target,attr"`
-	WeightTxt int    `xml:"inscription>text"`
-	WeightVal string `xml:"inscription>value"`
+	Id      string `xml:"id,attr"`
+	Source  string `xml:"source,attr"`
+	Target  string `xml:"target,attr"`
+	Type    Val    `xml:"type"`
+	ArcType Val    `xml:"arctype"`
+	Weight  Val    `xml:"inscription"`
 }
 
+// NOTE
+//   PIPE uses <value>
+//   CPN uses <text>
+type Val struct {
+	Text      string `xml:"text"`
+	Value     string `xml:"value"`
+	ValueAttr string `xml:"value,attr"`
+}
+
+func (v Val) String() string {
+	if v.Text != "" {
+		return v.Text
+	}
+	if v.Value != "" {
+		return v.Value
+	}
+	return v.ValueAttr
+}
+
+func (v Val) Int(def int) int {
+	if v.Text != "" {
+		val, err := strconv.Atoi(v.Value)
+		if err == nil {
+			return val
+		}
+	}
+	if v.Value != "" {
+		val, err := strconv.Atoi(v.Value)
+		if err == nil {
+			return val
+		}
+		// PIPE has some values prefixed with Default,
+		parts := strings.SplitAfter(v.Value, "Default,")
+		if len(parts) == 2 {
+			val, err = strconv.Atoi(parts[1])
+			if err == nil {
+				return val
+			}
+		}
+	}
+	return def
+}
 func (pnml *Pnml) buildNetCompo() (net.Net, compose.Composition) {
 	composition := compose.New()
 
@@ -72,17 +108,9 @@ func (pnml *Pnml) buildNetCompo() (net.Net, compose.Composition) {
 	buildPlaces := func(pnmlPlaces []Place) {
 		for _, p := range pnmlPlaces {
 			place := &net.Place{
-				Tokens:      p.MarkingTxt,
+				Tokens:      p.Marking.Int(0),
 				Id:          p.Id,
-				Description: p.NameTxt,
-			}
-			if p.NameVal != "" {
-				place.Description = p.NameVal
-			}
-			if p.MarkingVal != "" {
-				parts := strings.SplitAfter(p.MarkingVal, "Default,")
-				tokens, _ := strconv.Atoi(parts[len(parts)-1])
-				place.Tokens = tokens
+				Description: p.Name.String(),
 			}
 
 			composition.Move(place, p.Position.X, p.Position.Y)
@@ -95,21 +123,29 @@ func (pnml *Pnml) buildNetCompo() (net.Net, compose.Composition) {
 			targets := net.Arcs{}
 
 			for _, a := range pnmlArcs {
-				weight := 1
-				if a.WeightTxt > 0 {
-					weight = a.WeightTxt
+				if a.Source != t.Id && a.Target != t.Id {
+					continue
 				}
-				if a.WeightVal != "" {
-					parts := strings.SplitAfter(a.WeightVal, "Default,")
-					if len(parts) == 2 {
-						weight, _ = strconv.Atoi(parts[1])
+
+				weight := a.Weight.Int(1)
+				arcType := a.Type.String()
+				if arcType == "" {
+					arcType = a.ArcType.String()
+					// CPN has reverted direction of inhibitor edge
+					if arcType == "inhibitor" {
+						a.Source, a.Target = a.Target, a.Source
 					}
 				}
+
 				if a.Source == t.Id {
 					targets.Push(weight, places.Find(a.Target))
 				}
 				if a.Target == t.Id {
-					origins.Push(weight, places.Find(a.Source))
+					if arcType == "inhibitor" {
+						origins.PushInhibitor(places.Find(a.Source))
+					} else {
+						origins.Push(weight, places.Find(a.Source))
+					}
 				}
 			}
 			transition := &net.Transition{
@@ -117,11 +153,8 @@ func (pnml *Pnml) buildNetCompo() (net.Net, compose.Composition) {
 				Origins:     origins,
 				Targets:     targets,
 				Priority:    t.Priority,
-				Description: t.NameTxt,
+				Description: t.Name.String(),
 				TimeFunc:    nil, // TODO
-			}
-			if t.NameVal != "" {
-				transition.Description = t.NameVal
 			}
 
 			composition.Move(transition, t.Position.X, t.Position.Y)
