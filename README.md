@@ -13,7 +13,7 @@ Penego can work with Petri nets having following properties:
       - [x] Erlang
 - [ ] Propabilities of transitions
 - [x] Weighted arcs
-- [ ] Inhibitory edges
+- [x] Inhibitory edges
 - [ ] Capacity of places
 
 
