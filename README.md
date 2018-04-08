@@ -68,7 +68,9 @@ It consist of two types of lines:
 - Transition definition. The one with brackets `[]`
     - It may start/end with list of incomming/outcomming arcs, followed/foregoing by arrow `->`.
         - Arc means directed edge.
-            - Arc is defined by place identificator, which may be multipled by arcs's weight.
+            - Arc is defined by place identificator. Eg. `p`.
+            - Irt may be multipled by arcs's weight. Eg `2*p`
+            - Arc prefixed with `!` indicates inhibitory edge. Eg `!p`
         - List of arcs is comma-separated.
     - It may contain additional attribute within brackets. Priority or timing.
         - Transition may be timed od may have greater priority, but not both.

@@ -1,3 +1,5 @@
+// This package implements Composition
+// which is a stuct defining 2-dimensional placeme of petri net elements
 package compose
 
 import (

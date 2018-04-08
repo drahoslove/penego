@@ -1,3 +1,6 @@
+// Package net defines internal representation of petri net - Net struct
+// It implements simulation of such net
+// and also parser from textual representation (custom pn format) to Net
 package net
 
 import (
@@ -148,6 +151,7 @@ func (places Places) Find(id string) *Place {
 /* Arc */
 
 type ArcType int
+
 const (
 	NormalArc = ArcType(iota)
 	InhibitorArc
@@ -270,7 +274,7 @@ func (t *Transition) getEnabilityMagnitude() int {
 			arcEnability := arc.Place.Tokens / arc.Weight // posible fires for this arc
 			if arcEnability < enability {
 				enability = arcEnability
-			}		
+			}
 		}
 	}
 	return enability
@@ -285,7 +289,7 @@ func (t *Transition) isEnabled() bool {
 		} else {
 			if arc.Place.Tokens < arc.Weight {
 				return false
-			}	
+			}
 		}
 	}
 	return true

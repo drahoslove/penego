@@ -1,3 +1,6 @@
+// Package export defines ImageDrawer - implementation of draw.Drawer interface
+// which support drawing to various image formats
+// So far following are supported: PNG, SVG, PDF
 package export
 
 import (

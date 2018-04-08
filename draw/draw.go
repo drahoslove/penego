@@ -1,12 +1,8 @@
+// Package draw contains drawing procedures
+// which defines grapical representations of several entities
+// including gui elements, such as menu
+// and also petri net components - places, transitions, arcs
 package draw
-
-// draw content
-// drawing routines definitions
-// exports:
-//   Drawer
-//   Pos, Direction
-//   Init, Clean, Splash, Menu
-//   Place, Transition, Arc
 
 import (
 	"image/color"
@@ -401,7 +397,7 @@ func InhibitorArc(ctx draw2d.GraphicContext, style Style, from, to Pos) {
 	// Ingibitor edge is alwas from place to transtition: ( ) -> [ ]
 	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH
-	cr := w/2.8
+	cr := w / 2.8
 	var cPs []mgl.Vec2 // control point of arcs curve
 
 	defer tempContext(ctx)()
@@ -415,7 +411,7 @@ func InhibitorArc(ctx draw2d.GraphicContext, style Style, from, to Pos) {
 	}
 	xo := math.Sin(angle) * r // start position on place edge related to its center
 	yo := math.Cos(angle) * r
-	to.X -= w / 2 + cr*2
+	to.X -= w/2 + cr*2
 	to.Y += 14 // to not overlap with normal arc arrow
 	from.X += xo
 	from.Y += yo

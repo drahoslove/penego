@@ -1,3 +1,4 @@
+// Storage is package used for sharing various dynamic values across several modules
 package storage
 
 import (
@@ -79,7 +80,6 @@ func (s Storage) String(key string) string {
 	return v.(string)
 }
 
-
 func (s *Storage) AddFloat(key string, diff float64) float64 {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -93,8 +93,6 @@ func (s *Storage) AddFloat(key string, diff float64) float64 {
 	s.changed(key)
 	return val
 }
-
-
 
 func (s *Storage) OnChange(cb func(Storage, string)) {
 	(*s).onChange = cb

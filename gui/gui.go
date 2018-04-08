@@ -1,3 +1,8 @@
+// Package gui handles user interface related stuff
+// eg.:
+// window creation,
+// graphic context preparation and rendering (but not drawing rutines itself)
+// event handling - mouse, keyboard, resize,...
 package gui
 
 // exports Run function

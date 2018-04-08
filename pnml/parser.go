@@ -1,3 +1,6 @@
+// Package pnml implements parser of pnml format
+// Currently supported dialects are those from PIPE 5 and CPN tools 4
+// Not all features might be supported
 package pnml
 
 import (
