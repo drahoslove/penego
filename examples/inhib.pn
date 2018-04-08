@@ -1,0 +1,6 @@
+i (1) "blocker"
+g (1) "geneartor"
+e ( ) "exit"
+-----
+!i, g -> [1s] -> g, 2*e
+i -> [5s]

@@ -147,17 +147,28 @@ func (places Places) Find(id string) *Place {
 
 /* Arc */
 
+type ArcType int
+const (
+	NormalArc = ArcType(iota)
+	InhibitorArc
+)
+
 type Arc struct {
 	Weight int
+	Type   ArcType
 	Place  *Place
 }
 
 func (arc Arc) String() string {
-	if arc.Weight > 1 {
-		return fmt.Sprintf("%d*%s", arc.Weight, arc.Place.Id)
-	} else {
-		return arc.Place.Id
+	mark := ""
+	if arc.Type == InhibitorArc {
+		mark = "!"
 	}
+	weight := ""
+	if arc.Weight > 1 {
+		weight = fmt.Sprintf("%d*", arc.Weight)
+	}
+	return mark + weight + arc.Place.Id
 }
 
 func (a *Arc) Equals(aa *Arc) bool {
@@ -183,7 +194,11 @@ func (arcs Arcs) String() string {
 }
 
 func (arcs *Arcs) Push(w int, place *Place) {
-	*arcs = append(*arcs, &Arc{w, place})
+	*arcs = append(*arcs, &Arc{w, NormalArc, place})
+}
+
+func (arcs *Arcs) PushInhibitor(place *Place) {
+	*arcs = append(*arcs, &Arc{1, InhibitorArc, place})
 }
 
 func (a *Arcs) Equals(aa *Arcs) bool {
@@ -247,9 +262,15 @@ func (t *Transition) Equals(tt *Transition) bool {
 func (t *Transition) getEnabilityMagnitude() int {
 	enability := MaxInt
 	for _, arc := range t.Origins {
-		arcEnability := arc.Place.Tokens / arc.Weight // posible fires for this arc
-		if arcEnability < enability {
-			enability = arcEnability
+		if arc.Type == InhibitorArc { // if some inhibitory edge is not empty..
+			if arc.Place.Tokens != 0 {
+				return 0 // ...transition is not enabled at all
+			}
+		} else {
+			arcEnability := arc.Place.Tokens / arc.Weight // posible fires for this arc
+			if arcEnability < enability {
+				enability = arcEnability
+			}		
 		}
 	}
 	return enability
@@ -257,8 +278,14 @@ func (t *Transition) getEnabilityMagnitude() int {
 
 func (t *Transition) isEnabled() bool {
 	for _, arc := range t.Origins {
-		if arc.Place.Tokens < arc.Weight {
-			return false
+		if arc.Type == InhibitorArc {
+			if arc.Place.Tokens > 0 {
+				return false
+			}
+		} else {
+			if arc.Place.Tokens < arc.Weight {
+				return false
+			}	
 		}
 	}
 	return true
@@ -266,9 +293,11 @@ func (t *Transition) isEnabled() bool {
 
 func (t *Transition) doIn() {
 	for _, arc := range t.Origins {
-		arc.Place.Tokens -= arc.Weight
-		if arc.Place.Tokens < 0 {
-			panic("impossible transition done")
+		if arc.Type == NormalArc {
+			arc.Place.Tokens -= arc.Weight
+			if arc.Place.Tokens < 0 {
+				panic("impossible transition done")
+			}
 		}
 	}
 }

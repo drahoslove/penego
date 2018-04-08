@@ -23,7 +23,7 @@ func init() {
 		NUM   = `(0|([1-9][0-9]*))`
 		STR   = `"[^"]*"`
 		CMNT  = `((//)|(--)).*`
-		ARC   = SP + `(` + NUM + SP + `\*` + SP + `)?` + ID + SP
+		ARC   = SP + `(!)?(` + NUM + SP + `\*` + SP + `)?` + ID + SP
 		ARCS  = ARC + `(,` + ARC + `)*`
 		PRIO  = `p=(?P<prio>` + NUM + `)`
 		TIME  = `(?P<t>` + NUM + `)(?P<u>[smhd]|(ms)|(us))?`
@@ -131,10 +131,20 @@ func Parse(input string) (net Net, err error) {
 					return arcs
 				}
 				for _, pair := range strings.Split(list, ",") {
+					inhibitory := false
+					if pair[0] == '!' {
+						inhibitory = true
+						pair = pair[1:]
+					}
+
 					pair := strings.Split(strings.TrimSpace(pair), "*")
 					id := strings.TrimSpace(pair[len(pair)-1])
 					w := 1
 					if len(pair) == 2 {
+						if inhibitory {
+							err = errors.New("inhibitory edge should not have weight")
+							return arcs
+						}
 						w, _ = strconv.Atoi(strings.TrimSpace(pair[0]))
 					}
 					if place, exists := namedPlaces[id]; !exists {
@@ -146,7 +156,11 @@ func Parse(input string) (net Net, err error) {
 								err = errors.New("place `" + place.Id + "` used multiple times in one side of transition")
 							}
 						}
-						arcs.Push(w, place)
+						if inhibitory {
+							arcs.PushInhibitor(place)
+						} else {
+							arcs.Push(w, place)
+						}
 					}
 				}
 				return arcs
@@ -154,6 +168,13 @@ func Parse(input string) (net Net, err error) {
 
 			origins := getArcsByList(listin)
 			targets := getArcsByList(listout)
+
+			for _, target := range targets {
+				if target.Type == InhibitorArc {
+					err = errors.New("inhibitory edge not alowed in outgoing arcs")
+					return
+				}
+			}
 
 			// changes `[] -> n` to `S -> [] -> n,S`
 			// where S is hidden place creating self loop

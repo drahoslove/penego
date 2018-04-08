@@ -152,7 +152,11 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 			}
 			from := comp.places[arc.Place]
 			orSetStyle(arc.Place)
-			drawer.DrawInArc(from, pos, arc.Weight)
+			if arc.Type == net.InhibitorArc {
+				drawer.DrawInhibitorArc(from, pos)
+			} else {
+				drawer.DrawInArc(from, pos, arc.Weight)
+			}
 		}
 		for _, arc := range tran.Targets {
 			if arc.Place.Hidden() {
@@ -186,7 +190,11 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 			for tran, tranPos := range comp.transitions {
 				for _, arc := range tran.Origins {
 					if arc.Place == place {
-						drawer.DrawInArc(pos, tranPos, arc.Weight)
+						if arc.Type == net.InhibitorArc {
+							drawer.DrawInhibitorArc(pos, tranPos)
+						} else {
+							drawer.DrawInArc(pos, tranPos, arc.Weight)
+						}
 					}
 				}
 				for _, arc := range tran.Targets {
@@ -203,7 +211,11 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 					continue
 				}
 				from := comp.places[arc.Place]
-				drawer.DrawInArc(from, pos, arc.Weight)
+				if arc.Type == net.InhibitorArc {
+					drawer.DrawInhibitorArc(from, pos)
+				} else {
+					drawer.DrawInArc(from, pos, arc.Weight)
+				}
 			}
 			for _, arc := range tran.Targets {
 				if arc.Place.Hidden() {

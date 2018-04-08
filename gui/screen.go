@@ -180,6 +180,12 @@ func (s *Screen) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 	}
 }
 
+func (s *Screen) DrawInhibitorArc(from, to draw.Pos) {
+	if s.ctx != nil {
+		draw.InhibitorArc(s.ctx, s.style, from, to)
+	}
+}
+
 func (s *Screen) OnKey(keyName string, cb func()) {
 	var prevcb glfw.KeyCallback
 	prevcb = s.Window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scanCode int, action glfw.Action, mods glfw.ModifierKey) {

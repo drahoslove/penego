@@ -36,6 +36,7 @@ type Drawer interface {
 	DrawTransition(pos Pos, attrs, description string)
 	DrawInArc(from, to Pos, weight int)
 	DrawOutArc(from, to Pos, weight int)
+	DrawInhibitorArc(from, to Pos)
 	SetStyle(style Style)
 }
 
@@ -394,6 +395,53 @@ func Arc(ctx draw2d.GraphicContext, style Style, from, to Pos, dir Direction, we
 		ctx.SetFillColor(style.Color())
 		drawCenteredString(ctx, strconv.Itoa(weight), arcCntr.X()-1, arcCntr.Y())
 	}
+}
+
+func InhibitorArc(ctx draw2d.GraphicContext, style Style, from, to Pos) {
+	// Ingibitor edge is alwas from place to transtition: ( ) -> [ ]
+	r := PLACE_RADIUS
+	w := TRANSITION_WIDTH
+	cr := w/2.8
+	var cPs []mgl.Vec2 // control point of arcs curve
+
+	defer tempContext(ctx)()
+
+	angle := math.Pi * +0.25 // from left-up by default
+	if from.Y > to.Y {
+		angle += math.Pi // from right-down if place above tran
+	}
+	if from.Y == to.Y && from.X < to.X { // if in line
+		angle = math.Pi * 0.5
+	}
+	xo := math.Sin(angle) * r // start position on place edge related to its center
+	yo := math.Cos(angle) * r
+	to.X -= w / 2 + cr*2
+	to.Y += 14 // to not overlap with normal arc arrow
+	from.X += xo
+	from.Y += yo
+
+	cPs = []mgl.Vec2{
+		{from.X, from.Y},
+		{from.X + 4*xo, from.Y + 4*yo},
+		{to.X - 60, to.Y},
+		{to.X, to.Y},
+	}
+
+	// drawArrowHead(ctx, style, to.X, to.Y, -math.Pi/2)
+	ctx.SetStrokeColor(style.Color())
+
+	// circle
+	draw2dkit.Circle(ctx, to.X+cr, to.Y, cr)
+	ctx.Stroke()
+
+	ctx.MoveTo(cPs[0].X(), cPs[0].Y())
+	ctx.CubicCurveTo(
+		cPs[1].X(), cPs[1].Y(),
+		cPs[2].X(), cPs[2].Y(),
+		cPs[3].X(), cPs[3].Y(),
+	)
+	ctx.Stroke()
+
 }
 
 // help functions

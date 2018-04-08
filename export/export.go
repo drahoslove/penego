@@ -48,6 +48,11 @@ func (drawer ImgDrawer) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
 		draw.Arc(drawer.ctx, drawer.style, from, to, draw.Out, weight)
 	}
 }
+func (drawer ImgDrawer) DrawInhibitorArc(from, to draw.Pos) {
+	if drawer.ctx != nil {
+		draw.InhibitorArc(drawer.ctx, drawer.style, from, to)
+	}
+}
 
 func getName(ext string) string {
 	filename := store.Of(ext).String("filename")

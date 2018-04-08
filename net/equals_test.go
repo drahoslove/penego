@@ -9,16 +9,16 @@ func TestNetEquals(test *testing.T) {
 	g := &Place{Tokens: 1}
 	e := &Place{Description: "exit"}
 	t := &Transition{
-		Origins: Arcs{{1, g}},
-		Targets: Arcs{{1, g}, {2, e}},
+		Origins: Arcs{{1, NormalArc, g}},
+		Targets: Arcs{{1, NormalArc, g}, {2, NormalArc, e}},
 	}
 	v := &Transition{
-		Origins: Arcs{{1, g}},
-		Targets: Arcs{{2, e}, {1, g}},
+		Origins: Arcs{{1, NormalArc, g}},
+		Targets: Arcs{{2, NormalArc, e}, {1, NormalArc, g}},
 	}
 	u := &Transition{
-		Origins: Arcs{{1, g}},
-		Targets: Arcs{{1, e}, {2, g}},
+		Origins: Arcs{{1, NormalArc, g}},
+		Targets: Arcs{{1, NormalArc, e}, {2, NormalArc, g}},
 	}
 	netA := New(
 		Places{g, e},
