@@ -4,13 +4,14 @@ For full experience with go, you have to do both
 - install go toolchain 
 - set up your go workspace
 
-## Instalation 
-In general:
+## Installation 
+TL;DR:
  - Download go version 1.10 or newer for your platform: https://golang.org/dl/
  - Then follow these steps https://golang.org/doc/install
 
 ### Linux / Mac OSX
 
+Location `/usr/local` used in examples for installation.
 
 **download tarball**
 
@@ -18,15 +19,16 @@ In general:
 
 **extract**
 
-`tar -C tar -C /usr/local -xzf go1.10.linux-amd64.tar.gz`
+`tar -C /usr/local -xzf go1.10.linux-amd64.tar.gz`
 
-**set system path** in your ~/.profile or ~/.bashrc
+**set system path** in your `~/.profile` or `~/.bashrc`
 
 `export PATH=$PATH:/usr/local/go/bin`
 
 **check your installation**
 
 `which go` - should be /usr/local/go/bin/go
+
 `go version` - should be whatever version you downloaded
 
 
@@ -36,9 +38,9 @@ Either download windows `.msi` installer from here https://golang.org/dl/
 
 Or install manually following following steps:
 
-  - Download newest `.zip` file for widnows from https://golang.org/dl/
-  - Extract zip file to your prefered loaciton (`C:\go` is recomended)
-  - Add `C:\go\bin` to your system PATH variable
+  - Download newest `.zip` file for windows from https://golang.org/dl/
+  - Extract zip file to your prefered location (`C:\go` is recommended)
+  - Add `C:\go\bin` to your system PATH variable, here is how in case you don't know:
      - press `win` key, type in `system variables`
      - click `Edit the system enviromental variables`
      - click `Enviromental Variables…`
@@ -48,6 +50,8 @@ Or install manually following following steps:
      steps for windows 8 and newer might by slightly different
 
 ## Set up workspace system variables
+TL;DR:
+ - Just create `go` folder in your home directory.
 
 **GOPATH**
 
@@ -67,7 +71,7 @@ Add following to your `~/.profile` or `./bashrc` file
 ```
 export GOPATH=$HOME/go
 export GOBIN=$GOPATH/bin
-export PATH=$PATH:$GOBIN # optional
+export PATH=$PATH:$GOBIN
 ```
 
 ### Windows

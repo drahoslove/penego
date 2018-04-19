@@ -30,16 +30,16 @@ Penego can work with Petri nets having following properties:
 go get -u git.yo2.cz/drahoslav/penego/
 ```
 
-### requirements
-  - go 1.10+
+### Requirements
+  - go 1.10+ (see [How to install Go](/INSTALL_GO.md))
 
 #### windows
-  - mingw-64 5.x (andlabs/ui)
+  - mingw-64 5.x (req. by `andlabs/ui`)
 
 #### linux
   - apt install:
-    - `libgl1-mesa-dev xorg-dev`  (`go-gl/gl`, `go-gl/glfw`)
-    - `libgtk-3-dev` (`andlabs/ui`)
+    - `libgl1-mesa-dev xorg-dev`  (req. by `go-gl/gl`, `go-gl/glfw`)
+    - `libgtk-3-dev` (req. by `andlabs/ui`)
 
 ## Usage
 ### Gui mode
