@@ -112,6 +112,13 @@ func (s *Screen) setSizeCallback(f func(*Screen, int, int)) {
 
 /* exported methods */
 
+func (s *Screen) Reset() {
+	offset := guiSt.Of("offset")
+	offset.Set("x", 0.0)
+	offset.Set("y", 0.0)
+	s.newCtx()
+}
+
 func (s *Screen) Pan(dx, dy float64) {
 	s.ctx.Translate(dx, dy)
 	offset := guiSt.Of("offset")
@@ -251,9 +258,17 @@ func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
 func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, startY float64, done bool)) {
 	var prevClickCb glfw.MouseButtonCallback
 	var prevCurPosCb glfw.CursorPosCallback
+	var prevCurEnterCb glfw.CursorEnterCallback
 
 	startX, startY := 0.0, 0.0
 	draging := false
+
+	endDrag := func(){
+		x, y := s.GetCursorPos()
+		x, y = s.normalize(x, y, centered)
+		cb(x, y, x-startX, y-startY, startX, startY, true)
+		draging = false
+	}
 
 	prevClickCb = s.Window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 		if prevClickCb != nil {
@@ -265,12 +280,17 @@ func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, sta
 				startX, startY = w.GetCursorPos()
 				startX, startY = s.normalize(startX, startY, centered)
 			}
-			if action == glfw.Release {
-				x, y := w.GetCursorPos()
-				x, y = s.normalize(x, y, centered)
-				cb(x, y, x-startX, y-startY, startX, startY, true)
-				draging = false
+			if action == glfw.Release && draging {
+				endDrag()
 			}
+		}
+	})
+	prevCurEnterCb = s.Window.SetCursorEnterCallback(func(w *glfw.Window, entered bool) {
+		if prevCurEnterCb != nil {
+			prevCurEnterCb(w, entered)
+		}
+		if !entered && draging {
+			endDrag()
 		}
 	})
 	prevCurPosCb = s.Window.SetCursorPosCallback(func(w *glfw.Window, x float64, y float64) {

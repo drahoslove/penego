@@ -252,6 +252,7 @@ func main() {
 					fmt.Println("cant open file", err)
 					return
 				}
+				screen.Reset()
 				reloader.watch(filename)
 				reloader.action()
 			})
@@ -280,6 +281,7 @@ func main() {
 					return
 				}
 				defer file.Close()
+				screen.Reset()
 				network, composition = pnml.Parse(file)
 				sim.Stop()
 				state = New
