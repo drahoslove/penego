@@ -19,9 +19,10 @@ Penego can work with Petri nets having following properties:
 
 ## Screenshots
 
-| simple                      | simple after a while         | more complicated           | more complicated after a while |
-|-----------------------------|------------------------------|----------------------------|--------------------------------|
-| ![gui](examples/simple.png) | ![gui](examples/simple2.png) | ![gui](examples/mensa.png) | ![gui](examples/mensa2.png)    |
+
+|  simple                         |                                   | test 1                          |                                   |
+|---------------------------------|-----------------------------------|---------------------------------|-----------------------------------|
+| ![gui](examples/gui/simple.png) | ![gui](examples/gui/simple_a.png) | ![gui](examples/gui/test_1.png) | ![gui](examples/gui/test_1_a.png) |
 
 
 ## Build
@@ -41,11 +42,21 @@ go get -u git.yo2.cz/drahoslav/penego/
     - `libgtk-3-dev` (`andlabs/ui`)
 
 ## Usage
+### Gui mode
 ```bash
-./penego file.pn
+./penego [file.pn]
 ```
 Where `file.pn` is file with penego notation.
 
+### Headless mode
+```
+./penego [file.pn] [-i file.pnml] -o file.ext
+```
+(Where `ext` has to be one of `png`, `svg` or `pdf`.)
+
+It will either load net saved earlier from penego file,
+of it will import net from pnml file produced by another Petri net editor (PIPE5, CPN tools),
+and export it to an image based on extension.
 
 ## Penego notation
 Penego uses its own language to represent Petri nets.
