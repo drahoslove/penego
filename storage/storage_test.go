@@ -32,4 +32,45 @@ func TestStorage(test *testing.T) {
 	// }
 
 	fmt.Println(st)
+
+
+}
+
+func TestStorageOf(test *testing.T) {
+	st := storage.New()
+
+	val0 := "123"
+	
+	{
+		st.Of("a").Set("xxx", val0)
+
+		val1 := st.Of("a").String("xxx")
+		val2 := st.String("a.xxx")
+		if val1 != val0 {
+			test.Errorf("%v should be %v", val1, val0) 
+		}
+
+		if val2 != val0 {
+			test.Errorf("%v should be %v", val2, val0)
+		}
+	}
+
+	{
+		st.Of("a").Of("b").Set("xxx", val0)
+
+		val1 := st.Of("a").Of("b").String("xxx")
+		val2 := st.Of("a.b").String("xxx")
+		val3 := st.String("a.b.xxx")
+
+		if val1 != val0 {
+			test.Errorf("%v should be %v", val1, val0) 
+		}
+		if val2 != val0 {
+			test.Errorf("%v should be %v", val2, val0)
+		}
+		if val3 != val0 {
+			test.Errorf("%v should be %v", val3, val0)
+		}
+	}
+
 }

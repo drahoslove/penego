@@ -4,6 +4,7 @@
 package export
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"git.yo2.cz/drahoslav/penego/draw"
@@ -59,18 +60,25 @@ func (drawer ImgDrawer) DrawInhibitorArc(from, to draw.Pos) {
 
 func getName(ext string) string {
 	filename := store.Of(ext).String("filename")
-	println("getName", filename, ext)
 	return filename
 }
 
-func ByName(filename string, composeNet func(draw.Drawer)) {
-	ext := filepath.Ext(filename)
+func setName(filename string) string {
+	ext := filepath.Ext(filename)[1:]
+	store.Of(ext).Set("filename", filename)
+	return ext
+}
+
+func ByName(filename string, composeNet func(draw.Drawer)) error {
+	ext := setName(filename)
 	switch ext {
-	case ".png":
-		Png(composeNet)
-	case ".svg":
-		Svg(composeNet)
-	case ".pdf":
-		Pdf(composeNet)
+	case "png":
+		return Png(composeNet)
+	case "svg":
+		return Svg(composeNet)
+	case "pdf":
+		return Pdf(composeNet)
+	default:
+		return fmt.Errorf("Unknown export format %s", ext)
 	}
 }

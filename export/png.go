@@ -1,14 +1,13 @@
 package export
 
 import (
-	"fmt"
 	"image"
 
 	"git.yo2.cz/drahoslav/penego/draw"
 	"github.com/llgcode/draw2d/draw2dimg"
 )
 
-func Png(composeNet func(draw.Drawer)) {
+func Png(composeNet func(draw.Drawer)) error {
 	width, height := store.Int("width"), store.Int("height")
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
@@ -18,8 +17,5 @@ func Png(composeNet func(draw.Drawer)) {
 	draw.Clean(drawer.ctx, width, height) // background
 	composeNet(drawer)
 
-	err := draw2dimg.SaveToPngFile(getName("png"), img)
-	if err != nil {
-		fmt.Println(err)
-	}
+	return draw2dimg.SaveToPngFile(getName("png"), img)
 }

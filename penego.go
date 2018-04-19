@@ -102,8 +102,11 @@ func main() {
 		timeSpeed  = uint(10)
 		trueRandom = false
 		noClose    = true
-		verbose    = false
 		autoStart  = false
+
+		verbose    = false
+		input  = ""
+		output = ""
 	)
 
 	flag.DurationVar(&startTime, "start", startTime, "start `time` of simulation")
@@ -112,8 +115,11 @@ func main() {
 	flag.UintVar(&timeSpeed, "speed", timeSpeed, "time flow acceleration\n\tdifferent meaning for different -flow\n\t")
 	flag.BoolVar(&trueRandom, "truerandom", trueRandom, "seed pseudo random generator with true random seed on start")
 	flag.BoolVar(&noClose, "noclose", noClose, "preserve window after simulation ends")
+	flag.BoolVar(&autoStart, "autostart", autoStart, "automatic start of simulation")
 	flag.BoolVar(&verbose, "v", verbose, "be more verbose")
-	flag.BoolVar(&autoStart, "autostart", autoStart, "automatic start")
+
+	flag.StringVar(&input, "i", input, "import file - *.(pnml|xml)")
+	flag.StringVar(&output, "o", output, "export file - *.(png|svg|pdf)\n\t(this means no gui)")
 	flag.Parse()
 
 	////////////////////////////////
@@ -136,11 +142,31 @@ func main() {
 	if len(filename) > 0 {
 		pnString = read(filename)
 	} else {
-		fmt.Println("No pn file specified, using example")
+		fmt.Println("No penego file specified, using example")
 	}
 	network, composition = Parse(pnString)
 
+	if input != "" {
+		file, err := os.Open(input)
+		if err != nil {
+			fmt.Println("cant open import file", err)
+			return
+		}
+		defer file.Close()
+		network, composition = pnml.Parse(file)
+	}
+
 	////////////////////////////////
+
+	if output != "" { // headless mode
+		err := export.ByName(output, composition.DrawWith)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		return
+	}
+
+	// else gui mode
 
 	gui.Run(func(screen *gui.Screen) { // runs this anon func in goroutine
 
@@ -253,7 +279,8 @@ func main() {
 					fmt.Println("cant import file", err)
 					return
 				}
-				network, composition = pnml.Parse(file) // TODO should return same as net.Parse
+				defer file.Close()
+				network, composition = pnml.Parse(file)
 				sim.Stop()
 				state = New
 				fmt.Println("net imported", filename)
