@@ -114,6 +114,9 @@ func (s *Screen) setSizeCallback(f func(*Screen, int, int)) {
 
 func (s *Screen) Pan(dx, dy float64) {
 	s.ctx.Translate(dx, dy)
+	offset := guiSt.Of("offset")
+	offset.AddFloat("x", -dx)
+	offset.AddFloat("y", -dy)
 }
 
 func (s *Screen) ForceRedraw(block bool) {
@@ -219,10 +222,10 @@ func (s *Screen) RegisterControl(which int, key string, getIcon func() Icon, lab
 	s.OnMenu(menu, i, handler)
 }
 
-func (s *Screen) normalize(x, y float64,centered bool) (float64, float64) {
+func (s *Screen) normalize(x, y float64, centered bool) (float64, float64) {
 		if centered {
 			x -= float64(s.width) / 2 
-			y -= float64(s.height) / 2 
+			y -= float64(s.height) / 2
 			x += guiSt.Float("offset.x")
 			y += guiSt.Float("offset.y")
 		}
@@ -243,7 +246,6 @@ func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
 			w.SetCursor(handCursor)
 		}
 	})
-
 }
 
 func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, startY float64, done bool)) {
@@ -251,7 +253,6 @@ func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, sta
 	var prevCurPosCb glfw.CursorPosCallback
 
 	startX, startY := 0.0, 0.0
-	lastX, lastY := 0.0, 0.0
 	draging := false
 
 	prevClickCb = s.Window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
@@ -263,12 +264,11 @@ func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, sta
 				draging = true
 				startX, startY = w.GetCursorPos()
 				startX, startY = s.normalize(startX, startY, centered)
-				lastX, lastY = startX, startY
 			}
 			if action == glfw.Release {
 				x, y := w.GetCursorPos()
 				x, y = s.normalize(x, y, centered)
-				cb(x, y, x-lastX, y-lastY, startX, startY, true)
+				cb(x, y, x-startX, y-startY, startX, startY, true)
 				draging = false
 			}
 		}
@@ -279,8 +279,7 @@ func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, sta
 		}
 		if draging {
 			x, y = s.normalize(x, y, centered)
-			cb(x, y, x-lastX, y-lastY, startX, startY, false)
-			lastX, lastY = x, y
+			cb(x, y, x-startX, y-startY, startX, startY, false)
 		}
 	})
 }

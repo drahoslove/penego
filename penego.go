@@ -334,9 +334,6 @@ func main() {
 					composition.GhostMove(node, x, y)
 				}
 			} else { // pan view
-				offset := storage.Of("gui.offset")
-				offset.AddFloat("x", -dx)
-				offset.AddFloat("y", -dy)
 				screen.Pan(dx, dy)
 			}
 			screen.ForceRedraw(false)
