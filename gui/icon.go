@@ -27,6 +27,10 @@ const ( //  font awesome corresponding characters
 
 	NextStepIcon = '\ue966'
 	PrevStepIcon = '\ue965'
+
+	CenterOnIcon = '\ue3b4'
+	CenterOffIcon = '\ue3b5'
+	RotateIcon = '\ue1c1'
 )
 
 func AlwaysIcon(icon Icon) func() Icon {

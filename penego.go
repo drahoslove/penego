@@ -303,6 +303,17 @@ func main() {
 			gui.ToggleSettings()
 		}
 
+		center := func() {
+			screen.Reset()
+			composition.CenterTo(0, 0)
+		}
+		isCenter := func() bool {
+			offset := storage.Of("gui.offset")
+			ox, oy := offset.Float("x"), offset.Float("y")
+			x, y := composition.FindCenter()
+			return !(x == ox && y == oy)
+		}
+
 		// up bar commands
 		screen.RegisterControl(0, "Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
 		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.OpenIcon), "open", open, gui.True) // penego format
@@ -310,7 +321,8 @@ func main() {
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)
 		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ImportIcon), "import net", doImport, gui.True)   // from pnml
 		screen.RegisterControl(0, "E", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True) // to svg/pdf/png
-		screen.RegisterControl(0, "P", gui.AlwaysIcon(gui.SettingsIcon), "settings", settings, gui.True)   // to svg/pdf/png
+		screen.RegisterControl(0, "P", gui.AlwaysIcon(gui.SettingsIcon), "settings", settings, gui.True)
+		screen.RegisterControl(0, "C", gui.AlwaysIcon(gui.CenterOnIcon), "center net", center, isCenter) 
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.BeginIcon), "reset", reset, gui.True)
