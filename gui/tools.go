@@ -32,10 +32,9 @@ var (
 func init() {
 	exportSt = storage.Of("export")
 	settingsSt = storage.Of("settings")
-
 	go func() {
 		err := ui.Main(func() {
-			fooWindow = ui.NewWindow("", 0, 0, false)
+			fooWindow = ui.NewWindow("", 1, 1, false)
 			exportBox = createExportBox()
 			settingsBox = createSettingsBox()
 		})
@@ -169,7 +168,7 @@ func ToggleExport(export func(string)) {
 	exportFunc = export
 	ui.QueueMain(func() {
 		toggleWindow(&exportWindow, "Export", exportBox)
-		// exportWindow.SetMargined(true)
+		exportWindow.SetMargined(true)
 	})
 }
 
@@ -179,9 +178,9 @@ func createSettingsBox() ui.Control {
 	tab := ui.NewTab()
 
 	tab.Append("general", createFloatInput("linewidth", 1, 4))
-	tab.Append("place", nil)
-	tab.Append("transition", nil)
-	tab.Append("arc", nil)
+	// tab.Append("place", nil)
+	// tab.Append("transition", nil)
+	// tab.Append("arc", nil)
 
 	return tab
 }
