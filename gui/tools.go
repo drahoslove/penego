@@ -168,7 +168,6 @@ func ToggleExport(export func(string)) {
 	exportFunc = export
 	ui.QueueMain(func() {
 		toggleWindow(&exportWindow, "Export", exportBox)
-		exportWindow.SetMargined(true)
 	})
 }
 

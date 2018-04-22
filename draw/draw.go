@@ -116,6 +116,7 @@ func Init(ctx draw2d.GraphicContext, width, height int) {
 }
 
 func Clean(ctx draw2d.GraphicContext, width, height int) {
+	defer ctx.SetLineWidth(settingsSt.Float("linewidth"))
 	defer tempContext(ctx)()
 	ox, oy := guiSt.Float("offset.x"), guiSt.Float("offset.y")
 	ctx.Translate(ox, oy)
@@ -125,7 +126,6 @@ func Clean(ctx draw2d.GraphicContext, width, height int) {
 	/* background */
 	draw2dkit.Rectangle(ctx, -w/2, -h/2, w/2, h/2)
 	ctx.Fill()
-	ctx.SetLineWidth(settingsSt.Float("linewidth"))
 }
 
 func ExportBorder(ctx draw2d.GraphicContext) {
