@@ -329,14 +329,33 @@ func Arc(ctx draw2d.GraphicContext, style Style, from, to Pos, dir Direction, we
 
 	defer tempContext(ctx)()
 
+	quad := math.Pi/2
+
 	if dir == In { // ( ) -> [ ]
-		angle := math.Pi * +0.25 // from left-up by default
-		if from.Y > to.Y {
-			angle += math.Pi // from right-down if place above tran
+		angle := quad // from right by default
+
+		if from.X < to.X { // before
+			if from.Y > to.Y {
+				angle += quad/2 // from right-up if place below tran
+			}
+			if from.Y < to.Y {
+				angle -= quad/2 // from right-down if place above tran
+			}
+		} 
+		if from.X > to.X { // after
+			angle = -quad // from left
 		}
-		if from.Y == to.Y && from.X < to.X { // if in line
-			angle = math.Pi * 0.5
+
+		if from.X == to.X { // in same column
+			angle = -quad // from left
+			if from.Y > to.Y {
+				angle -= quad/2 // from left-up if place below tran
+			}
+			if from.Y < to.Y {
+				angle += quad/2 // from left-down if place above tran
+			}
 		}
+
 		xo := math.Sin(angle) * r // start position on place edge related to its center
 		yo := math.Cos(angle) * r
 		to.X -= w / 2
@@ -352,13 +371,31 @@ func Arc(ctx draw2d.GraphicContext, style Style, from, to Pos, dir Direction, we
 		drawArrowHead(ctx, style, to.X, to.Y, -math.Pi/2)
 	}
 	if dir == Out { // [ ] -> ( )
-		angle := math.Pi * -0.25 // to left-down by default
-		if from.Y < to.Y {
-			angle += math.Pi // to fith-up if place above tran
+		angle := -quad // to left by default
+
+		if from.X < to.X { // after
+			if from.Y > to.Y {
+				angle += quad/2 // to left-down if place above tran
+			}
+			if from.Y < to.Y {
+				angle -= quad/2 // to left-up if place below tran
+			}
 		}
-		if from.Y == to.Y && from.X < to.X { // if in line
-			angle = math.Pi * -0.5
+
+		if from.X > to.X { // before
+			angle = +quad // to right
 		}
+ 
+		if from.X == to.X { // in same column
+			angle = +quad
+			if from.Y > to.Y {
+				angle -= quad/2 // to right-down if place above tran
+			}
+			if from.Y < to.Y {
+				angle += quad/2 // to right-up if place below tran
+			}
+		}
+
 		xo := math.Sin(angle) * r
 		yo := math.Cos(angle) * r
 		from.X += w / 2
