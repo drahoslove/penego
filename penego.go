@@ -16,13 +16,16 @@ import (
 	"git.yo2.cz/drahoslav/penego/pnml"
 	"git.yo2.cz/drahoslav/penego/storage"
 	"github.com/pkg/profile"
+	"github.com/skratchdot/open-golang/open"
 )
 
 const EXAMPLE = `
-	g (1)
-	e ( ) "exit"
-	----
-	g -> p[exp(1s)] -> g, 2*e
+// This is an example new file, please edit it and save
+# NET
+g (1)
+e ( ) "exit"
+----
+g -> p[exp(1s)] -> g, 2*e
 `
 
 type State int
@@ -142,14 +145,14 @@ func main() {
 	if len(filename) > 0 {
 		pnString = read(filename)
 	} else {
-		fmt.Println("No penego file specified, using example")
+		log.Println("No penego file specified, using example")
 	}
 	network, composition = Parse(pnString)
 
 	if input != "" {
 		file, err := os.Open(input)
 		if err != nil {
-			fmt.Println("cant open import file", err)
+			log.Fatalln("cant open import file", err)
 			return
 		}
 		defer file.Close()
@@ -161,7 +164,7 @@ func main() {
 	if output != "" { // headless mode
 		err := export.ByName(output, composition.DrawWith)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			log.Fatalln(err)
 		}
 		return
 	}
@@ -188,7 +191,7 @@ func main() {
 				time.Sleep(time.Second / time.Duration(timeSpeed))
 			}
 			if verbose {
-				fmt.Println(now, network.Places())
+				log.Println(now, network.Places())
 			}
 			screen.SetTitle(now.String())
 			screen.ForceRedraw(false) // must not block
@@ -204,14 +207,13 @@ func main() {
 			pnString = read(filename)
 			network, composition = Parse(pnString)
 			if verbose {
-				fmt.Println(network)
+				log.Println(network)
 			}
 			state = New
 		})
 		defer reloader.close()
 
 		reloader.watch(filename)
-		reloader.action()
 
 		// action functions:
 
@@ -243,18 +245,34 @@ func main() {
 			screen.SetShouldClose(true)
 		}
 
+		create := func() {
+			fpath := os.TempDir() + "/tempPenego.pn"
+			f, err := os.Create(fpath)
+			if err != nil {
+				log.Fatal(err)
+			}
+			f.Write([]byte(EXAMPLE))
+			f.Close()
+
+			reloader.watch(fpath)
+			editor := os.Getenv("EDITOR")
+			if editor == "" {
+				editor = "vim"
+			}
+			open.StartWith(fpath, editor)
+		}
+
 		open := func() {
 			gui.LoadFile(func(filename string) {
 				if verbose {
 					fmt.Println(filename)
 				}
 				if err != nil {
-					fmt.Println("cant open file", err)
+					fmt.Fprintln(os.Stderr, "cant open file", err)
 					return
 				}
 				screen.Reset()
 				reloader.watch(filename)
-				reloader.action()
 			})
 		}
 
@@ -262,14 +280,16 @@ func main() {
 			gui.SaveFile(func(filename string) {
 				file, err := os.Create(filename)
 				if err != nil {
-					fmt.Println("cant save file", err)
+					fmt.Fprintln(os.Stderr, "cant save file", err)
 					return
 				}
+				defer file.Close()
 				str := Stringify(network, composition)
 				file.WriteString(str)
 				if verbose {
 					fmt.Println(str)
 				}
+				reloader.watch(filename)
 			})
 		}
 
@@ -277,7 +297,7 @@ func main() {
 			gui.LoadFile(func(filename string) {
 				file, err := os.Open(filename)
 				if err != nil {
-					fmt.Println("cant import file", err)
+					fmt.Fprintln(os.Stderr, "cant import file", err)
 					return
 				}
 				defer file.Close()
@@ -285,7 +305,7 @@ func main() {
 				network, composition = pnml.Parse(file)
 				sim.Stop()
 				state = New
-				fmt.Println("net imported", filename)
+				log.Println("net imported", filename)
 				if verbose {
 					fmt.Println(network)
 				}
@@ -295,7 +315,7 @@ func main() {
 		doExport := func() {
 			gui.ToggleExport(func(filename string) {
 				export.ByName(filename, composition.DrawWith)
-				fmt.Printf("image %s exported\n", filename)
+				log.Printf("image %s exported\n", filename)
 			})
 		}
 
@@ -315,7 +335,10 @@ func main() {
 		}
 
 		// up bar commands
-		screen.RegisterControl(0, "Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
+		screen.OnKey("Q", quit)
+		// screen.RegisterControl(0, "Q", gui.AlwaysIcon(gui.QuitIcon), "quit", quit, gui.True)
+
+		screen.RegisterControl(0, "N", gui.AlwaysIcon(gui.FileIcon), "new", create, gui.True)
 		screen.RegisterControl(0, "O", gui.AlwaysIcon(gui.OpenIcon), "open", open, gui.True) // penego format
 		screen.RegisterControl(0, "S", gui.AlwaysIcon(gui.SaveIcon), "save", save, gui.True) // penego format
 		screen.RegisterControl(0, "R", gui.AlwaysIcon(gui.ReloadIcon), "reload", reloader.action, reloader.isOn)

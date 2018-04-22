@@ -35,6 +35,11 @@ func makeFileWatcher(callback func(string)) Watcher {
 		}
 	}()
 
+	action := func() {
+		if currentFile != "" {
+			callback(currentFile)
+		}
+	}
 	watch := func(file string) {
 		if currentFile == file {
 			return
@@ -54,14 +59,10 @@ func makeFileWatcher(callback func(string)) Watcher {
 			}
 		}
 		currentFile = file
+		action()
 	}
 	end := func() {
 		watcher.Close()
-	}
-	action := func() {
-		if currentFile != "" {
-			callback(currentFile)
-		}
 	}
 	isOn := func() bool {
 		return currentFile != ""
