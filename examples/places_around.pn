@@ -1,0 +1,25 @@
+# NET
+
+lt(1)"t"
+lc(1)
+lb(1)"b"
+t(1)"u"
+b(1)"d"
+rt(1)"t"
+rc(1)
+rb(1)"b"
+----
+lt, lc, lb, t, b -> tran[] -> t, b, rt, rc, rb
+
+# COMPOSITION
+
+lt -210;-210
+lc -210;-90
+lb -210;45
+t -60;-210
+b -60;45
+rt 90;-210
+rc 90;-90
+rb 90;45
+----
+tran -60;-90
