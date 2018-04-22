@@ -175,6 +175,10 @@ func (arc Arc) String() string {
 	return mark + weight + arc.Place.Id
 }
 
+func (arc Arc) IsDumb() bool {
+	return arc.Place.Id == "." && arc.Weight == 1
+}
+
 func (a *Arc) Equals(aa *Arc) bool {
 	if a.Weight != aa.Weight {
 		return false
@@ -192,7 +196,9 @@ type Arcs []*Arc
 func (arcs Arcs) String() string {
 	arcsstr := make([]string, 0, len(arcs))
 	for _, arc := range arcs {
-		arcsstr = append(arcsstr, arc.String())
+		if !arc.IsDumb() {
+			arcsstr = append(arcsstr, arc.String())
+		}
 	}
 	return strings.Join(arcsstr, ", ")
 }
@@ -224,6 +230,16 @@ pairing:
 	return true
 }
 
+func (arcs *Arcs) IsEmpty() bool {
+	if len(*arcs) == 0 {
+		return true
+	}
+	if len(*arcs) == 1 && (*arcs)[0].IsDumb() {
+		return true
+	}
+	return false
+}
+
 /* Transtition */
 
 type Transition struct {
@@ -240,7 +256,15 @@ func (t Transition) String() string {
 	if t.Priority != 0 {
 		prio = "p=" + strconv.Itoa(t.Priority)
 	}
-	return fmt.Sprintf("%s -> %s[%s%s]%s -> %s", t.Origins, t.Id, t.TimeFunc, prio, q(t.Description), t.Targets)
+	origins := ""
+	if !t.Origins.IsEmpty() {
+		origins = fmt.Sprintf("%s -> ", t.Origins)
+	}
+	targets := ""
+	if !t.Targets.IsEmpty() {
+		targets = fmt.Sprintf(" -> %s", t.Targets)
+	}
+	return fmt.Sprintf("%s%s[%s%s]%s%s", origins, t.Id, t.TimeFunc, prio, q(t.Description), targets)
 }
 
 func (t *Transition) Equals(tt *Transition) bool {
