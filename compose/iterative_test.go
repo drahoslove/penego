@@ -59,7 +59,7 @@ func getGraphWithComponets() graph {
 	c10c32 := &edge{c10, c32, 1}
 
 	c11c10 := &edge{c11, c10, 1}
-	
+
 	c20c32 := &edge{c20, c32, 1}
 
 	c30c32 := &edge{c30, c32, 1}
@@ -87,30 +87,47 @@ func TestGraphTranspose(test *testing.T) {
 	}
 }
 
-
 func TestDFS(test *testing.T) {
 	graph := getGraphWithComponets()
 	v0 := graph.nodes[0]
 
-	log := func(str string) (func (*node)) {
-		return func (v *node) {
+	log := func(str string) func(*node) {
+		return func(v *node) {
 			test.Log(str, v.Composable)
 		}
 	}
 
-	dfs(graph, v0, func(*node) bool {return true}, log("in"), log("out"))
+	dfs(graph, v0, func(*node) bool { return true }, log("in"), log("out"))
 	test.Log("")
-	dfs(graph, v0, func(v *node) bool {return v.Composable.(int) <= 20}, log("in"), log("out"))
+	dfs(graph, v0, func(v *node) bool { return v.Composable.(int) <= 20 }, log("in"), log("out"))
 }
 
 func TestGraphComponents(test *testing.T) {
 	graph := getGraphWithComponets()
 
-	components, n := graph.components()
-	test.Log("count of comp", n)
+	comps, nontriv := graph.components()
+	test.Log("nontriv", nontriv)
 
-	for i, v := range components {
+	for i, v := range comps {
 		test.Log(i.Composable, v.Composable)
+	}
+
+	if len(nontriv) != 2 {
+		test.Error("graph should have 2 nontrivial strongly connected components")
+	}
+
+	/////
+
+	acyclic := graph.acyclic()
+	comps, nontriv = acyclic.components()
+	test.Log("nontriv", nontriv)
+
+	for i, v := range comps {
+		test.Log(i.Composable, v.Composable)
+	}
+
+	if len(nontriv) != 0 {
+		test.Error("acyclic graph should have no nontrivial strongly connected components")
 	}
 
 }

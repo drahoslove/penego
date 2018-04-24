@@ -5,18 +5,16 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
-
 type node struct {
 	Composable
-	rank int
+	rank     int
 	position int
 }
 type edge struct {
-	from *node
-	to *node
+	from   *node
+	to     *node
 	lenght int
 }
-
 
 type graph struct {
 	nodes []*node
@@ -80,8 +78,8 @@ func (g graph) transpose() graph {
 // calls onclose for each node when closed
 func dfs(g graph, v0 *node,
 	cond func(v *node) bool,
-	onclose func(v *node),
 	onopen func(v *node),
+	onclose func(v *node),
 ) (in, out map[*node]int) {
 	const (
 		notfound int = iota
@@ -119,7 +117,7 @@ func dfs(g graph, v0 *node,
 			}
 		}
 
-		state[v] = closed 
+		state[v] = closed
 		step++
 		out[v] = step
 		if onclose != nil {
@@ -152,13 +150,13 @@ func (g graph) components() (map[*node]*node, []*node) {
 		_, isIn := components[v]
 		return !isIn
 	}
-	for i := len(stack)-1; i >= 0; i-- {
+	for i := len(stack) - 1; i >= 0; i-- {
 		v := stack[i]
 		assignComp := func(w *node) { components[w] = v; isCompTimes[v]++ }
 		dfs(g, v, notAssigned, assignComp, nil)
 	}
 
-	// count components which consists of more than one node 
+	// count components which consists of more than one node
 	nontrivials := []*node{}
 	for v, n := range isCompTimes {
 		if n > 1 {
@@ -169,10 +167,49 @@ func (g graph) components() (map[*node]*node, []*node) {
 	return components, nontrivials
 }
 
+// returns new graph without cycles
+// this is done by reverting backwards edges
+func (g graph) acyclic() graph {
+	edges := make([]*edge, len(g.edges))
+	copy(edges, g.edges)
+	g.edges = edges
 
+	visited := map[*node]bool{}
+	stack := map[*node]bool{}
+
+	var dfs func(v *node)
+	dfs = func(v *node) {
+		if visited[v] {
+			return
+		}
+		visited[v] = true
+		stack[v] = true
+		for i, e := range g.edges {
+			if e.from == v {
+				u := e.to
+				if stack[u] {
+					// reverse
+					g.edges[i] = &edge{e.to, e.from, e.lenght}
+				} else {
+					if !visited[u] {
+						dfs(u)
+					}
+				}
+			}
+		}
+		stack[v] = false
+	}
+
+	_, components := g.components()
+	for _, comp := range components {
+		dfs(comp)
+	}
+
+	return g
+}
 
 // Iterative method for graph drawing
-// based on dot algorithm and work of Warfield, Sugiyamaet at al.  
+// based on dot algorithm and work of Warfield, Sugiyamaet at al.
 func GetIterative(network net.Net) Composition {
 	graph := loadGraph(network)
 
@@ -186,16 +223,7 @@ func GetIterative(network net.Net) Composition {
 
 		_ = min_len
 		// make graph acyclic by reversing edges
-
-		// tree edges
-		// nontree edges
-		//    cross
-		//    forward
-		//    back - these must be reversed to be forward
-
-		// projit vsechny netriviální silně souvislé komponenty
-		// depth-first 
-		// count how many cycles each edge makes in each komponent
+		graph = graph.acyclic()
 
 	}
 
