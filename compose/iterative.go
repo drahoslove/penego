@@ -218,13 +218,52 @@ func GetIterative(network net.Net) Composition {
 	// edge e = (v, w)
 	// lenght of edge l(e) ≥ δ(e)
 	// l(e) = λ(w) − λ(v)
+
+	// make graph acyclic by reversing edges
+	graph = graph.acyclic()
+	min_len := 1 // δ(e)
+
+	// _ = min_len
+
+	initRank := func() {
+		// An initial feasible ranking is computed. For brevity,init_rankis not given here.  Our versionkeeps nodes in a queue.  Nodes are placed in the queue when they have no unscanned in-edges.As nodes are taken off the queue, they are assigned the least rank that satisfies their in-edges, andtheir out-edges are marked as scanned. In the simplest case, whereδ =1 for all edges, thiscorresponds to viewing the graph as a poset and assigning the minimal elements to rank 0.  Thesenodes are removed from the poset and the new set of minimal elements are assigned rank 1, etc.
+	}
+	tightTree := func() int {
+		// finds a maximal tree of tight edges containing some fixed node andreturns the number of nodes in the tree. Note that such a maximal tree is just a spanning tree forthe subgraph induced by all nodes reachable from the fixed node in the underlying undirected
+		// graph using only tight edges.  In particular, all such trees have the same number of nodes.
+		return 0
+	}
+	initCutValues := func() {
+		// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
+	}
+
+	feasibleTree := func() {
+		initRank()
+		for tightTree() < len(graph.nodes) {
+			e := (*edge)(nil)           // a non-tree edge incident on the tree with a minimal amount of slack
+			delta := e.lenght - min_len // slack of an edge isthe difference of its length and its minimum length.
+			if incident_node == e.from {
+				delta = -delta
+			}
+			for _, v := range Tree {
+				v.rank += delta
+			}
+		}
+		initCutValues()
+	}
+
 	rank := func() {
-		min_len := 1 // δ(e)
-
-		_ = min_len
-		// make graph acyclic by reversing edges
-		graph = graph.acyclic()
-
+		feasibleTree()
+		for {
+			e := leaveEdge()
+			if e == nil {
+				break
+			}
+			f := enterEdge(e)
+			exchange(e, f)
+		}
+		normalize()
+		balance()
 	}
 
 	ordering := func() {
@@ -235,13 +274,13 @@ func GetIterative(network net.Net) Composition {
 
 	}
 
-	make_splines := func() {
+	makeSplines := func() {
 
 	}
 
 	rank()
 	ordering()
 	position()
-	make_splines()
+	makeSplines()
 	return Composition{}
 }
