@@ -3,22 +3,51 @@ package compose
 import (
 	// "git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
+	"log"
 )
 
 type node struct {
 	Composable
 	rank     int
 	position int
+	priority int
 }
 type edge struct {
-	from   *node
-	to     *node
-	lenght int
+	from     *node
+	to       *node
+	lenght   int
+	cutValue int
 }
 
 type graph struct {
 	nodes []*node
 	edges []*edge
+}
+
+func (e *edge) reversed() *edge {
+	re := *e
+	re.from, re.to = e.to, e.from
+	return &re
+}
+
+func (n *node) inEdges(edges []*edge) []*edge {
+	inEdges := []*edge{}
+	for _, e := range edges {
+		if e.to == n {
+			inEdges = append(inEdges, e)
+		}
+	}
+	return inEdges
+}
+
+func (n *node) outEdges(edges []*edge) []*edge {
+	outEdges := []*edge{}
+	for _, e := range edges {
+		if e.from == n {
+			outEdges = append(outEdges, e)
+		}
+	}
+	return outEdges
 }
 
 // Returns graph sturcure suited for graph related operations
@@ -31,30 +60,34 @@ func loadGraph(network net.Net) graph {
 	nodeByComposable := make(map[Composable]*node)
 
 	for _, place := range network.Places() {
-		n := &node{place, 1, 1}
+		n := &node{Composable: place}
 		g.nodes = append(g.nodes, n)
 		nodeByComposable[place] = n
 	}
 	for _, tran := range network.Transitions() {
-		n := &node{tran, 1, 1}
+		n := &node{Composable: tran}
 		g.nodes = append(g.nodes, n)
 		nodeByComposable[tran] = n
 	}
 	for _, tran := range network.Transitions() {
 		for _, arc := range tran.Origins {
+			if arc.IsDumb() {
+				continue
+			}
 			place := arc.Place
 			g.edges = append(g.edges, &edge{
-				nodeByComposable[place],
-				nodeByComposable[tran],
-				1,
+				from: nodeByComposable[place],
+				to:   nodeByComposable[tran],
 			})
 		}
 		for _, arc := range tran.Targets {
+			if arc.IsDumb() {
+				continue
+			}
 			place := arc.Place
 			g.edges = append(g.edges, &edge{
-				nodeByComposable[tran],
-				nodeByComposable[place],
-				1,
+				from: nodeByComposable[tran],
+				to:   nodeByComposable[place],
 			})
 		}
 	}
@@ -67,7 +100,7 @@ func (g graph) transpose() graph {
 	copy(edges, g.edges)
 	g.edges = edges
 	for i, e := range g.edges {
-		g.edges[i] = &edge{e.to, e.from, e.lenght}
+		g.edges[i] = e.reversed()
 	}
 	return g
 }
@@ -188,8 +221,7 @@ func (g graph) acyclic() graph {
 			if e.from == v {
 				u := e.to
 				if stack[u] {
-					// reverse
-					g.edges[i] = &edge{e.to, e.from, e.lenght}
+					g.edges[i] = e.reversed()
 				} else {
 					if !visited[u] {
 						dfs(u)
@@ -223,15 +255,65 @@ func GetIterative(network net.Net) Composition {
 	graph = graph.acyclic()
 	min_len := 1 // δ(e)
 
-	// _ = min_len
-
 	initRank := func() {
 		// An initial feasible ranking is computed. For brevity,init_rankis not given here.  Our versionkeeps nodes in a queue.  Nodes are placed in the queue when they have no unscanned in-edges.As nodes are taken off the queue, they are assigned the least rank that satisfies their in-edges, andtheir out-edges are marked as scanned. In the simplest case, whereδ =1 for all edges, thiscorresponds to viewing the graph as a poset and assigning the minimal elements to rank 0.  Thesenodes are removed from the poset and the new set of minimal elements are assigned rank 1, etc.
+		isFeasible := true
+		for _, n := range graph.nodes {
+			n.priority = 0
+			for _, e := range n.inEdges(graph.edges) {
+				n.priority++
+				e.cutValue = 0
+				// e.treeIndex = -1
+				if isFeasible && e.to.rank-e.from.rank < min_len { // head-tail
+					isFeasible = false
+				}
+			}
+		}
+		if isFeasible {
+			return
+		}
+
+		queue := make(chan *node, len(graph.nodes))
+		cntr := 0 // counter of nodes passed by queue
+
+		for _, n := range graph.nodes {
+			if n.priority == 0 {
+				queue <- n
+			}
+		}
+
+		for len(queue) > 0 {
+			n := <-queue
+			n.rank = 0
+			cntr++
+			for _, e := range n.inEdges(graph.edges) {
+				rank := e.from.rank + min_len
+				if rank > n.rank {
+					n.rank = rank
+				}
+			}
+			for _, e := range n.outEdges(graph.edges) {
+				e.to.priority--
+				if e.to.priority <= 0 {
+					queue <- e.to
+				}
+			}
+		}
+		close(queue)
+		if cntr != len(graph.nodes) {
+			log.Fatal("trouble creating feasible tree")
+			for _, n := range graph.nodes {
+				if n.priority != 0 {
+					log.Fatalf("node %v has priority %v", n, n.priority)
+				}
+			}
+		}
 	}
+
 	tightTree := func() int {
 		// finds a maximal tree of tight edges containing some fixed node andreturns the number of nodes in the tree. Note that such a maximal tree is just a spanning tree forthe subgraph induced by all nodes reachable from the fixed node in the underlying undirected
 		// graph using only tight edges.  In particular, all such trees have the same number of nodes.
-		return 0
+		return len(graph.nodes)
 	}
 	initCutValues := func() {
 		// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
@@ -240,28 +322,36 @@ func GetIterative(network net.Net) Composition {
 	feasibleTree := func() {
 		initRank()
 		for tightTree() < len(graph.nodes) {
-			e := (*edge)(nil)           // a non-tree edge incident on the tree with a minimal amount of slack
-			delta := e.lenght - min_len // slack of an edge isthe difference of its length and its minimum length.
-			if incident_node == e.from {
-				delta = -delta
-			}
-			for _, v := range Tree {
-				v.rank += delta
-			}
+			// e := (*edge)(nil)           // a non-tree edge incident on the tree with a minimal amount of slack
+			// delta := e.lenght - min_len // slack of an edge isthe difference of its length and its minimum length.
+			// if incident_node == e.from {
+			// 	delta = -delta
+			// }
+			// for _, v := range Tree {
+			// 	v.rank += delta
+			// }
 		}
 		initCutValues()
 	}
 
+	normalize := func() {
+
+	}
+
+	balance := func() {
+
+	}
+
 	rank := func() {
 		feasibleTree()
-		for {
-			e := leaveEdge()
-			if e == nil {
-				break
-			}
-			f := enterEdge(e)
-			exchange(e, f)
-		}
+		// for {
+		// 	e := leaveEdge()
+		// 	if e == nil {
+		// 		break
+		// 	}
+		// 	f := enterEdge(e)
+		// 	exchange(e, f)
+		// }
 		normalize()
 		balance()
 	}

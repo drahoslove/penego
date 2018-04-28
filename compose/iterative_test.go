@@ -35,7 +35,7 @@ i -> t11[24h] -> g, x
 	return net
 }
 
-func TestIterativeComposition(test *testing.T) {
+func TestLoadGraph(test *testing.T) {
 	graph := loadGraph(getNet())
 
 	test.Logf("%v", graph)
@@ -44,29 +44,29 @@ func TestIterativeComposition(test *testing.T) {
 // as image 5.13 in https://knihy.nic.cz/files/edice/pruvodce_labyrintem_algoritmu.pdf
 func getGraphWithComponets() graph {
 
-	c10 := &node{10, 1, 0}
-	c11 := &node{11, 1, 1}
+	c10 := &node{Composable: 10}
+	c11 := &node{Composable: 11}
 
-	c20 := &node{20, 2, 0}
+	c20 := &node{Composable: 20}
 
-	c30 := &node{30, 3, 0}
-	c31 := &node{31, 3, 1}
-	c32 := &node{32, 3, 2}
+	c30 := &node{Composable: 30}
+	c31 := &node{Composable: 31}
+	c32 := &node{Composable: 32}
 
-	c10c11 := &edge{c10, c11, 1}
-	c10c30 := &edge{c10, c30, 1}
-	c10c20 := &edge{c10, c20, 1}
-	c10c32 := &edge{c10, c32, 1}
+	c10c11 := &edge{from: c10, to: c11}
+	c10c30 := &edge{from: c10, to: c30}
+	c10c20 := &edge{from: c10, to: c20}
+	c10c32 := &edge{from: c10, to: c32}
 
-	c11c10 := &edge{c11, c10, 1}
+	c11c10 := &edge{from: c11, to: c10}
 
-	c20c32 := &edge{c20, c32, 1}
+	c20c32 := &edge{from: c20, to: c32}
 
-	c30c32 := &edge{c30, c32, 1}
+	c30c32 := &edge{from: c30, to: c32}
 
-	c31c30 := &edge{c31, c30, 1}
+	c31c30 := &edge{from: c31, to: c30}
 
-	c32c21 := &edge{c32, c31, 1}
+	c32c21 := &edge{from: c32, to: c31}
 
 	return graph{
 		[]*node{c10, c11, c20, c30, c31, c32},
@@ -130,4 +130,18 @@ func TestGraphComponents(test *testing.T) {
 		test.Error("acyclic graph should have no nontrivial strongly connected components")
 	}
 
+}
+
+func TestInOutEdges(test *testing.T) {
+	graph := loadGraph(getNet())
+
+	for _, e := range graph.edges {
+		test.Log(e, e.reversed())
+	}
+}
+
+func TestIterative(test *testing.T) {
+	comp := GetIterative(getNet())
+
+	test.Log(comp)
 }
