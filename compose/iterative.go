@@ -6,22 +6,89 @@ import (
 	"log"
 )
 
+const maxInt = int(^uint(0) >> 1)
+const min_len = 1
+
 type node struct {
 	Composable
 	rank     int
 	position int
 	priority int
+	tree     *tree
 }
 type edge struct {
 	from     *node
 	to       *node
-	lenght   int
 	cutValue int
+}
+
+func (e *edge) len() int {
+	return e.to.rank - e.from.rank
+}
+
+func (e *edge) slack() int {
+	return e.len() - min_len
 }
 
 type graph struct {
 	nodes []*node
 	edges []*edge
+}
+
+func newGraph() graph {
+	return graph{
+		make([]*node, 0, 16),
+		make([]*edge, 0, 16),
+	}
+}
+
+func (g *graph) addEdge(e *edge) {
+	g.edges = append(g.edges, e)
+	if !g.includesNode(e.from) {
+		g.nodes = append(g.nodes, e.from)
+	}
+	if !g.includesNode(e.to) {
+		g.nodes = append(g.nodes, e.to)
+	}
+}
+
+func (g *graph) includesNode(n *node) bool {
+	for _, no := range g.nodes {
+		if n == no {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *graph) includesEdge(e *edge) bool {
+	for _, ed := range g.edges {
+		if e == ed {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *graph) minIncidentEdge(edges []*edge) (min_e *edge, min_n *node) {
+	min_slack := maxInt
+	for _, e := range edges {
+		if e.slack() < min_slack {
+			from_is_in := g.includesNode(e.from)
+			to_is_in := g.includesNode(e.to)
+			if from_is_in && !to_is_in {
+				min_slack = e.slack()
+				min_e = e
+				min_n = e.to
+			}
+			if to_is_in && !from_is_in {
+				min_slack = e.slack()
+				min_e = e
+				min_n = e.from
+			}
+		}
+	}
+	return
 }
 
 func (e *edge) reversed() *edge {
@@ -53,10 +120,7 @@ func (n *node) outEdges(edges []*edge) []*edge {
 // Returns graph sturcure suited for graph related operations
 // created from net.Net structure (which is more suitable for simulation and rendering purposes)
 func loadGraph(network net.Net) graph {
-	g := graph{
-		make([]*node, 0, 16),
-		make([]*edge, 0, 16),
-	}
+	g := newGraph()
 	nodeByComposable := make(map[Composable]*node)
 
 	for _, place := range network.Places() {
@@ -240,12 +304,146 @@ func (g graph) acyclic() graph {
 	return g
 }
 
+type tree struct {
+	graph
+}
+
+func isTightTree(g *graph) bool {
+	for _, e := range g.edges {
+		if e.slack() > 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func tightTree(g *graph) (*tree, int) {
+	tr := &tree{newGraph()}
+	size := 0
+	var findSubtree func(v *node, subtree *tree) int
+
+	findSubtree = func(v *node, subtree *tree) int {
+		size := 1
+		v.tree = subtree
+		for _, e := range v.inEdges(g.edges) {
+			if subtree.includesEdge(e) {
+				continue
+			}
+			if e.from.tree == nil && e.slack() == 0 {
+				subtree.addEdge(e)
+				size += findSubtree(e.from, subtree)
+			}
+		}
+		for _, e := range v.outEdges(g.edges) {
+			if subtree.includesEdge(e) {
+				continue
+			}
+			if e.to.tree == nil && e.slack() == 0 {
+				subtree.addEdge(e)
+				size += findSubtree(e.to, subtree)
+			}
+		}
+		return size
+	}
+	for _, v := range g.nodes {
+		v.tree = nil
+	}
+	if len(g.nodes) > 0 {
+		size += findSubtree(g.nodes[0], tr)
+	}
+	return tr, size
+}
+
+func initRank(g *graph) {
+	// An initial feasible ranking is computed. For brevity,init_rankis not given here.  Our versionkeeps nodes in a queue.  Nodes are placed in the queue when they have no unscanned in-edges.As nodes are taken off the queue, they are assigned the least rank that satisfies their in-edges, andtheir out-edges are marked as scanned. In the simplest case, whereδ =1 for all edges, thiscorresponds to viewing the graph as a poset and assigning the minimal elements to rank 0.  Thesenodes are removed from the poset and the new set of minimal elements are assigned rank 1, etc.
+	isFeasible := true
+	for _, n := range g.nodes {
+		n.priority = 0
+		for _, e := range n.inEdges(g.edges) {
+			n.priority++
+			e.cutValue = 0
+			// e.treeIndex = -1
+			if isFeasible && e.len() < min_len { // head-tail
+				isFeasible = false
+			}
+		}
+	}
+	if isFeasible {
+		return
+	}
+
+	queue := make(chan *node, len(g.nodes))
+	cntr := 0 // counter of nodes passed by queue
+
+	for _, n := range g.nodes {
+		if n.priority == 0 {
+			queue <- n
+		}
+	}
+
+	for len(queue) > 0 {
+		n := <-queue
+		n.rank = 0
+		cntr++
+		for _, e := range n.inEdges(g.edges) {
+			rank := e.from.rank + min_len
+			if rank > n.rank {
+				n.rank = rank
+			}
+		}
+		for _, e := range n.outEdges(g.edges) {
+			e.to.priority--
+			if e.to.priority == 0 {
+				queue <- e.to
+			}
+		}
+	}
+	close(queue)
+	if cntr != len(g.nodes) {
+		for _, n := range g.nodes {
+			log.Printf("node %p has priority %v and rank %v", n, n.priority, n.rank)
+			// if n.priority != 0 {
+			// }
+		}
+		log.Fatalln("trouble creating feasible tree", cntr, len(g.nodes))
+	}
+}
+
+func feasibleTree(g *graph) (tr *tree) {
+
+	initRank(g)
+	size := 0
+
+	for {
+		tr, size = tightTree(g)
+		if size == len(g.nodes) {
+			break
+		}
+		incid_e, incid_n := tr.minIncidentEdge(g.edges) // a non-tree edge incident on the tree with a minimal amount of slack
+		if incid_e == nil {
+			break
+		}
+		delta := incid_e.slack() // slack of an edge isthe difference of its length and its minimum length.
+		if incid_n == incid_e.from {
+			delta = -delta
+		}
+		for _, v := range tr.nodes {
+			v.rank += delta
+		}
+	}
+
+	initCutValues := func() {
+		// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
+	}
+	initCutValues()
+	return
+}
+
 // Iterative method for graph drawing
 // based on dot algorithm and work of Warfield, Sugiyamaet at al.
 func GetIterative(network net.Net) Composition {
 	graph := loadGraph(network)
 
-	_ = graph
 	// assign rank λ(v) to each node v
 	// edge e = (v, w)
 	// lenght of edge l(e) ≥ δ(e)
@@ -253,86 +451,6 @@ func GetIterative(network net.Net) Composition {
 
 	// make graph acyclic by reversing edges
 	graph = graph.acyclic()
-	min_len := 1 // δ(e)
-
-	initRank := func() {
-		// An initial feasible ranking is computed. For brevity,init_rankis not given here.  Our versionkeeps nodes in a queue.  Nodes are placed in the queue when they have no unscanned in-edges.As nodes are taken off the queue, they are assigned the least rank that satisfies their in-edges, andtheir out-edges are marked as scanned. In the simplest case, whereδ =1 for all edges, thiscorresponds to viewing the graph as a poset and assigning the minimal elements to rank 0.  Thesenodes are removed from the poset and the new set of minimal elements are assigned rank 1, etc.
-		isFeasible := true
-		for _, n := range graph.nodes {
-			n.priority = 0
-			for _, e := range n.inEdges(graph.edges) {
-				n.priority++
-				e.cutValue = 0
-				// e.treeIndex = -1
-				if isFeasible && e.to.rank-e.from.rank < min_len { // head-tail
-					isFeasible = false
-				}
-			}
-		}
-		if isFeasible {
-			return
-		}
-
-		queue := make(chan *node, len(graph.nodes))
-		cntr := 0 // counter of nodes passed by queue
-
-		for _, n := range graph.nodes {
-			if n.priority == 0 {
-				queue <- n
-			}
-		}
-
-		for len(queue) > 0 {
-			n := <-queue
-			n.rank = 0
-			cntr++
-			for _, e := range n.inEdges(graph.edges) {
-				rank := e.from.rank + min_len
-				if rank > n.rank {
-					n.rank = rank
-				}
-			}
-			for _, e := range n.outEdges(graph.edges) {
-				e.to.priority--
-				if e.to.priority <= 0 {
-					queue <- e.to
-				}
-			}
-		}
-		close(queue)
-		if cntr != len(graph.nodes) {
-			log.Fatal("trouble creating feasible tree")
-			for _, n := range graph.nodes {
-				if n.priority != 0 {
-					log.Fatalf("node %v has priority %v", n, n.priority)
-				}
-			}
-		}
-	}
-
-	tightTree := func() int {
-		// finds a maximal tree of tight edges containing some fixed node andreturns the number of nodes in the tree. Note that such a maximal tree is just a spanning tree forthe subgraph induced by all nodes reachable from the fixed node in the underlying undirected
-		// graph using only tight edges.  In particular, all such trees have the same number of nodes.
-		return len(graph.nodes)
-	}
-	initCutValues := func() {
-		// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
-	}
-
-	feasibleTree := func() {
-		initRank()
-		for tightTree() < len(graph.nodes) {
-			// e := (*edge)(nil)           // a non-tree edge incident on the tree with a minimal amount of slack
-			// delta := e.lenght - min_len // slack of an edge isthe difference of its length and its minimum length.
-			// if incident_node == e.from {
-			// 	delta = -delta
-			// }
-			// for _, v := range Tree {
-			// 	v.rank += delta
-			// }
-		}
-		initCutValues()
-	}
 
 	normalize := func() {
 
@@ -343,7 +461,7 @@ func GetIterative(network net.Net) Composition {
 	}
 
 	rank := func() {
-		feasibleTree()
+		feasibleTree(&graph)
 		// for {
 		// 	e := leaveEdge()
 		// 	if e == nil {

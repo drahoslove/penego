@@ -145,3 +145,34 @@ func TestIterative(test *testing.T) {
 
 	test.Log(comp)
 }
+
+func TestTighTree(test *testing.T) {
+	graph := loadGraph(getNet())
+
+	tightTree, size := tightTree(&graph)
+	if !isTightTree(&tightTree.graph) {
+		test.Errorf("Tree %v is no tight", tightTree)
+	}
+
+	test.Log("graph size", len(graph.nodes))
+	test.Log("tightTree size", size)
+	test.Log("nodes", len(tightTree.nodes), "edeges", len(tightTree.edges))
+	for _, e := range tightTree.edges {
+		test.Log("edge", e)
+	}
+}
+
+func TestFeasibleTree(test *testing.T) {
+	graph := loadGraph(getNet()).acyclic()
+	feasibleTree := feasibleTree(&graph)
+
+	if !isTightTree(&feasibleTree.graph) {
+		test.Errorf("Tree %v is not tight", feasibleTree)
+	}
+
+	if len(feasibleTree.nodes) != len(graph.nodes) {
+		test.Errorf("fessible tre contains only %v nodes of original %v graphs nodes", len(feasibleTree.nodes), len(graph.nodes))
+	}
+
+	test.Logf("Feasible tree %v", feasibleTree)
+}
