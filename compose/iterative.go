@@ -15,11 +15,19 @@ type node struct {
 	position int
 	priority int
 	tree     *tree
+	// related to cut value computing:
+	parent *edge
+	lim    int
+	low    int
 }
 type edge struct {
 	from     *node
 	to       *node
 	cutValue int
+}
+
+func (e *edge) weight() int {
+	return 1
 }
 
 func (e *edge) len() int {
@@ -431,12 +439,130 @@ func feasibleTree(g *graph) (tr *tree) {
 			v.rank += delta
 		}
 	}
-
-	initCutValues := func() {
-		// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
-	}
-	initCutValues()
+	initCutValues(g, tr)
 	return
+}
+
+func initCutValues(g *graph, tr *tree) {
+	// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
+	var (
+		dfsRange  func(*node, *edge, int) int
+		dfsCutval func(*node, *edge)
+	)
+
+	// computes low and lim values for nodes
+	dfsRange = func(n *node, parent *edge, low int) int {
+		lim := low
+		n.parent = parent
+		n.low = low
+		for _, e := range n.outEdges(tr.edges) {
+			if e != parent {
+				lim = dfsRange(e.to, e, lim)
+			}
+		}
+		for _, e := range n.inEdges(tr.edges) {
+			if e != parent {
+				lim = dfsRange(e.from, e, lim)
+			}
+		}
+		n.lim = lim
+		return lim + 1
+	}
+
+	dfsCutval = func(n *node, parent *edge) {
+		for _, e := range n.outEdges(tr.edges) {
+			if e != parent {
+				dfsCutval(e.to, e)
+			}
+		}
+		for _, e := range n.inEdges(tr.edges) {
+			if e != parent {
+				dfsCutval(e.from, e)
+			}
+		}
+		if parent != nil {
+			x_cutval(parent, g, tr)
+		}
+	}
+
+	if len(tr.nodes) == 0 {
+		log.Fatalln("No nodes to init cutvalues")
+	}
+	dfsRange(tr.nodes[0], nil, 1)
+	dfsCutval(tr.nodes[0], nil)
+}
+
+// set cut value of f, assuming values of edges on one side were already set
+func x_cutval(f *edge, g *graph, tr *tree) {
+	var n *node
+	var dir int
+	if f.from.parent == f {
+		n = f.from
+		dir = 1
+	} else {
+		n = f.to
+		dir = -1
+	}
+
+	x_val := func(e *edge, n *node, dir int) int {
+		var (
+			other_n *node
+			flip    bool
+			d       int
+			rv      int
+		)
+
+		if e.from == n {
+			other_n = e.to
+		} else {
+			other_n = e.from
+		}
+		if !(n.low <= other_n.lim && other_n.lim <= n.lim) {
+			flip = true
+			rv = e.weight()
+		} else {
+			flip = false
+			if tr.includesEdge(e) {
+				rv = e.cutValue
+			} else {
+				rv = 0
+			}
+			rv -= e.weight()
+		}
+		if dir > 0 && e.to == n || dir < 0 && e.from == n {
+			d = 1
+		} else {
+			d = -1
+		}
+		if flip {
+			d = -d
+		}
+		if d < 0 {
+			rv = -rv
+		}
+		return rv
+	}
+
+	sum := 0
+	for _, e := range n.outEdges(g.edges) {
+		sum += x_val(e, n, dir)
+	}
+	for _, e := range n.inEdges(g.edges) {
+		sum += x_val(e, n, dir)
+	}
+	f.cutValue = sum
+}
+
+func checkCutval(g *graph, tr *tree) {
+	for _, n := range g.nodes {
+		for _, e := range n.outEdges(tr.edges) {
+			save := e.cutValue
+			x_cutval(e, g, tr)
+			if save != e.cutValue {
+				log.Fatalln("Edge cutvalues not computed")
+			}
+		}
+	}
 }
 
 // Iterative method for graph drawing
@@ -461,7 +587,8 @@ func GetIterative(network net.Net) Composition {
 	}
 
 	rank := func() {
-		feasibleTree(&graph)
+		tr := feasibleTree(&graph)
+		checkCutval(&graph, tr)
 		// for {
 		// 	e := leaveEdge()
 		// 	if e == nil {
