@@ -1,3 +1,7 @@
+/*
+ * Network Simplex Algorithm for Ranking Nodes of a directed acyclic graph (DAG)
+ * this is strongly based on algorithm described in here https://graphviz.gitlab.io/_pages/Documentation/TSE93.pdf
+ */
 package compose
 
 import (
@@ -44,7 +48,6 @@ func (tr *tree) dfsCutval(n *node, parent *edge) {
 	}
 }
 
-// this is strongly based on algorithm described in here https://graphviz.gitlab.io/_pages/Documentation/TSE93.pdf
 func rank(g *graph) {
 	balance := func(tr *tree) {
 		for _, e := range tr.edges {
@@ -73,7 +76,8 @@ func rank(g *graph) {
 			break
 		}
 		f := enterEdge(e, g, tr)
-		update(e, f, tr) // exchange e, f and recompute ranks and tuvals
+		update(e, f, tr) // exchange e, f and recompute ranks and cutvals
+		// TODO add max iteration limit
 	}
 	tr.normalizeRanks()
 	balance(tr)

@@ -340,13 +340,9 @@ func GetIterative(network net.Net) Composition {
 	// make graph acyclic by reversing edges
 	graph = graph.acyclic()
 
-	ordering := func() {
-
-	}
-
 	position := func() {
+		// TODO implement better - this is just dumb way
 		rand.Seed(0)
-		// TODO
 		ranksToPos := map[int]int{}
 		for _, n := range graph.nodes {
 			if _, ok := ranksToPos[n.rank]; ok {
@@ -364,7 +360,7 @@ func GetIterative(network net.Net) Composition {
 	}
 
 	rank(&graph)
-	ordering()
+	ordering(&graph)
 	position()
 	makeSplines()
 
@@ -382,4 +378,8 @@ func GetIterative(network net.Net) Composition {
 	comp.CenterTo(0, 0)
 
 	return comp
+}
+
+func ordering(g *graph) {
+
 }
