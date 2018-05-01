@@ -36,7 +36,7 @@ func Parse(str string) (network net.Net, composition compose.Composition) {
 	if compoStr != "" {
 		composition = compose.Parse(compoStr, network)
 	} else {
-		composition = compose.GetSimple(network)
+		composition = compose.GetIterative(network)
 	}
 
 	return

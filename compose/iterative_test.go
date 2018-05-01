@@ -140,12 +140,6 @@ func TestInOutEdges(test *testing.T) {
 	}
 }
 
-func TestIterative(test *testing.T) {
-	comp := GetIterative(getNet())
-
-	test.Log(comp)
-}
-
 func TestTighTree(test *testing.T) {
 	graph := loadGraph(getNet())
 
@@ -175,4 +169,10 @@ func TestFeasibleTree(test *testing.T) {
 	}
 
 	test.Logf("Feasible tree %v", feasibleTree)
+}
+
+func TestIterative(test *testing.T) {
+	comp := GetIterative(getNet())
+
+	test.Log(comp)
 }

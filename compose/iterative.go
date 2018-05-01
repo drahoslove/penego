@@ -1,7 +1,7 @@
 package compose
 
 import (
-	// "git.yo2.cz/drahoslav/penego/draw"
+	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
 	"log"
 )
@@ -14,7 +14,7 @@ type node struct {
 	rank     int
 	position int
 	priority int
-	tree     *tree
+	tree     *tree // for finding tight tree
 	// related to cut value computing:
 	parent *edge
 	lim    int
@@ -314,6 +314,125 @@ func (g graph) acyclic() graph {
 
 type tree struct {
 	graph
+	of *graph
+}
+
+// computes low and lim values for nodes
+func (tr *tree) dfsRange(n *node, parent *edge, low int) int {
+	lim := low
+	n.parent = parent
+	n.low = low
+	for _, e := range n.outEdges(tr.edges) {
+		if e != parent {
+			lim = tr.dfsRange(e.to, e, lim)
+		}
+	}
+	for _, e := range n.inEdges(tr.edges) {
+		if e != parent {
+			lim = tr.dfsRange(e.from, e, lim)
+		}
+	}
+	n.lim = lim
+	return lim + 1
+}
+
+func (tr *tree) dfsCutval(n *node, parent *edge) {
+	for _, e := range n.outEdges(tr.edges) {
+		if e != parent {
+			tr.dfsCutval(e.to, e)
+		}
+	}
+	for _, e := range n.inEdges(tr.edges) {
+		if e != parent {
+			tr.dfsCutval(e.from, e)
+		}
+	}
+	if parent != nil {
+		x_cutval(parent, tr)
+	}
+}
+
+func initCutValues(g *graph, tr *tree) {
+	// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
+	if len(tr.nodes) == 0 {
+		log.Fatalln("No nodes to init cutvalues")
+	}
+	tr.dfsRange(tr.nodes[0], nil, 1)
+	tr.dfsCutval(tr.nodes[0], nil)
+}
+
+// set cut value of f, assuming values of edges on one side were already set
+func x_cutval(f *edge, tr *tree) {
+	var g = tr.of
+	var n *node
+	var dir int
+	if f.from.parent == f {
+		n = f.from
+		dir = 1
+	} else {
+		n = f.to
+		dir = -1
+	}
+
+	x_val := func(e *edge, n *node, dir int) int {
+		var (
+			other_n *node
+			flip    bool
+			d       int
+			rv      int
+		)
+
+		if e.from == n {
+			other_n = e.to
+		} else {
+			other_n = e.from
+		}
+		if !(n.low <= other_n.lim && other_n.lim <= n.lim) {
+			flip = true
+			rv = e.weight()
+		} else {
+			flip = false
+			if tr.includesEdge(e) {
+				rv = e.cutValue
+			} else {
+				rv = 0
+			}
+			rv -= e.weight()
+		}
+		if dir > 0 && e.to == n || dir < 0 && e.from == n {
+			d = 1
+		} else {
+			d = -1
+		}
+		if flip {
+			d = -d
+		}
+		if d < 0 {
+			rv = -rv
+		}
+		return rv
+	}
+
+	sum := 0
+	for _, e := range n.outEdges(g.edges) {
+		sum += x_val(e, n, dir)
+	}
+	for _, e := range n.inEdges(g.edges) {
+		sum += x_val(e, n, dir)
+	}
+	f.cutValue = sum
+}
+
+func checkCutval(tr *tree) {
+	for _, n := range tr.nodes {
+		for _, e := range n.outEdges(tr.edges) {
+			save := e.cutValue
+			x_cutval(e, tr)
+			if save != e.cutValue {
+				log.Fatalln("Edge cutvalues not computed")
+			}
+		}
+	}
 }
 
 func isTightTree(g *graph) bool {
@@ -326,7 +445,7 @@ func isTightTree(g *graph) bool {
 }
 
 func tightTree(g *graph) (*tree, int) {
-	tr := &tree{newGraph()}
+	tr := &tree{newGraph(), g}
 	size := 0
 	var findSubtree func(v *node, subtree *tree) int
 
@@ -417,6 +536,7 @@ func initRank(g *graph) {
 	}
 }
 
+// return smallest feasible tight tree with initialized cut values
 func feasibleTree(g *graph) (tr *tree) {
 
 	initRank(g)
@@ -431,7 +551,7 @@ func feasibleTree(g *graph) (tr *tree) {
 		if incid_e == nil {
 			break
 		}
-		delta := incid_e.slack() // slack of an edge isthe difference of its length and its minimum length.
+		delta := incid_e.slack() // slack of an edge is the difference of its length and its minimum length.
 		if incid_n == incid_e.from {
 			delta = -delta
 		}
@@ -443,124 +563,177 @@ func feasibleTree(g *graph) (tr *tree) {
 	return
 }
 
-func initCutValues(g *graph, tr *tree) {
-	// computes the cut values of the tree edges. For each tree edge,this is computed by marking the nodes as belonging to the head or tail component, and thenperforming the sum of the signed weights of all edges whose head and tail are in differentcomponents, the sign being negative for those edges going from the head to the tail component
+// Returns tree edge with most negative cutValue to be replaced
+func leaveEdge(tr *tree) *edge {
+	var leave_e *edge
+	for _, e := range tr.edges {
+		if e.cutValue < 0 {
+			if leave_e == nil {
+				leave_e = e
+			} else {
+				if e.cutValue < leave_e.cutValue {
+					leave_e = e
+				}
+			}
+		}
+	}
+	return leave_e
+}
+
+// returns non-tree edge withc smallest slack
+// which connects head component with tree component after breaking tree by l
+func enterEdge(leave_e *edge, g *graph, tr *tree) *edge {
 	var (
-		dfsRange  func(*node, *edge, int) int
-		dfsCutval func(*node, *edge)
+		enter_e         *edge
+		n               *node
+		outsearch       bool
+		dfsEnterOutEdge func(*node)
+		dfsEnterInEdge  func(*node)
 	)
 
-	// computes low and lim values for nodes
-	dfsRange = func(n *node, parent *edge, low int) int {
-		lim := low
-		n.parent = parent
-		n.low = low
-		for _, e := range n.outEdges(tr.edges) {
-			if e != parent {
-				lim = dfsRange(e.to, e, lim)
-			}
-		}
-		for _, e := range n.inEdges(tr.edges) {
-			if e != parent {
-				lim = dfsRange(e.from, e, lim)
-			}
-		}
-		n.lim = lim
-		return lim + 1
-	}
-
-	dfsCutval = func(n *node, parent *edge) {
-		for _, e := range n.outEdges(tr.edges) {
-			if e != parent {
-				dfsCutval(e.to, e)
-			}
-		}
-		for _, e := range n.inEdges(tr.edges) {
-			if e != parent {
-				dfsCutval(e.from, e)
-			}
-		}
-		if parent != nil {
-			x_cutval(parent, g, tr)
-		}
-	}
-
-	if len(tr.nodes) == 0 {
-		log.Fatalln("No nodes to init cutvalues")
-	}
-	dfsRange(tr.nodes[0], nil, 1)
-	dfsCutval(tr.nodes[0], nil)
-}
-
-// set cut value of f, assuming values of edges on one side were already set
-func x_cutval(f *edge, g *graph, tr *tree) {
-	var n *node
-	var dir int
-	if f.from.parent == f {
-		n = f.from
-		dir = 1
+	if leave_e.from.lim < leave_e.to.lim {
+		n = leave_e.from
+		outsearch = false
 	} else {
-		n = f.to
-		dir = -1
+		n = leave_e.to
+		outsearch = true
 	}
 
-	x_val := func(e *edge, n *node, dir int) int {
-		var (
-			other_n *node
-			flip    bool
-			d       int
-			rv      int
-		)
+	min_slack := maxInt
+	low := n.low
+	lim := n.lim
 
-		if e.from == n {
-			other_n = e.to
-		} else {
-			other_n = e.from
-		}
-		if !(n.low <= other_n.lim && other_n.lim <= n.lim) {
-			flip = true
-			rv = e.weight()
-		} else {
-			flip = false
-			if tr.includesEdge(e) {
-				rv = e.cutValue
+	dfsEnterOutEdge = func(n *node) {
+		for _, e := range n.outEdges(g.edges) {
+			if !tr.includesEdge(e) {
+				if !(low <= e.to.lim && e.to.lim <= lim) {
+					slack := e.slack()
+					if slack < min_slack || enter_e == nil {
+						enter_e = e
+						min_slack = slack
+					}
+				}
 			} else {
-				rv = 0
+				if e.to.lim < n.lim {
+					dfsEnterOutEdge(e.to)
+				}
 			}
-			rv -= e.weight()
 		}
-		if dir > 0 && e.to == n || dir < 0 && e.from == n {
-			d = 1
-		} else {
-			d = -1
+		for _, e := range n.inEdges(tr.edges) {
+			if min_slack <= 0 {
+				break
+			}
+			if e.from.lim < n.lim {
+				dfsEnterOutEdge(e.from)
+			}
 		}
-		if flip {
-			d = -d
-		}
-		if d < 0 {
-			rv = -rv
-		}
-		return rv
 	}
 
-	sum := 0
-	for _, e := range n.outEdges(g.edges) {
-		sum += x_val(e, n, dir)
+	dfsEnterInEdge = func(n *node) {
+		for _, e := range n.inEdges(g.edges) {
+			if !tr.includesEdge(e) {
+				if !(low <= e.from.lim && e.from.lim <= lim) {
+					slack := e.slack()
+					if slack < min_slack || enter_e == nil {
+						enter_e = e
+						min_slack = slack
+					}
+				}
+			} else {
+				if e.from.lim < n.lim {
+					dfsEnterInEdge(e.from)
+				}
+			}
+		}
+		for _, e := range n.outEdges(tr.edges) {
+			if min_slack <= 0 {
+				break
+			}
+			if e.to.lim < n.lim {
+				dfsEnterInEdge(e.to)
+			}
+		}
 	}
-	for _, e := range n.inEdges(g.edges) {
-		sum += x_val(e, n, dir)
+
+	if outsearch {
+		dfsEnterOutEdge(n)
+	} else {
+		dfsEnterInEdge(n)
 	}
-	f.cutValue = sum
+	return enter_e
 }
 
-func checkCutval(g *graph, tr *tree) {
-	for _, n := range g.nodes {
-		for _, e := range n.outEdges(tr.edges) {
-			save := e.cutValue
-			x_cutval(e, g, tr)
-			if save != e.cutValue {
-				log.Fatalln("Edge cutvalues not computed")
+// computes new ranks, cutvalues and swap leave and enter edges in tree
+func update(leave_e, enter_e *edge, tr *tree) {
+	delta := enter_e.slack()
+	/* "for (v = in nodes in tail side of e) do ND_rank(v) -= delta;" */
+	if delta > 0 {
+		s := len(leave_e.from.inEdges(tr.edges)) + len(leave_e.from.outEdges(tr.edges))
+		if s == 1 {
+			rerank(leave_e.from, delta, tr)
+		} else {
+			s = len(leave_e.to.inEdges(tr.edges)) + len(leave_e.to.outEdges(tr.edges))
+			if s == 1 {
+				rerank(leave_e.to, -delta, tr)
+			} else {
+				if leave_e.from.lim < leave_e.to.lim {
+					rerank(leave_e.from, delta, tr)
+				} else {
+					rerank(leave_e.to, -delta, tr)
+				}
 			}
+		}
+	}
+
+	// set new cutvalues to all nodes between from_v and lca(from_n, to_n)
+	treeUpdate := func(from_n, to_n *node, cutvalue int, dir int) *node {
+		for !(from_n.low <= to_n.lim && to_n.lim <= from_n.lim) {
+			e := from_n.parent
+			if from_n != e.from {
+				dir = -dir
+			}
+			e.cutValue += cutvalue * dir
+
+			if e.from.lim > e.to.lim {
+				from_n = e.from
+			} else {
+				from_n = e.to
+			}
+		}
+		return from_n
+	}
+
+	cutvalue := leave_e.cutValue
+	// Lowest common ancestor
+	lca1 := treeUpdate(enter_e.from, enter_e.to, cutvalue, 1)
+	lca2 := treeUpdate(enter_e.to, enter_e.from, cutvalue, -1)
+	if lca1 != lca2 {
+		log.Fatalln("mismatched lca in tree updates")
+	}
+	enter_e.cutValue = -cutvalue
+	leave_e.cutValue = 0
+	exchangeTreeEdges(leave_e, enter_e, tr)
+	tr.dfsRange(lca1, lca1.parent, lca1.low)
+}
+
+func exchangeTreeEdges(leave_e, enter_e *edge, tr *tree) {
+	for i, e := range tr.edges {
+		if e == leave_e {
+			tr.edges[i] = enter_e
+		}
+	}
+}
+
+func rerank(n *node, delta int, tr *tree) {
+	n.rank -= delta
+	for _, e := range n.outEdges(tr.edges) {
+		if e != n.parent {
+			rerank(e.to, delta, tr)
+		}
+	}
+	for _, e := range n.inEdges(tr.edges) {
+		if e != n.parent {
+			rerank(e.from, delta, tr)
 		}
 	}
 }
@@ -588,15 +761,15 @@ func GetIterative(network net.Net) Composition {
 
 	rank := func() {
 		tr := feasibleTree(&graph)
-		checkCutval(&graph, tr)
-		// for {
-		// 	e := leaveEdge()
-		// 	if e == nil {
-		// 		break
-		// 	}
-		// 	f := enterEdge(e)
-		// 	exchange(e, f)
-		// }
+		// checkCutval(&graph, tr)
+		for {
+			e := leaveEdge(tr)
+			if e == nil {
+				break
+			}
+			f := enterEdge(e, &graph, tr)
+			update(e, f, tr) // exchange e, f and recompute ranks and tuvals
+		}
 		normalize()
 		balance()
 	}
@@ -606,7 +779,16 @@ func GetIterative(network net.Net) Composition {
 	}
 
 	position := func() {
-
+		ranksToPos := map[int]int{}
+		for _, n := range graph.nodes {
+			if _, ok := ranksToPos[n.rank]; ok {
+				ranksToPos[n.rank] = 0
+			} else {
+				ranksToPos[n.rank] += 1
+			}
+			n.position = ranksToPos[n.rank]
+			log.Println("node rank and position", n.rank, n.position)
+		}
 	}
 
 	makeSplines := func() {
@@ -617,5 +799,18 @@ func GetIterative(network net.Net) Composition {
 	ordering()
 	position()
 	makeSplines()
-	return Composition{}
+
+	comp := New()
+
+	for _, n := range graph.nodes {
+		pos := draw.Pos{float64(n.position * 90), float64(n.rank) * 90}
+		switch node := n.Composable.(type) {
+		case *net.Transition:
+			comp.transitions[node] = pos
+		case *net.Place:
+			comp.places[node] = pos
+		}
+	}
+
+	return comp
 }
