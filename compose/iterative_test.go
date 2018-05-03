@@ -171,6 +171,25 @@ func TestFeasibleTree(test *testing.T) {
 	test.Logf("Feasible tree %v", feasibleTree)
 }
 
+func TestFillPathNodes(test *testing.T) {
+	graph := loadGraph(getNet()).acyclic()
+	rank(&graph)
+
+	for _, e := range graph.edges {
+		if e.from.rank-e.to.rank > 1 || e.to.rank-e.from.rank > 1 {
+			test.Log("ranks apart", e.from.rank, e.to.rank)
+		}
+	}
+	fillPathNodes(&graph)
+
+	for _, e := range graph.edges {
+		if e.from.rank-e.to.rank > 1 || e.to.rank-e.from.rank > 1 {
+			test.Error("ranks apart", e.from.rank, e.to.rank)
+		}
+	}
+
+}
+
 func TestIterative(test *testing.T) {
 	comp := GetIterative(getNet())
 
