@@ -60,10 +60,10 @@ func rank(g *graph) {
 				if delta <= 1 {
 					continue
 				}
-				if enter_e.from.lim < enter_e.to.lim {
-					rerank(enter_e.from, delta/2, tr)
+				if e.from.lim < e.to.lim {
+					rerank(e.from, delta/2, tr)
 				} else {
-					rerank(enter_e.to, -delta/2, tr)
+					rerank(e.to, -delta/2, tr)
 				}
 			}
 		}

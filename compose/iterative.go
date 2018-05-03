@@ -4,7 +4,6 @@ import (
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
 	"log"
-	"math/rand"
 )
 
 const maxInt = int(^uint(0) >> 1)
@@ -330,6 +329,21 @@ func (g graph) acyclic() graph {
 // Iterative method for graph drawing
 // based on dot algorithm and work of Warfield, Sugiyamaet at al.
 func GetIterative(network net.Net) Composition {
+	position := func(g *graph) {
+		// TODO implement better - this is just dumb way
+		ranksToPos := map[int]int{}
+		for _, n := range g.nodes {
+			if _, ok := ranksToPos[n.rank]; ok {
+				ranksToPos[n.rank] = 0
+			} else {
+				ranksToPos[n.rank] += 1
+			}
+			n.position = ranksToPos[n.rank]
+			// log.Println("node rank and position", n.rank, n.position)
+			_ = log.Println
+		}
+	}
+
 	graph := loadGraph(network)
 
 	// assign rank λ(v) to each node v
@@ -340,28 +354,13 @@ func GetIterative(network net.Net) Composition {
 	// make graph acyclic by reversing edges
 	graph = graph.acyclic()
 
-	position := func() {
-		// TODO implement better - this is just dumb way
-		rand.Seed(0)
-		ranksToPos := map[int]int{}
-		for _, n := range graph.nodes {
-			if _, ok := ranksToPos[n.rank]; ok {
-				ranksToPos[n.rank] = 0
-			} else {
-				ranksToPos[n.rank] += 1
-			}
-			n.position = ranksToPos[n.rank]
-			log.Println("node rank and position", n.rank, n.position)
-		}
-	}
-
 	makeSplines := func() {
 
 	}
 
 	rank(&graph)
 	ordering(&graph)
-	position()
+	position(&graph)
 	makeSplines()
 
 	comp := New()
@@ -381,5 +380,35 @@ func GetIterative(network net.Net) Composition {
 }
 
 func ordering(g *graph) {
+	fillPathNodes(g)
+}
 
+// adds intermediate "path nodes" to edges whose ranks are not adjencent
+func fillPathNodes(g *graph) {
+	for _, e := range g.edges {
+		addNodeEdge := func(rank int) {
+			inter_n := &node{Composable: nil, rank: rank}
+			inter_e := &edge{from: inter_n, to: e.to}
+			e.to = inter_n
+			g.nodes = append(g.nodes, inter_n)
+			g.edges = append(g.edges, inter_e)
+		}
+		if e.from.rank < e.to.rank {
+			// add new node and edge []++> from right end
+			// (1)-->(4)
+			// (1)-->[3]++>(4)
+			// (1)-->[2]++>(3)-->(4)
+			for rank := e.to.rank - 1; rank > e.from.rank; rank-- {
+				addNodeEdge(rank)
+			}
+		} else {
+			// add new node and edge []++> from right end
+			// (4)-->(1)
+			// (4)-->[2]++>(1)
+			// (4)-->[3]++>(2)-->(1)
+			for rank := e.to.rank + 1; rank < e.from.rank; rank++ {
+				addNodeEdge(rank)
+			}
+		}
+	}
 }
