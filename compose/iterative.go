@@ -3,7 +3,6 @@ package compose
 import (
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
-	"log"
 )
 
 const maxInt = int(^uint(0) >> 1)
@@ -12,7 +11,7 @@ const min_len = 1
 type node struct {
 	Composable
 	rank     int
-	position int
+	order    int
 	priority int
 	tree     *tree // for finding tight tree
 	// related to cut value computing:
@@ -329,19 +328,6 @@ func (g graph) acyclic() graph {
 // Iterative method for graph drawing
 // based on dot algorithm and work of Warfield, Sugiyamaet at al.
 func GetIterative(network net.Net) Composition {
-	position := func(g *graph) {
-		// TODO implement better - this is just dumb way
-		log.Println("positioning")
-		ranksToPos := map[int]int{}
-		for _, n := range g.nodes {
-			if _, in := ranksToPos[n.rank]; !in {
-				ranksToPos[n.rank] = 0
-			}
-			ranksToPos[n.rank]++
-			n.position = ranksToPos[n.rank]
-			log.Println("node rank and position", n.rank, n.position)
-		}
-	}
 
 	graph := loadGraph(network)
 
@@ -353,19 +339,15 @@ func GetIterative(network net.Net) Composition {
 	// make graph acyclic by reversing edges
 	graph = graph.acyclic()
 
-	makeSplines := func() {
-
-	}
-
 	rank(&graph)
 	ordering(&graph)
-	position(&graph)
-	makeSplines()
+	// positions()
+	// makeSplines()
 
 	comp := New()
 
 	for _, n := range graph.nodes {
-		pos := draw.Pos{float64(n.rank * 90), float64(n.position) * 90}
+		pos := draw.Pos{float64(n.rank * 90), float64(n.order) * 90}
 		switch node := n.Composable.(type) {
 		case *net.Transition:
 			comp.transitions[node] = pos
@@ -375,45 +357,11 @@ func GetIterative(network net.Net) Composition {
 			if _, ok := comp.pathes[node]; !ok {
 				comp.pathes[node] = []draw.Pos{}
 			}
+			// append pos front
 			comp.pathes[node] = append([]draw.Pos{pos}, comp.pathes[node]...)
 		}
 	}
 	comp.CenterTo(0, 0)
 
 	return comp
-}
-
-func ordering(g *graph) {
-	fillPathNodes(g)
-}
-
-// adds intermediate "path nodes" to edges whose ranks are not adjencent
-func fillPathNodes(g *graph) {
-	for _, e := range g.edges {
-		path := &path{e.from.Composable, e.to.Composable}
-		addNodeEdge := func(rank int) {
-			inter_n := &node{Composable: path, rank: rank}
-			inter_e := &edge{from: inter_n, to: e.to}
-			e.to = inter_n
-			g.nodes = append(g.nodes, inter_n)
-			g.edges = append(g.edges, inter_e)
-		}
-		if e.from.rank < e.to.rank {
-			// add new node and edge []++> from right end
-			// (1)-->(4)
-			// (1)-->[3]++>(4)
-			// (1)-->[2]++>(3)-->(4)
-			for rank := e.to.rank - 1; rank > e.from.rank; rank-- {
-				addNodeEdge(rank)
-			}
-		} else {
-			// add new node and edge []++> from right end
-			// (4)-->(1)
-			// (4)-->[2]++>(1)
-			// (4)-->[3]++>(2)-->(1)
-			for rank := e.to.rank + 1; rank < e.from.rank; rank++ {
-				addNodeEdge(rank)
-			}
-		}
-	}
 }
