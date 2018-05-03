@@ -333,14 +333,13 @@ func GetIterative(network net.Net) Composition {
 		// TODO implement better - this is just dumb way
 		ranksToPos := map[int]int{}
 		for _, n := range g.nodes {
-			if _, ok := ranksToPos[n.rank]; ok {
+			if _, ok := ranksToPos[n.rank]; !ok {
 				ranksToPos[n.rank] = 0
 			} else {
 				ranksToPos[n.rank] += 1
 			}
 			n.position = ranksToPos[n.rank]
-			// log.Println("node rank and position", n.rank, n.position)
-			_ = log.Println
+			log.Println("node rank and position", n.rank, n.position)
 		}
 	}
 
@@ -372,6 +371,11 @@ func GetIterative(network net.Net) Composition {
 			comp.transitions[node] = pos
 		case *net.Place:
 			comp.places[node] = pos
+		case *path:
+			if _, ok := comp.pathes[node]; !ok {
+				comp.pathes[node] = []draw.Pos{}
+			}
+			comp.pathes[node] = append([]draw.Pos{pos}, comp.pathes[node]...)
 		}
 	}
 	comp.CenterTo(0, 0)
@@ -386,8 +390,9 @@ func ordering(g *graph) {
 // adds intermediate "path nodes" to edges whose ranks are not adjencent
 func fillPathNodes(g *graph) {
 	for _, e := range g.edges {
+		path := &path{e.from.Composable, e.to.Composable}
 		addNodeEdge := func(rank int) {
-			inter_n := &node{Composable: nil, rank: rank}
+			inter_n := &node{Composable: path, rank: rank}
 			inter_e := &edge{from: inter_n, to: e.to}
 			e.to = inter_n
 			g.nodes = append(g.nodes, inter_n)

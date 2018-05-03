@@ -41,20 +41,20 @@ func (drawer ImgDrawer) DrawTransition(pos draw.Pos, attrs, description string) 
 	}
 }
 
-func (drawer ImgDrawer) DrawInArc(from draw.Pos, to draw.Pos, weight int) {
+func (drawer ImgDrawer) DrawInArc(path []draw.Pos, weight int) {
 	if drawer.ctx != nil {
-		draw.Arc(drawer.ctx, drawer.style, from, to, draw.In, weight)
+		draw.Arc(drawer.ctx, drawer.style, path, draw.In, weight)
 	}
 }
 
-func (drawer ImgDrawer) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
+func (drawer ImgDrawer) DrawOutArc(path []draw.Pos, weight int) {
 	if drawer.ctx != nil {
-		draw.Arc(drawer.ctx, drawer.style, from, to, draw.Out, weight)
+		draw.Arc(drawer.ctx, drawer.style, path, draw.Out, weight)
 	}
 }
-func (drawer ImgDrawer) DrawInhibitorArc(from, to draw.Pos) {
+func (drawer ImgDrawer) DrawInhibitorArc(path []draw.Pos) {
 	if drawer.ctx != nil {
-		draw.InhibitorArc(drawer.ctx, drawer.style, from, to)
+		draw.InhibitorArc(drawer.ctx, drawer.style, path)
 	}
 }
 
