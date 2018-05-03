@@ -331,13 +331,13 @@ func (g graph) acyclic() graph {
 func GetIterative(network net.Net) Composition {
 	position := func(g *graph) {
 		// TODO implement better - this is just dumb way
+		log.Println("positioning")
 		ranksToPos := map[int]int{}
 		for _, n := range g.nodes {
-			if _, ok := ranksToPos[n.rank]; !ok {
+			if _, in := ranksToPos[n.rank]; !in {
 				ranksToPos[n.rank] = 0
-			} else {
-				ranksToPos[n.rank] += 1
 			}
+			ranksToPos[n.rank]++
 			n.position = ranksToPos[n.rank]
 			log.Println("node rank and position", n.rank, n.position)
 		}

@@ -49,7 +49,7 @@ func (comp Composition) PathPositions(from Composable, to Composable) []draw.Pos
 	}
 	fromPos, toPos := getPos(from), getPos(to)
 
-	positions := []draw.Pos{fromPos}
+	positions := []draw.Pos{}
 
 	// insert intermediate path positions
 	for path, poss := range comp.pathes {
@@ -58,8 +58,14 @@ func (comp Composition) PathPositions(from Composable, to Composable) []draw.Pos
 				positions = append(positions, pos)
 			}
 		}
+		if path.from == to && path.to == from {
+			for _, pos := range poss {
+				positions = append([]draw.Pos{pos}, positions...)
+			}
+		}
 	}
 
+	positions = append([]draw.Pos{fromPos}, positions...)
 	positions = append(positions, toPos)
 	return positions
 }

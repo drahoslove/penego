@@ -436,6 +436,9 @@ func Arc(ctx draw2d.GraphicContext, style Style, path []Pos, dir Direction, weig
 					drawArrowHead(ctx, style, to.X, to.Y, angle)
 				}
 			}
+			if i > 0 { // draw path join
+				draw2dkit.Circle(ctx, cPs[0].X(), cPs[0].Y(), 2)
+			}
 
 			ctx.MoveTo(cPs[0].X(), cPs[0].Y())
 			ctx.CubicCurveTo(
