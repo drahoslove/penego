@@ -3,6 +3,7 @@ package compose
 import (
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
+	"fmt"
 )
 
 const maxInt = int(^uint(0) >> 1)
@@ -342,13 +343,35 @@ func GetIterative(network net.Net) Composition {
 
 	rank(&graph)
 	ordering(&graph)
-	// positions()
+	comp := positions(&graph)
 	// makeSplines()
 
-	comp := New()
+	return comp
+}
 
-	for _, n := range graph.nodes {
-		pos := draw.Pos{float64(n.rank * 80), float64(n.order) * 80}
+
+func positions(g *graph) Composition {
+	// TODO make this better
+	comp := New()
+	rankSizes := map[int]int{}
+	maxRankSize := 0
+
+	for _, n := range g.nodes {
+		if _, ok := rankSizes[n.rank]; !ok {
+			rankSizes[n.rank] = 0
+		}
+		rankSizes[n.rank]++
+	}
+	for _, size := range rankSizes {
+		if size > maxRankSize {
+			maxRankSize = size
+		}
+	}
+
+	for _, n := range g.nodes {
+		x := float64(n.rank * 90)
+		y := (float64(n.order) + (float64(maxRankSize - rankSizes[n.rank]) / 2)) * 90 
+		pos := draw.Pos{x, y}
 		switch node := n.Composable.(type) {
 		case *net.Transition:
 			comp.transitions[node] = pos

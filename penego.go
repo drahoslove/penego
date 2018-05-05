@@ -78,8 +78,8 @@ func main() {
 	// TODO init elsewhere?
 	pwd, _ := os.Getwd()
 	storage.Of("export").
-		Set("width", 1024).
-		Set("height", 512).
+		Set("width", 1024*2).
+		Set("height", 512*2).
 		Set("zoom", 0).
 		Set("png.filename", pwd+string(filepath.Separator)+"image.png").
 		Set("pdf.filename", pwd+string(filepath.Separator)+"image.pdf").
