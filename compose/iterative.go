@@ -13,7 +13,8 @@ type node struct {
 	rank     int
 	order    int
 	priority int
-	tree     *tree // for finding tight tree
+	weight   float64 // for median value when ordering
+	tree     *tree   // for finding tight tree
 	// related to cut value computing:
 	parent *edge
 	lim    int
@@ -347,7 +348,7 @@ func GetIterative(network net.Net) Composition {
 	comp := New()
 
 	for _, n := range graph.nodes {
-		pos := draw.Pos{float64(n.rank * 90), float64(n.order) * 90}
+		pos := draw.Pos{float64(n.rank * 80), float64(n.order) * 80}
 		switch node := n.Composable.(type) {
 		case *net.Transition:
 			comp.transitions[node] = pos
