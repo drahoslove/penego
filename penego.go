@@ -148,6 +148,7 @@ func main() {
 		log.Println("No penego file specified, using example")
 	}
 	network, composition = Parse(pnString)
+	composition.Rotate()
 
 	if input != "" {
 		file, err := os.Open(input)
@@ -333,6 +334,9 @@ func main() {
 			x, y := composition.FindCenter()
 			return !(x == ox && y == oy)
 		}
+		rotate := func() {
+			composition.Rotate()
+		}
 
 		// up bar commands
 		screen.OnKey("Q", quit)
@@ -346,6 +350,7 @@ func main() {
 		screen.RegisterControl(0, "E", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True) // to svg/pdf/png
 		screen.RegisterControl(0, "P", gui.AlwaysIcon(gui.SettingsIcon), "settings", settings, gui.True)
 		screen.RegisterControl(0, "C", gui.AlwaysIcon(gui.CenterOnIcon), "center net", center, isCenter) 
+		screen.RegisterControl(0, "T", gui.AlwaysIcon(gui.RotateIcon), "rotate net", rotate, gui.True) 
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.BeginIcon), "reset", reset, gui.True)

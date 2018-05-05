@@ -3,7 +3,6 @@ package compose
 import (
 	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
-	"fmt"
 )
 
 const maxInt = int(^uint(0) >> 1)
@@ -138,6 +137,11 @@ func (n *node) outEdges(edges []*edge) []*edge {
 		}
 	}
 	return outEdges
+}
+
+func (n *node) isPath() bool {
+	_, isPath := n.Composable.(path)
+	return isPath
 }
 
 // Returns graph sturcure suited for graph related operations
@@ -361,10 +365,8 @@ func positions(g *graph) Composition {
 			rankSizes[n.rank] = 0
 		}
 		rankSizes[n.rank]++
-	}
-	for _, size := range rankSizes {
-		if size > maxRankSize {
-			maxRankSize = size
+		if rankSizes[n.rank] > maxRankSize {
+			maxRankSize = rankSizes[n.rank]
 		}
 	}
 

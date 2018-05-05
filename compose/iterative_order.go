@@ -56,13 +56,17 @@ func (os orders) clone() orders {
 func ordering(g *graph) {
 	fillPathNodes(g)
 
+	keepTrying := MAX_ORDERING_ITER
+
 	orders := initOrder(g)
 	bestOrders := orders.clone()
-	for i := 0; i < MAX_ORDERING_ITER; i++ {
+	for i := 0; keepTrying > 0; i++ {
+		keepTrying--
 		weightMedian(g, orders, i)
 		transpose(g, orders)
 		if crossings(g, orders) < crossings(g, bestOrders) {
 			bestOrders = orders.clone()
+			keepTrying = MAX_ORDERING_ITER
 		}
 	}
 
@@ -137,7 +141,7 @@ func transpose(g *graph, orders orders) {
 				}
 				if crossing(exchNodes) < crossing(nodes) {
 					improved = true
-					orders[rank] = exchNodes // swap
+					orders[rank] = exchNodes // use exchanged
 				}
 			}
 		}

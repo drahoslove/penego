@@ -170,6 +170,68 @@ func (comp Composition) CenterTo(x, y float64) {
 	}
 }
 
+// rotates composition 90 degrees clockwise
+func (comp Composition) Rotate() {
+	for place, pos := range comp.places {
+		comp.places[place] = draw.Pos{-pos.Y, pos.X}
+	}
+
+	for tran, pos := range comp.transitions {
+		comp.transitions[tran] = draw.Pos{-pos.Y, pos.X}
+	}
+
+	for _, poss := range comp.pathes {
+		for i, pos := range poss {
+			poss[i] = draw.Pos{-pos.Y, pos.X}
+		}
+	}
+}
+
+// align nodes to vertical center axis
+func (comp Composition) AlignY() {
+	minX, minY := math.Inf(+1), math.Inf(+1)
+	maxX, maxY := math.Inf(-1), math.Inf(-1)
+	byX := map[float64][]Composable{}
+	byY := map[float64][]Composable{}
+
+	assignPos := func(node Composable, pos draw.Pos) {
+		x, y := pos.X, pos.Y
+		if x < minX {
+			minX = x
+		}
+		if x > maxX {
+			maxX = x
+		}
+		if y < minY {
+			minY = y
+		}
+		if y > maxY {
+			maxY = y
+		}
+		if _, ok := byX[x]; !ok {
+			byX[x] = []Composable{}
+		}
+		if _, ok := byY[y]; !ok {
+			byY[y] = []Composable{}
+		}
+		byX[x] = append(byX[x], node)
+		byY[y] = append(byY[y], node)
+	}
+	for place, pos := range comp.places {
+		assignPos(place, pos)
+	}
+	for tran, pos := range comp.transitions {
+		assignPos(tran, pos)
+	}
+	for path, poss := range comp.pathes {
+		for _, pos := range poss {
+			assignPos(path, pos)
+		}
+	}
+
+	// TODO
+}
+
 func (comp Composition) GhostMove(node Composable, x, y float64) {
 	comp.ghosts[node] = snap(x, y, 15)
 }
