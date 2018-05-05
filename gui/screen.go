@@ -6,14 +6,14 @@ package gui
 import (
 	"time"
 
-	"git.yo2.cz/drahoslav/penego/storage"
 	"git.yo2.cz/drahoslav/penego/draw"
+	"git.yo2.cz/drahoslav/penego/storage"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/llgcode/draw2d/draw2dgl"
 )
 
 var (
-	guiSt      *storage.Storage
+	guiSt *storage.Storage
 )
 
 func init() {
@@ -178,21 +178,21 @@ func (s *Screen) DrawTransition(pos draw.Pos, attrs, description string) {
 	}
 }
 
-func (s *Screen) DrawInArc(from draw.Pos, to draw.Pos, weight int) {
+func (s *Screen) DrawInArc(path []draw.Pos, weight int) {
 	if s.ctx != nil {
-		draw.Arc(s.ctx, s.style, from, to, draw.In, weight)
+		draw.Arc(s.ctx, s.style, path, draw.In, weight)
 	}
 }
 
-func (s *Screen) DrawOutArc(from draw.Pos, to draw.Pos, weight int) {
+func (s *Screen) DrawOutArc(path []draw.Pos, weight int) {
 	if s.ctx != nil {
-		draw.Arc(s.ctx, s.style, from, to, draw.Out, weight)
+		draw.Arc(s.ctx, s.style, path, draw.Out, weight)
 	}
 }
 
-func (s *Screen) DrawInhibitorArc(from, to draw.Pos) {
+func (s *Screen) DrawInhibitorArc(path []draw.Pos) {
 	if s.ctx != nil {
-		draw.InhibitorArc(s.ctx, s.style, from, to)
+		draw.InhibitorArc(s.ctx, s.style, path)
 	}
 }
 
@@ -230,14 +230,14 @@ func (s *Screen) RegisterControl(which int, key string, getIcon func() Icon, lab
 }
 
 func (s *Screen) normalize(x, y float64, centered bool) (float64, float64) {
-		if centered {
-			x -= float64(s.width) / 2 
-			y -= float64(s.height) / 2
-			x += guiSt.Float("offset.x")
-			y += guiSt.Float("offset.y")
-		}
-		return x, y
+	if centered {
+		x -= float64(s.width) / 2
+		y -= float64(s.height) / 2
+		x += guiSt.Float("offset.x")
+		y += guiSt.Float("offset.y")
 	}
+	return x, y
+}
 
 func (s *Screen) OnMouseMove(centered bool, cb func(float64, float64) bool) {
 	var prevcb glfw.CursorPosCallback
@@ -263,7 +263,7 @@ func (s *Screen) OnDrag(centered bool, cb func(x, y, deltax, deltaY, startX, sta
 	startX, startY := 0.0, 0.0
 	draging := false
 
-	endDrag := func(){
+	endDrag := func() {
 		x, y := s.GetCursorPos()
 		x, y = s.normalize(x, y, centered)
 		cb(x, y, x-startX, y-startY, startX, startY, true)

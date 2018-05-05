@@ -30,9 +30,9 @@ func init() {
 type Drawer interface {
 	DrawPlace(pos Pos, n int, description string)
 	DrawTransition(pos Pos, attrs, description string)
-	DrawInArc(from, to Pos, weight int)
-	DrawOutArc(from, to Pos, weight int)
-	DrawInhibitorArc(from, to Pos)
+	DrawInArc(path []Pos, weight int)
+	DrawOutArc(path []Pos, weight int)
+	DrawInhibitorArc(path []Pos)
 	SetStyle(style Style)
 }
 
@@ -322,115 +322,149 @@ func Transition(ctx draw2d.GraphicContext, style Style, pos Pos, attrs, descript
 	}
 }
 
-func Arc(ctx draw2d.GraphicContext, style Style, from, to Pos, dir Direction, weight int) {
+func Arc(ctx draw2d.GraphicContext, style Style, path []Pos, dir Direction, weight int) {
 	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH
-	var cPs []mgl.Vec2 // control point of arcs curve
+	const X, Y = 0, 1
 
-	defer tempContext(ctx)()
+	for i := 0; i < len(path)-1; i++ {
+		func() {
+			from, to := path[i], path[i+1]
+			var cPs []mgl.Vec2 // control point of arcs curve
 
-	quad := math.Pi/2
+			defer tempContext(ctx)()
 
-	if dir == In { // ( ) -> [ ]
-		angle := quad // from right by default
+			quad := math.Pi / 2
 
-		if from.X < to.X { // before
-			if from.Y > to.Y {
-				angle += quad/2 // from right-up if place below tran
+			if dir == In { // ( ) -> [ ]
+				angle := quad // from right by default
+
+				if from.X < to.X { // before
+					if from.Y > to.Y {
+						angle += quad / 2 // from right-up if place below tran
+					}
+					if from.Y < to.Y {
+						angle -= quad / 2 // from right-down if place above tran
+					}
+				}
+				if from.X > to.X { // after
+					angle = -quad // from left
+				}
+
+				if from.X == to.X { // in same column
+					angle = -quad // from left
+					if from.Y > to.Y {
+						angle -= quad / 2 // from left-up if place below tran
+					}
+					if from.Y < to.Y {
+						angle += quad / 2 // from left-down if place above tran
+					}
+				}
+
+				var xo, yo float64
+				if i == 0 {
+					xo = math.Sin(angle) * r // start position on place edge related to its center
+					yo = math.Cos(angle) * r
+					from.X += xo
+					from.Y += yo
+				}
+				if i == len(path)-2 {
+					to.X -= w / 2
+				}
+				cPs = []mgl.Vec2{
+					{from.X, from.Y},
+					{from.X, from.Y},
+					{to.X, to.Y},
+					{to.X, to.Y},
+				}
+				if i == 0 {
+					cPs[1][X] += 4 * xo
+					cPs[1][Y] += 4 * yo
+				}
+				if i == len(path)-2 {
+					cPs[2][X] -= 60
+					drawArrowHead(ctx, style, to.X, to.Y, -math.Pi/2)
+				}
 			}
-			if from.Y < to.Y {
-				angle -= quad/2 // from right-down if place above tran
+			if dir == Out { // [ ] -> ( )
+				angle := -quad // to left by default
+
+				if from.X < to.X { // after
+					if from.Y > to.Y {
+						angle += quad / 2 // to left-down if place above tran
+					}
+					if from.Y < to.Y {
+						angle -= quad / 2 // to left-up if place below tran
+					}
+				}
+
+				if from.X > to.X { // before
+					angle = +quad // to right
+				}
+
+				if from.X == to.X { // in same column
+					angle = +quad
+					if from.Y > to.Y {
+						angle -= quad / 2 // to right-down if place above tran
+					}
+					if from.Y < to.Y {
+						angle += quad / 2 // to right-up if place below tran
+					}
+				}
+				var xo, yo float64
+				if i == 0 {
+					from.X += w / 2
+				}
+				if i == len(path)-2 {
+					xo = math.Sin(angle) * r
+					yo = math.Cos(angle) * r
+					to.X += xo
+					to.Y += yo
+				}
+				cPs = []mgl.Vec2{
+					{from.X, from.Y},
+					{from.X, from.Y},
+					{to.X, to.Y},
+					{to.X, to.Y},
+				}
+				if i == 0 {
+					cPs[1][X] += 60
+				}
+				if i == len(path)-2 {
+					cPs[2][X] += 4 * xo
+					cPs[2][Y] += 4 * yo
+					drawArrowHead(ctx, style, to.X, to.Y, angle)
+				}
 			}
-		} 
-		if from.X > to.X { // after
-			angle = -quad // from left
-		}
-
-		if from.X == to.X { // in same column
-			angle = -quad // from left
-			if from.Y > to.Y {
-				angle -= quad/2 // from left-up if place below tran
+			if i > 0 { // draw path join
+				draw2dkit.Circle(ctx, cPs[0].X(), cPs[0].Y(), 2)
 			}
-			if from.Y < to.Y {
-				angle += quad/2 // from left-down if place above tran
+
+			ctx.MoveTo(cPs[0].X(), cPs[0].Y())
+			ctx.CubicCurveTo(
+				cPs[1].X(), cPs[1].Y(),
+				cPs[2].X(), cPs[2].Y(),
+				cPs[3].X(), cPs[3].Y(),
+			)
+			ctx.SetStrokeColor(style.Color())
+			ctx.Stroke()
+
+			if weight > 1 && i == len(path)/2 {
+				arcCntr := mgl.CubicBezierCurve2D(0.5, cPs[0], cPs[1], cPs[2], cPs[3])
+				draw2dkit.Circle(ctx, arcCntr.X(), arcCntr.Y()-6, 12)
+				ctx.SetFillColor(style.Background())
+				ctx.Fill()
+
+				ctx.SetFillColor(style.Color())
+				drawCenteredString(ctx, strconv.Itoa(weight), arcCntr.X()-1, arcCntr.Y())
 			}
-		}
-
-		xo := math.Sin(angle) * r // start position on place edge related to its center
-		yo := math.Cos(angle) * r
-		to.X -= w / 2
-		from.X += xo
-		from.Y += yo
-
-		cPs = []mgl.Vec2{
-			{from.X, from.Y},
-			{from.X + 4*xo, from.Y + 4*yo},
-			{to.X - 60, to.Y},
-			{to.X, to.Y},
-		}
-		drawArrowHead(ctx, style, to.X, to.Y, -math.Pi/2)
-	}
-	if dir == Out { // [ ] -> ( )
-		angle := -quad // to left by default
-
-		if from.X < to.X { // after
-			if from.Y > to.Y {
-				angle += quad/2 // to left-down if place above tran
-			}
-			if from.Y < to.Y {
-				angle -= quad/2 // to left-up if place below tran
-			}
-		}
-
-		if from.X > to.X { // before
-			angle = +quad // to right
-		}
- 
-		if from.X == to.X { // in same column
-			angle = +quad
-			if from.Y > to.Y {
-				angle -= quad/2 // to right-down if place above tran
-			}
-			if from.Y < to.Y {
-				angle += quad/2 // to right-up if place below tran
-			}
-		}
-
-		xo := math.Sin(angle) * r
-		yo := math.Cos(angle) * r
-		from.X += w / 2
-		to.X += xo
-		to.Y += yo
-		cPs = []mgl.Vec2{
-			{from.X, from.Y},
-			{from.X + 60, from.Y},
-			{to.X + 4*xo, to.Y + 4*yo},
-			{to.X, to.Y},
-		}
-		drawArrowHead(ctx, style, to.X, to.Y, angle)
-	}
-
-	ctx.MoveTo(cPs[0].X(), cPs[0].Y())
-	ctx.CubicCurveTo(
-		cPs[1].X(), cPs[1].Y(),
-		cPs[2].X(), cPs[2].Y(),
-		cPs[3].X(), cPs[3].Y(),
-	)
-	ctx.SetStrokeColor(style.Color())
-	ctx.Stroke()
-
-	if weight > 1 {
-		arcCntr := mgl.CubicBezierCurve2D(0.5, cPs[0], cPs[1], cPs[2], cPs[3])
-		draw2dkit.Circle(ctx, arcCntr.X(), arcCntr.Y()-6, 12)
-		ctx.SetFillColor(style.Background())
-		ctx.Fill()
-
-		ctx.SetFillColor(style.Color())
-		drawCenteredString(ctx, strconv.Itoa(weight), arcCntr.X()-1, arcCntr.Y())
+		}()
 	}
 }
 
-func InhibitorArc(ctx draw2d.GraphicContext, style Style, from, to Pos) {
+func InhibitorArc(ctx draw2d.GraphicContext, style Style, path []Pos) {
+	// TODO whole path
+	from, to := path[0], path[len(path)-1]
 	// Ingibitor edge is alwas from place to transtition: ( ) -> [ ]
 	r := PLACE_RADIUS
 	w := TRANSITION_WIDTH

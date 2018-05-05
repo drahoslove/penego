@@ -1,19 +1,41 @@
 package compose
 
 import (
-	// "git.yo2.cz/drahoslav/penego/draw"
+	"git.yo2.cz/drahoslav/penego/draw"
 	"git.yo2.cz/drahoslav/penego/net"
 )
+
+const maxInt = int(^uint(0) >> 1)
+const min_len = 1
 
 type node struct {
 	Composable
 	rank     int
-	position int
+	order    int
+	priority int
+	weight   float64 // for median value when ordering
+	tree     *tree   // for finding tight tree
+	// related to cut value computing:
+	parent *edge
+	lim    int
+	low    int
 }
 type edge struct {
-	from   *node
-	to     *node
-	lenght int
+	from     *node
+	to       *node
+	cutValue int
+}
+
+func (e *edge) weight() int {
+	return 1
+}
+
+func (e *edge) len() int {
+	return e.to.rank - e.from.rank
+}
+
+func (e *edge) slack() int {
+	return e.len() - min_len
 }
 
 type graph struct {
@@ -21,40 +43,137 @@ type graph struct {
 	edges []*edge
 }
 
-// Returns graph sturcure suited for graph related operations
-// created from net.Net structure (which is more suitable for simulation and rendering purposes)
-func loadGraph(network net.Net) graph {
-	g := graph{
+func newGraph() graph {
+	return graph{
 		make([]*node, 0, 16),
 		make([]*edge, 0, 16),
 	}
+}
+
+func (g *graph) addEdge(e *edge) {
+	g.edges = append(g.edges, e)
+	if !g.includesNode(e.from) {
+		g.nodes = append(g.nodes, e.from)
+	}
+	if !g.includesNode(e.to) {
+		g.nodes = append(g.nodes, e.to)
+	}
+}
+
+func (g *graph) includesNode(n *node) bool {
+	for _, no := range g.nodes {
+		if n == no {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *graph) includesEdge(e *edge) bool {
+	for _, ed := range g.edges {
+		if e == ed {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *graph) minIncidentEdge(edges []*edge) (min_e *edge, min_n *node) {
+	min_slack := maxInt
+	for _, e := range edges {
+		if e.slack() < min_slack {
+			from_is_in := g.includesNode(e.from)
+			to_is_in := g.includesNode(e.to)
+			if from_is_in && !to_is_in {
+				min_slack = e.slack()
+				min_e = e
+				min_n = e.to
+			}
+			if to_is_in && !from_is_in {
+				min_slack = e.slack()
+				min_e = e
+				min_n = e.from
+			}
+		}
+	}
+	return
+}
+
+func (g *graph) normalizeRanks() {
+	minRank := maxInt
+	for _, n := range g.nodes {
+		if n.rank < minRank {
+			minRank = n.rank
+		}
+	}
+	if minRank != 0 {
+		for _, n := range g.nodes {
+			n.rank -= minRank
+		}
+	}
+}
+
+func (e *edge) reversed() *edge {
+	re := *e
+	re.from, re.to = e.to, e.from
+	return &re
+}
+
+func (n *node) inEdges(edges []*edge) []*edge {
+	inEdges := []*edge{}
+	for _, e := range edges {
+		if e.to == n {
+			inEdges = append(inEdges, e)
+		}
+	}
+	return inEdges
+}
+
+func (n *node) outEdges(edges []*edge) []*edge {
+	outEdges := []*edge{}
+	for _, e := range edges {
+		if e.from == n {
+			outEdges = append(outEdges, e)
+		}
+	}
+	return outEdges
+}
+
+// Returns graph sturcure suited for graph related operations
+// created from net.Net structure (which is more suitable for simulation and rendering purposes)
+func loadGraph(network net.Net) graph {
+	g := newGraph()
 	nodeByComposable := make(map[Composable]*node)
 
 	for _, place := range network.Places() {
-		n := &node{place, 1, 1}
+		n := &node{Composable: place}
 		g.nodes = append(g.nodes, n)
 		nodeByComposable[place] = n
 	}
 	for _, tran := range network.Transitions() {
-		n := &node{tran, 1, 1}
+		n := &node{Composable: tran}
 		g.nodes = append(g.nodes, n)
 		nodeByComposable[tran] = n
 	}
 	for _, tran := range network.Transitions() {
 		for _, arc := range tran.Origins {
+			if arc.IsDumb() {
+				continue
+			}
 			place := arc.Place
 			g.edges = append(g.edges, &edge{
-				nodeByComposable[place],
-				nodeByComposable[tran],
-				1,
+				from: nodeByComposable[place],
+				to:   nodeByComposable[tran],
 			})
 		}
 		for _, arc := range tran.Targets {
+			if arc.IsDumb() {
+				continue
+			}
 			place := arc.Place
 			g.edges = append(g.edges, &edge{
-				nodeByComposable[tran],
-				nodeByComposable[place],
-				1,
+				from: nodeByComposable[tran],
+				to:   nodeByComposable[place],
 			})
 		}
 	}
@@ -67,7 +186,7 @@ func (g graph) transpose() graph {
 	copy(edges, g.edges)
 	g.edges = edges
 	for i, e := range g.edges {
-		g.edges[i] = &edge{e.to, e.from, e.lenght}
+		g.edges[i] = e.reversed()
 	}
 	return g
 }
@@ -188,8 +307,7 @@ func (g graph) acyclic() graph {
 			if e.from == v {
 				u := e.to
 				if stack[u] {
-					// reverse
-					g.edges[i] = &edge{e.to, e.from, e.lenght}
+					g.edges[i] = e.reversed()
 				} else {
 					if !visited[u] {
 						dfs(u)
@@ -211,37 +329,40 @@ func (g graph) acyclic() graph {
 // Iterative method for graph drawing
 // based on dot algorithm and work of Warfield, Sugiyamaet at al.
 func GetIterative(network net.Net) Composition {
+
 	graph := loadGraph(network)
 
-	_ = graph
 	// assign rank λ(v) to each node v
 	// edge e = (v, w)
 	// lenght of edge l(e) ≥ δ(e)
 	// l(e) = λ(w) − λ(v)
-	rank := func() {
-		min_len := 1 // δ(e)
 
-		_ = min_len
-		// make graph acyclic by reversing edges
-		graph = graph.acyclic()
+	// make graph acyclic by reversing edges
+	graph = graph.acyclic()
 
+	rank(&graph)
+	ordering(&graph)
+	// positions()
+	// makeSplines()
+
+	comp := New()
+
+	for _, n := range graph.nodes {
+		pos := draw.Pos{float64(n.rank * 80), float64(n.order) * 80}
+		switch node := n.Composable.(type) {
+		case *net.Transition:
+			comp.transitions[node] = pos
+		case *net.Place:
+			comp.places[node] = pos
+		case *path:
+			if _, ok := comp.pathes[node]; !ok {
+				comp.pathes[node] = []draw.Pos{}
+			}
+			// append pos front
+			comp.pathes[node] = append([]draw.Pos{pos}, comp.pathes[node]...)
+		}
 	}
+	comp.CenterTo(0, 0)
 
-	ordering := func() {
-
-	}
-
-	position := func() {
-
-	}
-
-	make_splines := func() {
-
-	}
-
-	rank()
-	ordering()
-	position()
-	make_splines()
-	return Composition{}
+	return comp
 }

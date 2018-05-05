@@ -12,12 +12,18 @@ import (
 	"git.yo2.cz/drahoslav/penego/net"
 )
 
+type path struct {
+	from Composable
+	to   Composable
+}
+
 type Composable interface {
 }
 
 type Composition struct {
 	places      map[*net.Place]draw.Pos
 	transitions map[*net.Transition]draw.Pos
+	pathes      map[*path][]draw.Pos
 	ghosts      map[Composable]draw.Pos
 }
 
@@ -25,8 +31,43 @@ func New() Composition {
 	return Composition{
 		make(map[*net.Place]draw.Pos),
 		make(map[*net.Transition]draw.Pos),
+		make(map[*path][]draw.Pos),
 		make(map[Composable]draw.Pos),
 	}
+}
+
+func (comp Composition) PathPositions(from Composable, to Composable) []draw.Pos {
+	getPos := func(node Composable) draw.Pos {
+		switch node := node.(type) {
+		case *net.Place:
+			return comp.places[node]
+		case *net.Transition:
+			return comp.transitions[node]
+		default:
+			return draw.Pos{}
+		}
+	}
+	fromPos, toPos := getPos(from), getPos(to)
+
+	positions := []draw.Pos{}
+
+	// insert intermediate path positions
+	for path, poss := range comp.pathes {
+		if path.from == from && path.to == to {
+			for _, pos := range poss {
+				positions = append(positions, pos)
+			}
+		}
+		if path.from == to && path.to == from {
+			for _, pos := range poss {
+				positions = append([]draw.Pos{pos}, positions...)
+			}
+		}
+	}
+
+	positions = append([]draw.Pos{fromPos}, positions...)
+	positions = append(positions, toPos)
+	return positions
 }
 
 func (comp Composition) String() string {
@@ -113,12 +154,19 @@ func (comp Composition) CenterTo(x, y float64) {
 	deltaX := x - centerX
 	deltaY := y - centerY
 
-	for node, pos := range comp.places {
-		comp.Move(node, pos.X+deltaX, pos.Y+deltaY)
+	for place, pos := range comp.places {
+		comp.Move(place, pos.X+deltaX, pos.Y+deltaY)
 	}
 
-	for node, pos := range comp.transitions {
-		comp.Move(node, pos.X+deltaX, pos.Y+deltaY)
+	for tran, pos := range comp.transitions {
+		comp.Move(tran, pos.X+deltaX, pos.Y+deltaY)
+	}
+
+	for _, poss := range comp.pathes {
+		for i, _ := range poss {
+			poss[i].X += deltaX
+			poss[i].Y += deltaY
+		}
 	}
 }
 
@@ -146,27 +194,25 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 	}
 
 	// draw arcs
-	for tran, pos := range comp.transitions {
+	for tran, _ := range comp.transitions {
 		orSetStyle := setStyle(tran)
 		for _, arc := range tran.Origins {
 			if arc.Place.Hidden() {
 				continue
 			}
-			from := comp.places[arc.Place]
 			orSetStyle(arc.Place)
 			if arc.Type == net.InhibitorArc {
-				drawer.DrawInhibitorArc(from, pos)
+				drawer.DrawInhibitorArc(comp.PathPositions(arc.Place, tran))
 			} else {
-				drawer.DrawInArc(from, pos, arc.Weight)
+				drawer.DrawInArc(comp.PathPositions(arc.Place, tran), arc.Weight)
 			}
 		}
 		for _, arc := range tran.Targets {
 			if arc.Place.Hidden() {
 				continue
 			}
-			to := comp.places[arc.Place]
 			orSetStyle(arc.Place)
-			drawer.DrawOutArc(pos, to, arc.Weight)
+			drawer.DrawOutArc(comp.PathPositions(tran, arc.Place), arc.Weight)
 		}
 	}
 
@@ -188,20 +234,20 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 		switch node := node.(type) {
 		case *net.Place:
 			place := node
-			drawer.DrawPlace(pos, node.Tokens, node.Description)
-			for tran, tranPos := range comp.transitions {
+			drawer.DrawPlace(pos, place.Tokens, place.Description)
+			for tran, _ := range comp.transitions {
 				for _, arc := range tran.Origins {
 					if arc.Place == place {
 						if arc.Type == net.InhibitorArc {
-							drawer.DrawInhibitorArc(pos, tranPos)
+							drawer.DrawInhibitorArc(comp.PathPositions(place, tran))
 						} else {
-							drawer.DrawInArc(pos, tranPos, arc.Weight)
+							drawer.DrawInArc(comp.PathPositions(place, tran), arc.Weight)
 						}
 					}
 				}
 				for _, arc := range tran.Targets {
 					if arc.Place == place {
-						drawer.DrawOutArc(tranPos, pos, arc.Weight)
+						drawer.DrawOutArc(comp.PathPositions(tran, place), arc.Weight)
 					}
 				}
 			}
@@ -212,19 +258,17 @@ func (comp Composition) DrawWith(drawer draw.Drawer) {
 				if arc.Place.Hidden() {
 					continue
 				}
-				from := comp.places[arc.Place]
 				if arc.Type == net.InhibitorArc {
-					drawer.DrawInhibitorArc(from, pos)
+					drawer.DrawInhibitorArc(comp.PathPositions(arc.Place, tran))
 				} else {
-					drawer.DrawInArc(from, pos, arc.Weight)
+					drawer.DrawInArc(comp.PathPositions(arc.Place, tran), arc.Weight)
 				}
 			}
 			for _, arc := range tran.Targets {
 				if arc.Place.Hidden() {
 					continue
 				}
-				to := comp.places[arc.Place]
-				drawer.DrawOutArc(pos, to, arc.Weight)
+				drawer.DrawOutArc(comp.PathPositions(node, arc.Place), arc.Weight)
 			}
 		}
 	}
