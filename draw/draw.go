@@ -330,6 +330,8 @@ func Arc(ctx draw2d.GraphicContext, style Style, path []Pos, dir Direction, weig
 	for i := 0; i < len(path)-1; i++ {
 		func() {
 			from, to := path[i], path[i+1]
+			hr := dist(from, to) / 100 // for curve handle distance
+
 			var cPs []mgl.Vec2 // control point of arcs curve
 
 			defer tempContext(ctx)()
@@ -378,8 +380,8 @@ func Arc(ctx draw2d.GraphicContext, style Style, path []Pos, dir Direction, weig
 					{to.X, to.Y},
 				}
 				if i == 0 {
-					cPs[1][X] += 4 * xo
-					cPs[1][Y] += 4 * yo
+					cPs[1][X] += hr * xo
+					cPs[1][Y] += hr * yo
 				}
 				if i == len(path)-2 {
 					cPs[2][X] -= 60
@@ -431,8 +433,8 @@ func Arc(ctx draw2d.GraphicContext, style Style, path []Pos, dir Direction, weig
 					cPs[1][X] += 60
 				}
 				if i == len(path)-2 {
-					cPs[2][X] += 4 * xo
-					cPs[2][Y] += 4 * yo
+					cPs[2][X] += hr * xo
+					cPs[2][Y] += hr * yo
 					drawArrowHead(ctx, style, to.X, to.Y, angle)
 				}
 			}
@@ -548,4 +550,8 @@ func tempContext(ctx draw2d.GraphicContext) func() {
 func opaque(clr color.RGBA, opacity float32) color.RGBA {
 	clr.A = uint8(255 * opacity)
 	return clr
+}
+
+func dist(a, b Pos) float64 {
+	return math.Hypot(b.X-a.X, b.Y-a.Y)
 }

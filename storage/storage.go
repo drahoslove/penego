@@ -6,7 +6,7 @@ var store Storage
 type Storage struct {
 	vals     map[string]interface{}
 	prefix   string
-	onChange func(Storage, string)
+	onChange []func(Storage, string)
 	subs     map[string]*Storage
 }
 
@@ -19,14 +19,15 @@ func Of(prefix string) *Storage {
 }
 
 func New() Storage {
-	return Storage{map[string]interface{}{}, "", nil, make(map[string]*Storage)}
+	return Storage{map[string]interface{}{}, "", []func(Storage, string){}, make(map[string]*Storage)}
 }
 
 func (s *Storage) Of(prefix string) *Storage {
 	if st, ok := s.subs[prefix]; ok {
 		return st
 	}
-	st := Storage{s.vals, s.prefix + prefix + ".", s.onChange, make(map[string]*Storage)}
+	onChange := make([]func(Storage, string), 0)
+	st := Storage{s.vals, s.prefix + prefix + ".", onChange, make(map[string]*Storage)}
 	s.subs[prefix] = &st
 	return &st
 }
@@ -78,11 +79,11 @@ func (s *Storage) AddFloat(key string, diff float64) float64 {
 }
 
 func (s *Storage) OnChange(cb func(Storage, string)) {
-	(*s).onChange = cb
+	s.onChange = append(s.onChange, cb)
 }
 
 func (s Storage) changed(key string) {
-	if s.onChange != nil {
-		s.onChange(s, s.prefix+key)
+	for _, f := range s.onChange {
+		f(s, s.prefix+key)
 	}
 }

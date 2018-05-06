@@ -11,6 +11,12 @@ import (
 	"github.com/andlabs/ui"
 )
 
+const (
+	// points with 72 dpi
+	A4_WIDTH   = 595
+	A4_HEIGHT  = 842
+)
+
 type pair struct {
 	control ui.Control
 	stretch bool
@@ -108,6 +114,73 @@ func createFormatPresets(ext string) ui.Control {
 	})
 
 	box := ui.NewVerticalBox()
+	if ext == "pdf" {
+		currentOrientation := "L"
+		currentPaperFormat := "A4"
+		setDimensions := func() {
+			width, height := A4_WIDTH, A4_HEIGHT
+			if currentOrientation == "L" {
+				width, height = height, width
+			}
+			if currentPaperFormat == "A3" {
+				width = int(float64(width) * math.Sqrt2)
+				height = int(float64(height) * math.Sqrt2)
+			}
+			if currentPaperFormat == "A5" {
+				width = int(float64(width) / math.Sqrt2 )
+				height = int(float64(height) / math.Sqrt2)
+			}
+			exportSt.Set("width", width)
+			exportSt.Set("height", height)
+		} 
+		orientation := func() ui.Control {
+			// TODO: use radio buttons once available in ui
+			portrait := ui.NewButton("Portrait")
+			landscape := ui.NewButton("Landscape")
+			orient := func(b *ui.Button){
+				if b.Text() == "Portrait" {
+					portrait.Disable()
+					landscape.Enable()
+					currentOrientation = "P"
+				}
+				if b.Text() == "Landscape"  {
+					landscape.Disable()
+					portrait.Enable()
+					currentOrientation = "L"
+				}
+				setDimensions()
+			}
+			portrait.OnClicked(orient)
+			landscape.OnClicked(orient)
+			landscape.Enable()
+			buttons := line(pair{portrait, false}, pair{landscape, false})
+			return line(pair{ui.NewLabel("Orientation"), true}, pair{buttons, false})
+		}
+
+		paperFormat := func() ui.Control {
+			// TODO: use radio buttons once available in ui
+			buttons := map[string]*ui.Button{
+				"A3": ui.NewButton("A3"),
+				"A4": ui.NewButton("A4"),
+				"A5": ui.NewButton("A5"),
+			}
+			buttons["A4"].Disable()
+			for _, btn := range buttons {
+				btn.OnClicked(func(b *ui.Button) {
+					for _, btn := range buttons {
+						btn.Enable()
+					}
+					b.Disable()
+					currentPaperFormat = b.Text()
+					setDimensions()
+				})
+			}
+			return line(pair{ui.NewLabel("format"), true}, pair{buttons["A3"], false}, pair{buttons["A4"], false}, pair{buttons["A5"], false})
+		}
+		setDimensions()
+		box.Append(orientation(), false)
+		box.Append(paperFormat(), false)
+	}
 	box.Append(createIntInput("width", 1, math.MaxInt32), false)
 	box.Append(createIntInput("height", 1, math.MaxInt32), false)
 	box.Append(createIntInput("zoom", -5, +5), false)
@@ -143,6 +216,9 @@ func createIntInput(name string, min, max int) ui.Control {
 	input.SetValue(exportSt.Int(name))
 	input.OnChanged(func(*ui.Spinbox) {
 		exportSt.Set(name, input.Value())
+	})
+	exportSt.OnChange(func(st storage.Storage, key string) {
+		input.SetValue(exportSt.Int(name))
 	})
 
 	return line(pair{label, true}, pair{input, false})

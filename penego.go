@@ -78,8 +78,8 @@ func main() {
 	// TODO init elsewhere?
 	pwd, _ := os.Getwd()
 	storage.Of("export").
-		Set("width", 1024*2).
-		Set("height", 512*2).
+		Set("width", 1024).
+		Set("height", 512).
 		Set("zoom", 0).
 		Set("png.filename", pwd+string(filepath.Separator)+"image.png").
 		Set("pdf.filename", pwd+string(filepath.Separator)+"image.pdf").
@@ -107,9 +107,9 @@ func main() {
 		noClose    = true
 		autoStart  = false
 
-		verbose    = false
-		input  = ""
-		output = ""
+		verbose = false
+		input   = ""
+		output  = ""
 	)
 
 	flag.DurationVar(&startTime, "start", startTime, "start `time` of simulation")
@@ -315,8 +315,12 @@ func main() {
 
 		doExport := func() {
 			gui.ToggleExport(func(filename string) {
-				export.ByName(filename, composition.DrawWith)
-				log.Printf("image %s exported\n", filename)
+				err := export.ByName(filename, composition.DrawWith)
+				if err != nil {
+					log.Println(err)
+				} else {
+					log.Printf("image %s exported\n", filename)
+				}
 			})
 		}
 
@@ -349,8 +353,8 @@ func main() {
 		screen.RegisterControl(0, "I", gui.AlwaysIcon(gui.ImportIcon), "import net", doImport, gui.True)   // from pnml
 		screen.RegisterControl(0, "E", gui.AlwaysIcon(gui.ExportIcon), "export image", doExport, gui.True) // to svg/pdf/png
 		screen.RegisterControl(0, "P", gui.AlwaysIcon(gui.SettingsIcon), "settings", settings, gui.True)
-		screen.RegisterControl(0, "C", gui.AlwaysIcon(gui.CenterOnIcon), "center net", center, isCenter) 
-		screen.RegisterControl(0, "T", gui.AlwaysIcon(gui.RotateIcon), "rotate net", rotate, gui.True) 
+		screen.RegisterControl(0, "C", gui.AlwaysIcon(gui.CenterOnIcon), "center net", center, isCenter)
+		screen.RegisterControl(0, "T", gui.AlwaysIcon(gui.RotateIcon), "rotate net", rotate, gui.True)
 
 		// down bar commands (simulation related)
 		screen.RegisterControl(1, "home", gui.AlwaysIcon(gui.BeginIcon), "reset", reset, gui.True)

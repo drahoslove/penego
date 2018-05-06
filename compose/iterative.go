@@ -387,6 +387,7 @@ func positions(g *graph) Composition {
 			comp.pathes[node] = append([]draw.Pos{pos}, comp.pathes[node]...)
 		}
 	}
+	comp.AlignY()
 	comp.CenterTo(0, 0)
 
 	return comp
