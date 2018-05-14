@@ -12,7 +12,9 @@ func Svg(composeNet func(draw.Drawer)) error {
 	width, height := store.Int("width"), store.Int("height")
 
 	draw.Init(drawer.ctx, width, height)
-	draw.Clean(drawer.ctx, width, height) // background
+	if store.Bool("background") {
+		draw.Clean(drawer.ctx, width, height) // background
+	}
 	composeNet(drawer)
 
 	return draw2dsvg.SaveToSvgFile(getName("svg"), img)

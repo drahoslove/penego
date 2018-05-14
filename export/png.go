@@ -14,7 +14,9 @@ func Png(composeNet func(draw.Drawer)) error {
 	drawer := &ImgDrawer{draw2dimg.NewGraphicContext(img), 0}
 
 	draw.Init(drawer.ctx, width, height)
-	draw.Clean(drawer.ctx, width, height) // background
+	if store.Bool("background") {
+		draw.Clean(drawer.ctx, width, height) // background
+	}
 	composeNet(drawer)
 
 	return draw2dimg.SaveToPngFile(getName("png"), img)

@@ -37,7 +37,9 @@ func Pdf(composeNet func(draw.Drawer)) error {
 	drawer.ctx.Save() // required for pdf backend to call save before translate
 	draw.Init(drawer.ctx, width, height)
 	// drawer.ctx.SetFontData(draw2d.FontData{Name: "courier"}) // TODO use gomono
-	draw.Clean(drawer.ctx, width, height) // background
+	if store.Bool("background") {
+		draw.Clean(drawer.ctx, width, height) // background
+	}
 	composeNet(drawer)
 	drawer.ctx.Restore()
 	return draw2dpdf.SaveToPdfFile(getName("pdf"), img)

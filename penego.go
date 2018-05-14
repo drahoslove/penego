@@ -80,6 +80,7 @@ func main() {
 	storage.Of("export").
 		Set("width", 1024).
 		Set("height", 512).
+		Set("background", false).
 		Set("zoom", 0).
 		Set("png.filename", pwd+string(filepath.Separator)+"image.png").
 		Set("pdf.filename", pwd+string(filepath.Separator)+"image.pdf").

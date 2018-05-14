@@ -439,7 +439,7 @@ func Arc(ctx draw2d.GraphicContext, style Style, path []Pos, dir Direction, weig
 				}
 			}
 			if i > 0 { // draw path join
-				draw2dkit.Circle(ctx, cPs[0].X(), cPs[0].Y(), 2)
+				// draw2dkit.Circle(ctx, cPs[0].X(), cPs[0].Y(), 2)
 			}
 
 			ctx.MoveTo(cPs[0].X(), cPs[0].Y())
@@ -451,7 +451,7 @@ func Arc(ctx draw2d.GraphicContext, style Style, path []Pos, dir Direction, weig
 			ctx.SetStrokeColor(style.Color())
 			ctx.Stroke()
 
-			if weight > 1 && i == len(path)/2 {
+			if weight > 1 && i == len(path)/2-1 {
 				arcCntr := mgl.CubicBezierCurve2D(0.5, cPs[0], cPs[1], cPs[2], cPs[3])
 				draw2dkit.Circle(ctx, arcCntr.X(), arcCntr.Y()-6, 12)
 				ctx.SetFillColor(style.Background())
