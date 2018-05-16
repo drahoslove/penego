@@ -1,0 +1,23 @@
+
+// This is an example new file, please edit it and save
+# NET
+a (1)"a"
+c ()"c"
+
+bb -> [] -> cc
+a -> [] -> b
+d -> [] -> a
+b -> [] -> c
+c -> [] -> d
+
+d ()"d"
+
+aa (1)"a"
+cc ()"c"
+dd ()"d"
+
+bb ( )"b"
+aa -> [] -> bb
+cc -> [] -> dd
+aa -> [] -> dd
+b ( )"b"

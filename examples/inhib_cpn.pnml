@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml:pnml xmlns="http://www.daimi.au.dk/CPnets/pnml/hlpn" xmlns:cpn="http://www.daimi.au.dk/CPNTools/hlpn" xmlns:pnml="http://www.pnml.org/version-2009/grammar/pnml">
+      <pnml:net id="N65545" type="http://www.daimi.au.dk/CPnets/pnml/hlpn">
+            <pnml:declarations>
+                  <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                        <cpn:startblock name="Standard priorities"/>
+                  </pnml:toolspecific>
+                  <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                        <cpn:endblock/>
+                  </pnml:toolspecific>
+                  <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                        <cpn:startblock name="Standard declarations"/>
+                  </pnml:toolspecific>
+                  <pnml:declaration>
+                        <pnml:type>
+                              <pnml:name>UNIT</pnml:name>
+                              <pnml:type/>
+                        </pnml:type>
+                  </pnml:declaration>
+                  <pnml:declaration>
+                        <pnml:type>
+                              <pnml:name>BOOL</pnml:name>
+                              <pnml:type>
+                                    <pnml:bool/>
+                              </pnml:type>
+                        </pnml:type>
+                  </pnml:declaration>
+                  <pnml:declaration>
+                        <pnml:type>
+                              <pnml:name>INT</pnml:name>
+                              <pnml:type>
+                                    <pnml:int/>
+                              </pnml:type>
+                        </pnml:type>
+                  </pnml:declaration>
+                  <pnml:declaration>
+                        <pnml:type>
+                              <pnml:name>INTINF</pnml:name>
+                              <pnml:type/>
+                        </pnml:type>
+                  </pnml:declaration>
+                  <pnml:declaration>
+                        <pnml:type>
+                              <pnml:name>TIME</pnml:name>
+                              <pnml:type/>
+                        </pnml:type>
+                  </pnml:declaration>
+                  <pnml:declaration>
+                        <pnml:type>
+                              <pnml:name>REAL</pnml:name>
+                              <pnml:type/>
+                        </pnml:type>
+                  </pnml:declaration>
+                  <pnml:declaration>
+                        <pnml:type>
+                              <pnml:name>STRING</pnml:name>
+                              <pnml:type>
+                                    <pnml:string/>
+                              </pnml:type>
+                        </pnml:type>
+                  </pnml:declaration>
+                  <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                        <cpn:endblock/>
+                  </pnml:toolspecific>
+            </pnml:declarations>
+            <pnml:page id="ID6">
+                  <pnml:name>
+                        <pnml:text>New Page</pnml:text>
+                  </pnml:name>
+                  <pnml:place id="ID1412347769">
+                        <pnml:name>
+                              <pnml:text>P</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="0" y="0"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:name>
+                        <pnml:initialMarking>
+                              <!---->
+                              <pnml:text>0</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="57" y="24"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:initialMarking>
+                        <pnml:type>
+                              <pnml:text>UNIT</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="40" y="-23"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:type>
+                        <pnml:graphics>
+                              <pnml:position x="31" y="158"/>
+                              <pnml:fill color="#ffffff"/>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                              <pnml:dimension x="60.000000" y="40.000000"/>
+                              <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                                    <cpn:ellipse/>
+                              </pnml:toolspecific>
+                        </pnml:graphics>
+                  </pnml:place>
+                  <pnml:place id="ID1412347787">
+                        <pnml:name>
+                              <pnml:text>P</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="0" y="0"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:name>
+                        <pnml:initialMarking>
+                              <!---->
+                              <pnml:text>0</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="57" y="23"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:initialMarking>
+                        <pnml:type>
+                              <pnml:text>UNIT</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="40" y="-24"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:type>
+                        <pnml:graphics>
+                              <pnml:position x="228" y="44"/>
+                              <pnml:fill color="#ffffff"/>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                              <pnml:dimension x="60.000000" y="40.000000"/>
+                              <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                                    <cpn:ellipse/>
+                              </pnml:toolspecific>
+                        </pnml:graphics>
+                  </pnml:place>
+                  <pnml:place id="ID1412347872">
+                        <pnml:name>
+                              <pnml:text>E</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="0" y="0"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:name>
+                        <pnml:initialMarking>
+                              <!---->
+                              <pnml:text>0</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="56" y="24"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:initialMarking>
+                        <pnml:type>
+                              <pnml:text>UNIT</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="39" y="-23"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:type>
+                        <pnml:graphics>
+                              <pnml:position x="384" y="134"/>
+                              <pnml:fill color="#ffffff"/>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                              <pnml:dimension x="60.000000" y="40.000000"/>
+                              <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                                    <cpn:ellipse/>
+                              </pnml:toolspecific>
+                        </pnml:graphics>
+                  </pnml:place>
+                  <pnml:transition id="ID1412347817">
+                        <pnml:name>
+                              <pnml:text/>
+                              <pnml:graphics>
+                                    <pnml:offset x="0" y="0"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:name>
+                        <pnml:guard>
+                              <pnml:text/>
+                              <pnml:graphics>
+                                    <pnml:offset x="-39" y="31"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:guard>
+                        <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                              <cpn:time>
+                                    <cpn:text/>
+                                    <cpn:graphics>
+                                          <cpn:line color=""/>
+                                          <cpn:font align="left" family="arial" size="12" style="normal" weight="bold"/>
+                                          <cpn:offset x="44.5" y="31"/>
+                                    </cpn:graphics>
+                              </cpn:time>
+                              <cpn:code>
+                                    <cpn:text/>
+                                    <cpn:graphics>
+                                          <cpn:line color=""/>
+                                          <cpn:font align="left" family="arial" size="12" style="normal" weight="bold"/>
+                                          <cpn:offset x="64.5" y="-52"/>
+                                    </cpn:graphics>
+                              </cpn:code>
+                        </pnml:toolspecific>
+                        <pnml:graphics>
+                              <pnml:position x="234" y="260"/>
+                              <pnml:fill color="#ffffff"/>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                              <pnml:dimension x="60.000000" y="40.000000"/>
+                              <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                                    <cpn:rectangle/>
+                              </pnml:toolspecific>
+                        </pnml:graphics>
+                  </pnml:transition>
+                  <pnml:transition id="ID1412347843">
+                        <pnml:name>
+                              <pnml:text/>
+                              <pnml:graphics>
+                                    <pnml:offset x="0" y="0"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:name>
+                        <pnml:guard>
+                              <pnml:text/>
+                              <pnml:graphics>
+                                    <pnml:offset x="-39" y="31"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:guard>
+                        <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                              <cpn:time>
+                                    <cpn:text/>
+                                    <cpn:graphics>
+                                          <cpn:line color=""/>
+                                          <cpn:font align="left" family="arial" size="12" style="normal" weight="bold"/>
+                                          <cpn:offset x="44.5" y="31"/>
+                                    </cpn:graphics>
+                              </cpn:time>
+                              <cpn:code>
+                                    <cpn:text/>
+                                    <cpn:graphics>
+                                          <cpn:line color=""/>
+                                          <cpn:font align="left" family="arial" size="12" style="normal" weight="bold"/>
+                                          <cpn:offset x="64.5" y="-52"/>
+                                    </cpn:graphics>
+                              </cpn:code>
+                        </pnml:toolspecific>
+                        <pnml:graphics>
+                              <pnml:position x="235" y="134"/>
+                              <pnml:fill color="#ffffff"/>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                              <pnml:dimension x="60.000000" y="40.000000"/>
+                              <pnml:toolspecific tool="CPN Tools" version="1.0.0">
+                                    <cpn:rectangle/>
+                              </pnml:toolspecific>
+                        </pnml:graphics>
+                  </pnml:transition>
+                  <pnml:arc id="ID1412347926tp" source="ID1412347843" target="ID1412347787">
+                        <pnml:inscription>
+                              <pnml:text>1</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="9" y="23"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:inscription>
+                        <pnml:graphics>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                              <pnml:position x="284" y="102"/>
+                        </pnml:graphics>
+                        <pnml:arctype>
+                              <pnml:text>normal</pnml:text>
+                        </pnml:arctype>
+                  </pnml:arc>
+                  <pnml:arc id="ID1412347961pt" source="ID1412347787" target="ID1412347843">
+                        <pnml:inscription>
+                              <pnml:text>1</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="-61" y="7"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:inscription>
+                        <pnml:graphics>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                              <pnml:position x="174" y="102"/>
+                        </pnml:graphics>
+                        <pnml:arctype>
+                              <pnml:text>normal</pnml:text>
+                        </pnml:arctype>
+                  </pnml:arc>
+                  <pnml:arc id="ID1412347997tp" source="ID1412347843" target="ID1412347872">
+                        <pnml:inscription>
+                              <pnml:text>1</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="51" y="-21"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:inscription>
+                        <pnml:graphics>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                        </pnml:graphics>
+                        <pnml:arctype>
+                              <pnml:text>normal</pnml:text>
+                        </pnml:arctype>
+                  </pnml:arc>
+                  <pnml:arc id="ID1412348035pt" source="ID1412347769" target="ID1412347817">
+                        <pnml:inscription>
+                              <pnml:text>1</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="-121" y="-91"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:inscription>
+                        <pnml:graphics>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                        </pnml:graphics>
+                        <pnml:arctype>
+                              <pnml:text>normal</pnml:text>
+                        </pnml:arctype>
+                  </pnml:arc>
+                  <pnml:arc id="ID1412348116tp" source="ID1412347843" target="ID1412347769">
+                        <pnml:inscription>
+                              <pnml:text>1</pnml:text>
+                              <pnml:graphics>
+                                    <pnml:offset x="-127" y="-32"/>
+                                    <pnml:line color="#000000"/>
+                                    <pnml:font align="left" family="arial" size="12" style="normal" weight="normal"/>
+                              </pnml:graphics>
+                        </pnml:inscription>
+                        <pnml:graphics>
+                              <pnml:line color="#000000" style="solid" width="2"/>
+                        </pnml:graphics>
+                        <pnml:arctype>
+                              <pnml:text>inhibitor</pnml:text>
+                        </pnml:arctype>
+                  </pnml:arc>
+            </pnml:page>
+      </pnml:net>
+</pnml:pnml>
