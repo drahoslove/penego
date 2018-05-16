@@ -236,6 +236,28 @@ func createFloatInput(name string, min, max int) ui.Control {
 	return line(pair{label, true}, pair{input, false})
 }
 
+func createRadioInput(name string, options ...string) ui.Control {
+	label := ui.NewLabel(name)
+
+	buttons := []pair{pair{label, true}}
+
+	value := options[0]
+
+	for _, opt := range options {
+		btn := ui.NewButton(opt)
+		// if settingsSt.String(name) == opt {
+		// 	btn.Disable()
+		// }
+		btn.OnClicked(func(b *ui.Button) {
+			value = b.Text()
+			settingsSt.Set(name, value)
+		})
+		buttons = append(buttons, pair{btn, false})
+	}
+
+	return line(buttons...)
+}
+
 func IsExportOn() bool {
 	return exportWindow != nil
 }
@@ -252,7 +274,15 @@ func ToggleExport(export func(string)) {
 func createSettingsBox() ui.Control {
 	tab := ui.NewTab()
 
-	tab.Append("general", createFloatInput("linewidth", 1, 4))
+	linewidth := createFloatInput("linewidth", 1, 4)
+	composer := createRadioInput("composer", "simple", "complex")
+
+	general := ui.NewVerticalBox()
+	general.Append(linewidth, false)
+	general.Append(composer, false)
+
+	tab.Append("general", general)
+
 	// tab.Append("place", nil)
 	// tab.Append("transition", nil)
 	// tab.Append("arc", nil)

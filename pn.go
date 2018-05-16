@@ -7,6 +7,8 @@ import (
 
 	"git.yo2.cz/drahoslav/penego/compose"
 	"git.yo2.cz/drahoslav/penego/net"
+
+	"git.yo2.cz/drahoslav/penego/storage"
 )
 
 const (
@@ -36,9 +38,20 @@ func Parse(str string) (network net.Net, composition compose.Composition) {
 	if compoStr != "" {
 		composition = compose.Parse(compoStr, network)
 	} else {
-		composition = compose.GetIterative(network)
+		composition = Compose(network)
 	}
 
+	return
+}
+
+// returns composition based on settings
+func Compose(network net.Net) (composition compose.Composition) {
+	composer := storage.Of("settings").String("composer")
+	if composer == "simple" {
+		composition = compose.GetSimple(network)
+	} else {
+		composition = compose.GetIterative(network)
+	}
 	return
 }
 

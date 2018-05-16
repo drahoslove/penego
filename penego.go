@@ -86,7 +86,8 @@ func main() {
 		Set("pdf.filename", pwd+string(filepath.Separator)+"image.pdf").
 		Set("svg.filename", pwd+string(filepath.Separator)+"image.svg")
 	storage.Of("settings").
-		Set("linewidth", 2.0)
+		Set("linewidth", 2.0).
+		Set("composer", "complex")
 	storage.Of("gui.offset").
 		Set("x", 0.0).
 		Set("y", 0.0)
@@ -175,14 +176,21 @@ func main() {
 
 	gui.Run(func(screen *gui.Screen) { // runs this anon func in goroutine
 
+		var state State = Splash
+
+		var sim net.Simulation
+
 		storage.Of("settings").OnChange(func(st storage.Storage, key string) {
+			if key == "settings.composer" {
+				composition = Compose(network)
+				sim.Pause()
+				state = Initial
+			}
 			screen.ForceRedraw(false)
 		})
 		storage.Of("export").OnChange(func(st storage.Storage, key string) {
 			screen.ForceRedraw(false)
 		})
-
-		var state State = Splash
 
 		var onStateChange = func(before, now time.Duration) {
 			switch timeFlow {
@@ -199,7 +207,6 @@ func main() {
 			screen.ForceRedraw(false) // must not block
 		}
 
-		var sim net.Simulation
 
 		foo := func() {}
 		_ = foo
