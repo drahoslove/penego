@@ -26,6 +26,13 @@ g (1)
 e ( ) "exit"
 ----
 g -> p[exp(1s)] -> g, 2*e
+
+# COMPOSITION
+e 210;-45
+g 75;-165
+----
+p 75;-45
+
 `
 
 type State int
@@ -150,7 +157,7 @@ func main() {
 		log.Println("No penego file specified, using example")
 	}
 	network, composition = Parse(pnString)
-	composition.Rotate()
+	composition.CenterTo(0, 0)
 
 	if input != "" {
 		file, err := os.Open(input)
